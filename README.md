@@ -22,6 +22,7 @@ npm run dev
 | `npm run build` | build de production dans `dist/` |
 | `npm run preview` | sert le build de production |
 | `npm run lint` | Oxlint |
+| `npm test` | tests unitaires (routage, règles métier, encodeur QR) |
 | `npm run verifier` | vérifie le contrat avec la base Supabase (voir plus bas) |
 
 ### Comptes de démonstration
@@ -201,6 +202,28 @@ lien obtenu est donc partageable tel quel. Le certificat déjà résolu voyage a
 route, de sorte que la page ne redemande pas ce qu'elle vient d'obtenir — sans quoi une
 seconde consultation serait comptée.
 
+## Tests
+
+```bash
+npm test
+```
+
+26 tests, exécutés par le lanceur intégré de Node — **aucune dépendance de test dans le
+projet**. Ils couvrent trois choses, choisies parce qu'elles sont pures et que leur
+régression serait silencieuse :
+
+- **le routage** — aller-retour entre adresse et écran, encodage des jetons, chemins
+  inconnus ; c'est ce qui garantit qu'un lien de certificat ouvre la bonne page ;
+- **les règles métier** — `effectiveStatus()`, qui porte le principe « le statut est
+  calculé, pas stocké », et qui doit rester d'accord avec `effective_status()` côté
+  base ; la numérotation des références ; les identifiants publics ;
+- **l'encodeur QR** — dimensions normalisées, motifs de repérage aux trois coins,
+  motifs de synchronisation, déterminisme, et refus explicite d'un contenu trop long
+  plutôt qu'un code tronqué donc illisible.
+
+Le décodage complet d'un QR code n'est pas vérifié : il faudrait un décodeur. Le
+contrôle porte sur la structure, c'est-à-dire ce sur quoi un lecteur se cale d'abord.
+
 ## Vérifier le contrat avec la base
 
 ```bash
@@ -351,8 +374,11 @@ lui donne.
   base, mais `verify_certificate()` ne l'appelle pas, et `verifications.ip_hash` n'est
   jamais renseignée — la fonction n'a donc rien à mesurer. Les colonnes `country`,
   `user_agent` et `ip_hash` restent vides sur toute vérification servie par la base.
-  Les remplir suppose de lire les en-têtes de la requête côté Postgres
-  (`current_setting('request.headers')`) et d'appeler le garde-fou avant de répondre.
+  `supabase/migrations/PROPOSITION_tracabilite_verifications.sql` les renseigne et
+  branche le garde-fou ; elle n'est **pas appliquée**, pour trois raisons qui s'y
+  trouvent détaillées — dont celle-ci, qui prime : une entreprise sort souvent par une
+  seule adresse IP, et un service RH vérifiant vingt candidats se verrait répondre
+  « certificat introuvable », le pire message possible pour un registre officiel.
 - **Créer un titulaire passe par la console Supabase.** Voir
   [docs/creation-titulaires.md](docs/creation-titulaires.md).
 - **Les aperçus de partage sont génériques.** Un lien vers un certificat affiche la
@@ -366,7 +392,6 @@ lui donne.
 - **Authentification factice sans clés.** En mode démonstration, aucun mot de passe
   n'est vérifié et la volumétrie des vérifications est tirée au hasard. À ne jamais
   déployer dans cet état.
-- **Pas de tests unitaires.** `npm run verifier` couvre le contrat avec la base, pas la
-  logique d'interface. Le générateur de QR code et `effectiveStatus()`, en particulier,
-  mériteraient des tests : ce sont des fonctions pures, faciles à couvrir, et une
-  régression y passerait aujourd'hui inaperçue.
+- **Les composants React ne sont pas testés.** `npm test` couvre les fonctions pures —
+  routage, règles métier, encodeur QR — et `npm run verifier` le contrat avec la base.
+  Entre les deux, le rendu et les enchaînements d'écrans ne sont vérifiés qu'à la main.
