@@ -244,22 +244,103 @@ build ne connaissent votre base.
 
 À lancer après toute modification du schéma, et avant chaque mise en production.
 
-## Déploiement
+## Déploiement sur Vercel
 
-L'application est un fichier `index.html` unique servi pour toutes les adresses. **Le
-serveur doit renvoyer `index.html` sur les chemins inconnus**, faute de quoi
-`/verifier/{jeton}` — précisément le lien qui figure sur les certificats — répondra 404.
-Vite s'en charge en développement ; en production, cela se configure :
+`vercel.json` est déjà dans le dépôt : préréglage Vite, repli SPA, en-têtes de sécurité
+et cache long sur les fichiers versionnés. Restent trois choses à faire de votre côté.
+
+### 1. Les variables d'environnement
+
+Dans **Settings → Environment Variables**, pour **Production** *et* **Preview** :
+
+| Nom | Valeur |
+| --- | --- |
+| `VITE_SUPABASE_URL` | l'URL du projet Supabase |
+| `VITE_SUPABASE_ANON_KEY` | la clé **publiable** (`sb_publishable_…`) |
+
+Jamais la clé `service_role` : le paquet livré au navigateur est public par nature, tout
+ce qu'il contient est lisible par n'importe qui.
+
+Si ces variables manquent, **la construction échoue volontairement**. Sans elles
+l'application se replierait sur son mode démonstration, où la connexion accepte
+n'importe quel mot de passe : un registre officiel dont l'administration s'ouvrirait à
+tout venant. Le garde-fou est `scripts/verifier-build.mjs`.
+
+### 2. Les adresses de redirection Supabase
+
+C'est l'oubli classique, et il ne se voit qu'au moment où un titulaire demande un
+nouveau mot de passe : le lien reçu par courriel le renvoie vers `localhost`.
+
+Dans Supabase, **Authentication → URL Configuration** :
+
+- **Site URL** : `https://certify.vizdata.ci`
+- **Redirect URLs** : ajoutez le domaine définitif, l'adresse `*.vercel.app` du projet,
+  et `http://localhost:5173` pour le développement.
+
+### 3. Le domaine
+
+Faites pointer `certify.vizdata.ci` vers le projet Vercel. Ce n'est pas cosmétique :
+c'est le domaine inscrit en dur dans les QR codes déjà imprimés sur les certificats.
+
+### Mise en ligne
+
+```bash
+npx vercel login
+```
+
+```bash
+npx vercel --prod
+```
+
+La première commande ouvre votre navigateur ; je ne peux pas la lancer à votre place,
+et c'est aussi bien. Vous pouvez tout aussi bien connecter le dépôt à Vercel depuis
+l'interface, chaque `git push` déclenchant alors un déploiement.
+
+### Avant chaque mise en production
+
+```bash
+npm test && npm run verifier && npm run build
+```
+
+Les tests couvrent les fonctions pures, `verifier` contrôle que les requêtes
+correspondent toujours au schéma et que les politiques tiennent, et le build refuse de
+produire un paquet sans clés.
+
+### Autres hébergeurs
+
+Le point à ne pas manquer est partout le même : **renvoyer `index.html` sur les chemins
+inconnus**, faute de quoi `/verifier/{jeton}` — précisément le lien imprimé sur les
+certificats — répondra 404.
 
 | Hébergeur | Configuration |
 | --- | --- |
-| Netlify | un fichier `public/_redirects` contenant `/*  /index.html  200` |
-| Vercel | `{ "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }] }` |
+| Netlify | `public/_redirects` contenant `/*  /index.html  200` |
 | nginx | `try_files $uri $uri/ /index.html;` |
 | Apache | `FallbackResource /index.html` |
 
-Pensez aussi à faire pointer `certify.vizdata.ci` vers l'hébergement : c'est le domaine
-inscrit en dur dans les QR codes déjà imprimés.
+### En-têtes de sécurité
+
+`vercel.json` pose `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`,
+`Referrer-Policy` et `Permissions-Policy`. Le refus d'être affiché dans un cadre n'est
+pas décoratif ici : sans lui, un site tiers pourrait incruster une page de vérification
+authentique à côté d'un faux nom et faire passer le tout pour une preuve.
+
+Une politique de contenu (`Content-Security-Policy`) manque encore. Elle demande d'être
+juste du premier coup, sous peine de casser l'application en production, et n'a pas pu
+être éprouvée d'ici. Le squelette à éprouver sur un déploiement de préversion :
+
+```
+default-src 'self';
+connect-src 'self' https://VOTRE-PROJET.supabase.co;
+style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+font-src https://fonts.gstatic.com;
+img-src 'self' data:;
+frame-ancestors 'none';
+base-uri 'self'
+```
+
+`'unsafe-inline'` sur les styles est requis par les styles en ligne des composants ;
+les supprimer serait un chantier à part entière.
 
 ### Aperçus de partage
 
