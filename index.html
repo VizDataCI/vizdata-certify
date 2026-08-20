@@ -1,10 +1,32 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>vizdata-certify</title>
+
+    <title>VIZDATA CERTIFY — Registre officiel des certifications</title>
+    <meta
+      name="description"
+      content="Vérifiez l'authenticité d'un certificat délivré par VIZDATA à partir de sa référence ou du QR code qui y figure. Gratuit, sans compte."
+    />
+    <meta name="theme-color" content="#1578A6" />
+
+    <!--
+      Aperçus de partage. Ces balises sont statiques : un lien vers un certificat
+      précis affichera donc la carte générique du registre, pas le nom du
+      titulaire. Un aperçu par certificat suppose un rendu côté serveur, les
+      robots de LinkedIn et WhatsApp n'exécutant pas le JavaScript.
+    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="VIZDATA CERTIFY" />
+    <meta property="og:title" content="VIZDATA CERTIFY — Registre officiel des certifications" />
+    <meta
+      property="og:description"
+      content="Vérifiez l'authenticité d'un certificat délivré par VIZDATA. Le statut affiché fait foi."
+    />
+    <meta property="og:url" content="https://certify.vizdata.ci" />
+    <meta name="twitter:card" content="summary" />
   </head>
   <body>
     <div id="root"></div>

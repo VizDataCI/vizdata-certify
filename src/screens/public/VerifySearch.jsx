@@ -21,7 +21,10 @@ function VerifySearch(p) {
         setBusy(false);
         return;
       }
-      p.go({ view: "verifyResult", certificate, source: "reference" });
+      /* Le certificat déjà résolu voyage avec la route : la page n'a pas à
+         redemander ce qu'elle vient d'obtenir, ce qui compterait une seconde
+         consultation. L'adresse, elle, devient partageable. */
+      p.go({ view: "verifyResult", token: certificate.public_token, certificate, source: "reference" });
     } catch (e) {
       setErr(e.message);
       setBusy(false);

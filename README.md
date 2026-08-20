@@ -3,11 +3,11 @@
 Plateforme de gestion, de délivrance, d'archivage, de partage et de **vérification publique**
 des certificats délivrés par VIZDATA.
 
-> **État : migration vers Supabase en cours.** Tout ce qui se lit vient de la
-> base : authentification, vérification publique, espace certifié, espace
-> administrateur. Les **écritures de l'administration** ne sont pas encore
-> migrées et restent inopérantes une fois Supabase configuré.
-> Voir « Où en est la migration » plus bas.
+> **État : application branchée sur Supabase.** Authentification, vérification
+> publique, espace certifié et espace administrateur — lectures comme écritures —
+> passent par la base. Sans clés, l'application retombe sur un mode démonstration
+> autonome. Une limite subsiste : la création d'un titulaire passe par la console
+> Supabase, voir « La limite qui subsiste ».
 
 ## Démarrer
 
@@ -22,6 +22,7 @@ npm run dev
 | `npm run build` | build de production dans `dist/` |
 | `npm run preview` | sert le build de production |
 | `npm run lint` | Oxlint |
+| `npm run verifier` | vérifie le contrat avec la base Supabase (voir plus bas) |
 
 ### Comptes de démonstration
 
@@ -44,7 +45,7 @@ Deux règles structurent tout le reste :
    l'expiration à la date du jour : un certificat échu bascule seul en « Expiré »,
    sans intervention ni tâche planifiée.
 2. **On partage la page de vérification, jamais le fichier.** Le lien diffusé pointe
-   vers `/verify/{token}`. Un certificat révoqué ne peut donc jamais apparaître comme
+   vers `/verifier/{jeton}`. Un certificat révoqué ne peut donc jamais apparaître comme
    valide, même si son PDF continue de circuler.
 
 Les références suivent le format `VIZ-{ANNÉE}-{CODE}-{NUMÉRO}`, par exemple
@@ -76,7 +77,7 @@ Facultatives : `DATE_EXPIRATION`, `SCORE`.
 `EXPERT`, `VIZ`, ou tout code ajouté depuis les paramètres). Chaque ligne est validée
 avant écriture : adresse mal formée, code inconnu, date invalide, doublon dans le
 fichier, ou certificat déjà présent au registre. Seules les lignes saines sont
-importées ; les titulaires inconnus sont créés au passage.
+importées. En mode démonstration, un titulaire inconnu est créé au passage ; sur la base, il doit exister au préalable et la ligne est refusée sinon.
 
 ## Architecture
 
@@ -89,10 +90,14 @@ src/
   styles.css                feuille de style unique
   lib/
     qr.js                   encodeur QR — Galois Field, Reed-Solomon, versions 1 à 6, 8 masques
+    router.js               correspondance URL ↔ écran, historique du navigateur
+    supabase.js             client, lecture des clés d'environnement
+    auth.js                 connexion, session, réinitialisation du mot de passe
     dates.js                TODAY, formats français
     certificates.js         effectiveStatus, STATUS_META, nextReference, slugify
     series.js               agrégation mensuelle des histogrammes
   data/
+    api.js                  tous les échanges avec Supabase
     seed.js                 jeu de démonstration (types, titulaires, certificats)
     store.js                lecture / écriture / réinitialisation du localStorage
   ui/
@@ -105,27 +110,34 @@ src/
     ShareModal.jsx          partage LinkedIn / WhatsApp / e-mail / lien
   screens/
     public/                 PublicShell, Home, About, VerifySearch,
-                            VerifyResult, PublicProfile, Login
+                            VerifyResult, PublicProfile, Login, NotFound
     certified/              CertifiedSpace
     admin/                  AdminSpace, Dashboard, Certificates, CertificateDetail,
                             CertificateForm, RevokeModal, Certified, Verifications,
                             Import, Stats, Settings
 ```
 
-Le routage est fait maison : un `switch` sur `route.view` dans `App.jsx`, sans routeur ni
-URL réelle. L'état global (`db`) et les fonctions d'accès sont passés en cascade par les
-props sous le nom `shared` — c'est la première chose qu'un vrai backend viendra remplacer.
+Le routage est fait maison, sans dépendance : `lib/router.js` traduit l'URL en écran et
+inversement, `App.jsx` empile les changements dans l'historique du navigateur. L'état
+global et les fonctions d'accès descendent en cascade par les props sous le nom `shared`.
 
-L'adresse `certify.vizdata.ci` affichée dans l'interface et dans les QR codes est la
-cible de production, elle ne correspond à rien en local.
+L'adresse `certify.vizdata.ci` inscrite dans les QR codes est la cible de production ;
+en local, seul le chemin compte.
 
 ### Modèle de données
 
-`users` · `types` · `certificates` · `verifications` · `shares` · `audit_logs`.
-L'ensemble forme un objet unique conservé sous la clé `vizdata_certify_v1` du
-`localStorage`, réécrit 400 ms après chaque modification. Au premier chargement — ou
-si le stockage est indisponible — le jeu de démonstration de `buildSeed()` prend le
-relais. **Paramètres → Registre → Réinitialiser le registre** revient à cet état initial.
+Le modèle de référence est celui de la base Supabase, relevé dans
+[docs/schema.md](docs/schema.md) : neuf tables, quatre types énumérés, RLS partout.
+
+Le registre local n'est plus qu'un mode de repli, utilisé quand les clés sont absentes.
+Il regroupe `users` · `types` · `certificates` · `verifications` · `shares` ·
+`audit_logs` en un objet unique, conservé sous la clé `vizdata_certify_v1` du
+`localStorage` et réécrit 400 ms après chaque modification. Au premier chargement — ou
+si le stockage est indisponible — le jeu de `buildSeed()` prend le relais.
+**Paramètres → Registre → Réinitialiser le registre** revient à cet état initial.
+
+Les deux sources rendent la même forme d'objet, si bien que les écrans ignorent laquelle
+les alimente.
 
 Le PDF n'est pas généré : « Enregistrer en PDF » ouvre la boîte d'impression du
 navigateur sur une zone mise en forme par `@media print`.
@@ -168,6 +180,82 @@ Il n'y a volontairement pas d'inscription libre : un registre de certifications
 n'a pas à laisser n'importe qui se créer un compte. Les titulaires sont invités
 depuis la console Supabase.
 
+## Adresses
+
+| Chemin | Écran |
+| --- | --- |
+| `/` | accueil, recherche par référence |
+| `/verifier` | saisie d'une référence |
+| `/verifier/{jeton}` | verdict de vérification — **c'est l'adresse imprimée dans le QR code** |
+| `/u/{identifiant}` | profil public d'un certifié |
+| `/a-propos` | présentation du registre |
+| `/connexion` | connexion |
+| `/espace` | espace certifié |
+| `/administration` | espace administrateur |
+
+Tout autre chemin affiche une page « introuvable » sobre, qui ne dit rien de ce qui
+existe ou non à cette adresse.
+
+Une vérification faite par saisie de référence redirige vers `/verifier/{jeton}` : le
+lien obtenu est donc partageable tel quel. Le certificat déjà résolu voyage avec la
+route, de sorte que la page ne redemande pas ce qu'elle vient d'obtenir — sans quoi une
+seconde consultation serait comptée.
+
+## Vérifier le contrat avec la base
+
+```bash
+npm run verifier
+```
+
+Le script exécute le **vrai** code de `src/data/api.js` contre la **vraie** base, en
+position de visiteur anonyme, et contrôle douze points : les fonctions publiques
+répondent, les tables restent fermées, les jointures correspondent au schéma, les
+écritures sont refusées par les politiques, et les deux fonctions utilitaires durcies
+ne sont plus exécutables sans session.
+
+Il ne remplace pas des tests unitaires. Il répond à la question qui casse le plus
+souvent en silence : *les requêtes correspondent-elles encore au schéma, et les
+politiques tiennent-elles ?* Une colonne renommée, une relation supprimée, une politique
+relâchée par mégarde — cela se voit ici et nulle part ailleurs, puisque ni le lint ni le
+build ne connaissent votre base.
+
+À lancer après toute modification du schéma, et avant chaque mise en production.
+
+## Déploiement
+
+L'application est un fichier `index.html` unique servi pour toutes les adresses. **Le
+serveur doit renvoyer `index.html` sur les chemins inconnus**, faute de quoi
+`/verifier/{jeton}` — précisément le lien qui figure sur les certificats — répondra 404.
+Vite s'en charge en développement ; en production, cela se configure :
+
+| Hébergeur | Configuration |
+| --- | --- |
+| Netlify | un fichier `public/_redirects` contenant `/*  /index.html  200` |
+| Vercel | `{ "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }] }` |
+| nginx | `try_files $uri $uri/ /index.html;` |
+| Apache | `FallbackResource /index.html` |
+
+Pensez aussi à faire pointer `certify.vizdata.ci` vers l'hébergement : c'est le domaine
+inscrit en dur dans les QR codes déjà imprimés.
+
+### Aperçus de partage
+
+`index.html` porte des balises Open Graph, mais **statiques** : un lien vers un certificat
+précis affichera la carte générique du registre, pas le nom du titulaire ni son statut.
+Les robots de LinkedIn et WhatsApp n'exécutent pas le JavaScript, donc ils ne verront
+jamais le contenu rendu par React.
+
+Un aperçu par certificat suppose un rendu côté serveur. Deux voies, par ordre de coût :
+
+1. une fonction serverless qui intercepte `/verifier/{jeton}`, appelle
+   `verify_certificate` et renvoie une page minimale portant les bonnes balises aux
+   robots — le reste du trafic continuant vers l'application ;
+2. une migration vers un framework à rendu serveur, qui règle le problème par
+   construction mais change la nature du projet.
+
+Il manque également une image de partage : `og:image` n'est pas renseigné, faute de
+visuel VIZDATA disponible.
+
 ## Où en est la migration
 
 Le projet Supabase `cwyxvmzodipbdawojpeh` porte le schéma complet : 9 tables, RLS active
@@ -208,8 +296,9 @@ doit pas permettre. En mode Supabase :
 - l'import CSV marque les lignes concernées « Titulaire inconnu du registre » et ne
   les crée pas.
 
-Lever cette limite demande une Edge Function détenant la clé secrète, qui créerait le
-compte d'authentification et le profil en une seule opération.
+La marche à suivre — invitation depuis la console, ou Edge Function pour l'import en
+masse — est détaillée dans [docs/creation-titulaires.md](docs/creation-titulaires.md),
+avec le code de la fonction et ses pièges.
 
 ### Durcissement
 
@@ -258,16 +347,26 @@ lui donne.
 
 ## Limites connues
 
-- **Authentification factice tant que Supabase n'est pas configuré.** Voir plus haut :
-  sans clés, aucun mot de passe n'est vérifié. À ne pas exposer publiquement ainsi.
-- **Le rôle vient du registre local, pas du jeton.** Un administrateur est reconnu
-  parce que le registre du navigateur le dit. Cela ne protège rien tant que les données
-  ne sont pas passées côté serveur avec des règles d'accès.
-- **Les titulaires créés depuis l'administration n'ont pas de compte Supabase.**
-  Ils figurent au registre et leurs certificats sont vérifiables, mais ils ne peuvent
-  pas se connecter tant qu'ils n'ont pas été invités depuis la console.
-- **Aucun backend.** Les données ne quittent pas le navigateur : rien n'est partagé
-  entre deux postes, et un lien de vérification n'est pas résoluble par un tiers.
-- **Volumétrie des vérifications et partages simulée** au premier lancement (`Math.random()`).
-- `src/assets/` contient encore `react.svg` et `vite.svg`, hérités du gabarit Vite,
-  ainsi que `hero.png`, actuellement référencé nulle part.
+- **Le garde-fou anti-énumération est inerte.** `verification_rate_ok()` existe dans la
+  base, mais `verify_certificate()` ne l'appelle pas, et `verifications.ip_hash` n'est
+  jamais renseignée — la fonction n'a donc rien à mesurer. Les colonnes `country`,
+  `user_agent` et `ip_hash` restent vides sur toute vérification servie par la base.
+  Les remplir suppose de lire les en-têtes de la requête côté Postgres
+  (`current_setting('request.headers')`) et d'appeler le garde-fou avant de répondre.
+- **Créer un titulaire passe par la console Supabase.** Voir
+  [docs/creation-titulaires.md](docs/creation-titulaires.md).
+- **Les aperçus de partage sont génériques.** Un lien vers un certificat affiche la
+  carte du registre, pas le nom du titulaire : les robots sociaux n'exécutent pas le
+  JavaScript. Voir « Aperçus de partage ».
+- **Le PDF n'est pas un fichier.** « Enregistrer en PDF » ouvre la boîte d'impression du
+  navigateur sur une zone mise en forme par `@media print`. La colonne `pdf_url` de la
+  base n'est pas alimentée.
+- **Les onglets internes ne sont pas dans l'URL.** `/administration` et `/espace`
+  ouvrent toujours leur premier onglet ; un lien vers un sous-écran précis n'existe pas.
+- **Authentification factice sans clés.** En mode démonstration, aucun mot de passe
+  n'est vérifié et la volumétrie des vérifications est tirée au hasard. À ne jamais
+  déployer dans cet état.
+- **Pas de tests unitaires.** `npm run verifier` couvre le contrat avec la base, pas la
+  logique d'interface. Le générateur de QR code et `effectiveStatus()`, en particulier,
+  mériteraient des tests : ce sont des fonctions pures, faciles à couvrir, et une
+  régression y passerait aujourd'hui inaperçue.

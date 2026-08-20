@@ -13,6 +13,8 @@ import { STORE_KEY, loadDb } from "./data/store.js";
 import * as api from "./data/api.js";
 import { currentUser, isAuthConfigured, onAuthChange, signIn, signOut } from "./lib/auth.js";
 import { effectiveStatus } from "./lib/certificates.js";
+import { currentRoute, onNavigate, pushRoute } from "./lib/router.js";
+import { NotFound } from "./screens/public/NotFound.jsx";
 import { AdminSpace } from "./screens/admin/AdminSpace.jsx";
 import { CertifiedSpace } from "./screens/certified/CertifiedSpace.jsx";
 import { About } from "./screens/public/About.jsx";
@@ -24,7 +26,7 @@ import { VerifySearch } from "./screens/public/VerifySearch.jsx";
 
 export default function App() {
   const [db, setDb] = useState(loadDb);
-  const [route, setRoute] = useState({ view: "home" });
+  const [route, setRoute] = useState(currentRoute);
   const [session, setSession] = useState(null);
   const [toast, setToast] = useState("");
   const saveTimer = useRef(null);
@@ -116,7 +118,15 @@ export default function App() {
     log("CERTIFICATE_SHARED", certId, platform);
   };
 
-  const go = (r) => { setRoute(r); window.scrollTo(0, 0); };
+  /* Toute navigation passe par l'historique du navigateur : l'adresse suit
+     l'écran, et les boutons précédent / suivant fonctionnent. */
+  const go = (r) => {
+    pushRoute(r);
+    setRoute(r);
+    window.scrollTo(0, 0);
+  };
+
+  useEffect(() => onNavigate(setRoute), []);
 
   /* --- registre public ---------------------------------------------------
      Supabase quand il est configuré, registre local sinon. Les deux chemins
@@ -230,6 +240,7 @@ export default function App() {
     case "myprofile":
     case "mysettings": screen = <CertifiedSpace {...shared} />; break;
     case "admin": screen = <AdminSpace {...shared} />; break;
+    case "notFound": screen = <NotFound {...shared} />; break;
     default: screen = <Home {...shared} />;
   }
 

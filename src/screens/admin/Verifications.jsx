@@ -14,7 +14,7 @@ function AdminVerifications(p) {
         <span className="vz-chip">{p.db.verifications.length} au total</span>
       </div>
       <div className="vz-alert info" style={{ marginBottom: 14 }}>
-        Aucune donnée personnelle du vérificateur n'est conservée. Seuls la source, le pays et l'horodatage sont enregistrés.
+        Le vérificateur n'est jamais identifié : ni nom, ni adresse e-mail, ni compte. Sont enregistrés la source, le pays, l'horodatage, le navigateur utilisé et une empreinte de l'adresse IP — cette dernière sert uniquement à limiter les tentatives d'énumération de jetons. Une empreinte d'adresse IP restant une donnée personnelle au sens du RGPD, elle doit figurer dans le registre des traitements et faire l'objet d'une durée de conservation définie.
       </div>
       <div className="vz-card">
         <div className="vz-tablewrap">
