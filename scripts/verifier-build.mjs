@@ -23,10 +23,24 @@
 import { readFileSync } from "node:fs";
 import { analyserCle, eprouverCle } from "./cle-supabase.mjs";
 
+/** Décrit l'état d'une variable, pour un diagnostic sans ambiguïté. */
+function etat(nom) {
+  const valeur = process.env[nom];
+  if (valeur === undefined) return `${nom} : absente`;
+  if (valeur.trim() === "") return `${nom} : présente mais VIDE`;
+  return `${nom} : ${valeur.trim().length} caractères`;
+}
+
 /** Les variables viennent de l'hébergeur, ou d'un fichier .env en local. */
 function lireEnvironnement() {
-  if (process.env.VITE_SUPABASE_URL && process.env.VITE_SUPABASE_ANON_KEY) {
-    return { url: process.env.VITE_SUPABASE_URL.trim(), cle: process.env.VITE_SUPABASE_ANON_KEY.trim() };
+  const url = process.env.VITE_SUPABASE_URL?.trim();
+  const cle = process.env.VITE_SUPABASE_ANON_KEY?.trim();
+  if (url && cle) return { url, cle };
+
+  /* Une variable déclarée chez l'hébergeur mais vide est le piège classique :
+     l'interface confirme l'enregistrement, et rien n'est stocké. On le dit. */
+  if (process.env.VERCEL || process.env.CI) {
+    return { manquantes: [etat("VITE_SUPABASE_URL"), etat("VITE_SUPABASE_ANON_KEY")] };
   }
 
   for (const fichier of [".env.local", ".env"]) {
@@ -55,6 +69,17 @@ async function controler() {
   }
 
   const environnement = lireEnvironnement();
+
+  if (environnement?.manquantes) {
+    return refuser("Construction interrompue : clés Supabase inutilisables.", [
+      ...environnement.manquantes,
+      "",
+      "Une variable « présente mais VIDE » est le piège classique : l'interface de",
+      "l'hébergeur confirme l'enregistrement alors que rien n'a été stocké.",
+      "",
+      "Chez Vercel : Settings > Environment Variables, pour Production et Preview.",
+    ]);
+  }
 
   if (!environnement) {
     return refuser("Construction interrompue : VITE_SUPABASE_URL ou VITE_SUPABASE_ANON_KEY est absente.", [
