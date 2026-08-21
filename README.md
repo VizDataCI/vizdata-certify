@@ -22,7 +22,7 @@ npm run dev
 | `npm run build` | build de production dans `dist/` |
 | `npm run preview` | sert le build de production |
 | `npm run lint` | Oxlint |
-| `npm test` | tests unitaires (routage, règles métier, encodeur QR) |
+| `npm test` | tests unitaires (routage, règles métier, encodeur QR, clés) |
 | `npm run verifier` | vérifie le contrat avec la base Supabase (voir plus bas) |
 
 ### Comptes de démonstration
@@ -208,7 +208,7 @@ seconde consultation serait comptée.
 npm test
 ```
 
-26 tests, exécutés par le lanceur intégré de Node — **aucune dépendance de test dans le
+34 tests, exécutés par le lanceur intégré de Node — **aucune dépendance de test dans le
 projet**. Ils couvrent trois choses, choisies parce qu'elles sont pures et que leur
 régression serait silencieuse :
 
@@ -261,10 +261,23 @@ Dans **Settings → Environment Variables**, pour **Production** *et* **Preview*
 Jamais la clé `service_role` : le paquet livré au navigateur est public par nature, tout
 ce qu'il contient est lisible par n'importe qui.
 
-Si ces variables manquent, **la construction échoue volontairement**. Sans elles
-l'application se replierait sur son mode démonstration, où la connexion accepte
-n'importe quel mot de passe : un registre officiel dont l'administration s'ouvrirait à
-tout venant. Le garde-fou est `scripts/verifier-build.mjs`.
+**La construction échoue volontairement** si la clé manque, si son format est mauvais,
+ou si le projet Supabase la refuse. Le garde-fou est `scripts/verifier-build.mjs` et il
+contrôle trois choses :
+
+1. **Présence** — sans clés, l'application se replierait sur son mode démonstration, où
+   la connexion accepte n'importe quel mot de passe.
+2. **Format** — une clé `sb_secret_…`, ou un jeton portant le rôle `service_role`, est
+   refusée net : embarquée dans un paquet navigateur, elle contournerait toutes les
+   politiques RLS.
+3. **Validité** — la clé est éprouvée auprès du projet avant de construire quoi que ce
+   soit. Ce troisième contrôle a été ajouté après une mise en production où la clé,
+   présente mais tronquée au collage, avait produit un déploiement d'apparence saine sur
+   lequel chaque vérification répondait « Invalid API key ». Présence ne vaut pas
+   validité.
+
+Si le réseau est indisponible, la construction se poursuit avec un avertissement : un
+hébergeur injoignable ne doit pas bloquer une mise en production.
 
 ### 2. Les adresses de redirection Supabase
 

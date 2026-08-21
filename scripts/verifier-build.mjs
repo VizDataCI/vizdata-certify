@@ -5,59 +5,105 @@
  * catastrophique en ligne — un registre officiel dont l'espace d'administration
  * s'ouvre sans mot de passe.
  *
- * Or c'est exactement ce qui arrive si l'on oublie de renseigner les variables
- * d'environnement chez l'hébergeur : le build réussit, se déploie, et personne
- * ne s'aperçoit de rien avant qu'il ne soit trop tard.
+ * Trois contrôles, dans cet ordre :
+ *   1. les clés sont présentes ;
+ *   2. la clé a le bon format, et n'est surtout pas une clé secrète — un
+ *      paquet navigateur est public, une clé service_role qui s'y trouverait
+ *      contournerait toutes les politiques RLS ;
+ *   3. le projet Supabase l'accepte réellement.
  *
- * Ce script fait donc échouer la construction plutôt que de produire ce paquet.
+ * Le troisième contrôle a été ajouté après une mise en production où la clé,
+ * présente mais tronquée au collage, avait produit un déploiement d'apparence
+ * saine sur lequel chaque vérification répondait « Invalid API key ».
+ *
  * Pour construire délibérément une démonstration :
- *
  *   VITE_MODE_DEMO=1 npm run build
  */
 
 import { readFileSync } from "node:fs";
+import { analyserCle, eprouverCle } from "./cle-supabase.mjs";
 
-/** Les variables viennent de l'hébergeur, ou du fichier .env.local en local. */
-function clesPresentes() {
-  if (process.env.VITE_SUPABASE_URL && process.env.VITE_SUPABASE_ANON_KEY) return true;
+/** Les variables viennent de l'hébergeur, ou d'un fichier .env en local. */
+function lireEnvironnement() {
+  if (process.env.VITE_SUPABASE_URL && process.env.VITE_SUPABASE_ANON_KEY) {
+    return { url: process.env.VITE_SUPABASE_URL.trim(), cle: process.env.VITE_SUPABASE_ANON_KEY.trim() };
+  }
 
   for (const fichier of [".env.local", ".env"]) {
     try {
       const contenu = readFileSync(fichier, "utf8");
       const url = contenu.match(/^VITE_SUPABASE_URL=(.+)$/m)?.[1]?.trim();
       const cle = contenu.match(/^VITE_SUPABASE_ANON_KEY=(.+)$/m)?.[1]?.trim();
-      if (url && cle) return true;
+      if (url && cle) return { url, cle };
     } catch {
       /* fichier absent : on essaie le suivant */
     }
   }
-  return false;
+  return null;
 }
 
-if (process.env.VITE_MODE_DEMO === "1") {
-  console.log("Construction en mode démonstration — authentification factice, à ne pas mettre en ligne.");
-  process.exit(0);
+function refuser(titre, lignes) {
+  console.error(["", "  " + titre, "", ...lignes.map((l) => "  " + l), ""].join("\n"));
+  return 1;
 }
 
-if (!clesPresentes()) {
-  console.error(
-    [
+/** @returns {Promise<number>} code de sortie */
+async function controler() {
+  if (process.env.VITE_MODE_DEMO === "1") {
+    console.log("Construction en mode démonstration — authentification factice, à ne pas mettre en ligne.");
+    return 0;
+  }
+
+  const environnement = lireEnvironnement();
+
+  if (!environnement) {
+    return refuser("Construction interrompue : VITE_SUPABASE_URL ou VITE_SUPABASE_ANON_KEY est absente.", [
+      "Sans elles, l'application se replie sur son mode démonstration, où la",
+      "connexion accepte n'importe quel mot de passe. Mise en ligne, elle ouvrirait",
+      "l'espace d'administration à tout venant.",
       "",
-      "  Construction interrompue : VITE_SUPABASE_URL ou VITE_SUPABASE_ANON_KEY est absente.",
+      "En local    : copiez .env.example en .env.local et renseignez les deux valeurs.",
+      "Chez Vercel : Settings > Environment Variables, pour Production et Preview.",
       "",
-      "  Sans elles, l'application se replie sur son mode démonstration, où la",
-      "  connexion accepte n'importe quel mot de passe. Mise en ligne, elle ouvrirait",
-      "  l'espace d'administration à tout venant.",
+      "Pour construire volontairement une démonstration :",
+      "  VITE_MODE_DEMO=1 npm run build",
+    ]);
+  }
+
+  const { url, cle } = environnement;
+  const analyse = analyserCle(cle);
+
+  if (analyse.danger) {
+    return refuser(`Construction interrompue : clé ${analyse.format}.`, [
+      analyse.danger,
       "",
-      "  En local   : copiez .env.example en .env.local et renseignez les deux valeurs.",
-      "  Chez Vercel : Settings > Environment Variables, pour Production et Preview.",
+      "La clé attendue est la clé PUBLIABLE du projet Supabase,",
+      "dans Settings > API Keys > Publishable key.",
+    ]);
+  }
+
+  console.log(`Clé ${analyse.format} (rôle ${analyse.role}) — vérification auprès du projet…`);
+  const epreuve = await eprouverCle(url, cle);
+
+  if (epreuve.joignable && !epreuve.acceptee) {
+    return refuser(`Construction interrompue : le projet Supabase refuse la clé (${epreuve.detail}).`, [
+      "La clé a le bon format mais n'est pas reconnue. Le plus souvent, le collage",
+      "a été tronqué — c'est notamment ce qui arrive dans une invite masquée.",
       "",
-      "  Pour construire volontairement une démonstration :",
-      "    VITE_MODE_DEMO=1 npm run build",
-      "",
-    ].join("\n"),
-  );
-  process.exit(1);
+      "Comparez la valeur avec Settings > API Keys dans Supabase,",
+      "et vérifiez qu'elle correspond bien au projet " + url,
+    ]);
+  }
+
+  if (!epreuve.joignable) {
+    console.warn(`Projet Supabase injoignable (${epreuve.detail}) — la clé n'a pas pu être éprouvée, construction poursuivie.`);
+  } else {
+    console.log(`Clé acceptée par le projet (${epreuve.detail}) — construction en mode réel.`);
+  }
+  return 0;
 }
 
-console.log("Clés Supabase présentes : construction en mode réel.");
+/* On renseigne le code de sortie sans forcer process.exit() : Node se retire
+   quand ses gestionnaires se sont refermés. Un exit() brutal pendant la
+   fermeture de la connexion HTTP déclenche une assertion libuv sous Windows. */
+process.exitCode = await controler();
