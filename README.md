@@ -3,11 +3,13 @@
 Plateforme de gestion, de délivrance, d'archivage, de partage et de **vérification publique**
 des certificats délivrés par VIZDATA.
 
-> **État : application branchée sur Supabase.** Authentification, vérification
-> publique, espace certifié et espace administrateur — lectures comme écritures —
-> passent par la base. Sans clés, l'application retombe sur un mode démonstration
-> autonome. Une limite subsiste : la création d'un titulaire passe par la console
-> Supabase, voir « La limite qui subsiste ».
+> **État : en ligne.** L'application est déployée sur Vercel et branchée sur
+> Supabase — authentification, vérification publique, espace certifié et espace
+> administrateur, lectures comme écritures. Une vérification de certificat a été
+> effectuée en production, sans compte. Voir « En production ».
+>
+> Sans clés, l'application retombe sur un mode démonstration autonome. Une limite
+> subsiste : la création d'un titulaire passe par la console Supabase.
 
 ## Démarrer
 
@@ -243,6 +245,53 @@ relâchée par mégarde — cela se voit ici et nulle part ailleurs, puisque ni 
 build ne connaissent votre base.
 
 À lancer après toute modification du schéma, et avant chaque mise en production.
+
+## En production
+
+L'application est déployée sur Vercel, projet `vizdata-certify-registre` :
+
+**https://vizdata-certify-registre-k4j8lo6f2-vizdatacis-projects.vercel.app**
+
+Vérifié en conditions réelles le 21 août 2026, sans compte et depuis un navigateur :
+
+- les huit adresses répondent 200, dont `/verifier/{jeton}` — le lien imprimé sur les
+  certificats — grâce au repli SPA ;
+- une vérification affiche le verdict complet : titulaire, dates, score, statut,
+  compétences validées ;
+- les quatre en-têtes de sécurité sont appliqués ;
+- `users` et `certificates` renvoient zéro ligne à un visiteur anonyme **alors que la
+  table contient un certificat** : le verrouillage RLS est mesuré, plus seulement déduit ;
+- CORS autorise le domaine déployé.
+
+Un certificat de démonstration reste au registre pour ces contrôles. Pour le retirer :
+
+```sql
+delete from public.certificates where reference = 'VIZ-2026-EXCEL-000001';
+```
+
+### Deux points à traiter
+
+**La protection de déploiement est désactivée** sur ce projet, ce qui est nécessaire : un
+registre dont la vocation est d'être vérifiable sans compte ne peut pas rester derrière
+une authentification Vercel. Ce n'est pas la base qui est exposée — seule la clé publiable
+circule, et les politiques RLS protègent les données.
+
+**Un ancien projet `vizdata-certify` subsiste** sur le même compte. Il sert une version
+cassée, restée bloquée après qu'un déploiement a été supprimé en cours de construction.
+À supprimer une fois le nom éventuellement récupéré pour le projet courant.
+
+### Ce qui n'est pas branché
+
+Le dépôt GitHub n'est pas relié à Vercel : l'application GitHub de Vercel n'a pas accès au
+dépôt, qui est privé. Chaque mise en ligne se fait donc à la main :
+
+```bash
+npm test && npm run verifier && npx vercel --prod
+```
+
+Pour obtenir le déploiement à chaque `git push`, installez
+[l'application Vercel](https://github.com/apps/vercel) sur le compte VizDataCI et
+donnez-lui accès au dépôt.
 
 ## Déploiement sur Vercel
 
