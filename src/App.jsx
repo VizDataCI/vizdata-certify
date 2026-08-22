@@ -13,7 +13,7 @@ import { STORE_KEY, loadDb } from "./data/store.js";
 import * as api from "./data/api.js";
 import { currentUser, isAuthConfigured, onAuthChange, signIn, signOut } from "./lib/auth.js";
 import { effectiveStatus } from "./lib/certificates.js";
-import { currentRoute, onNavigate, pushRoute } from "./lib/router.js";
+import { currentRoute, onNavigate, pushRoute, toPath } from "./lib/router.js";
 import { NotFound } from "./screens/public/NotFound.jsx";
 import { AdminSpace } from "./screens/admin/AdminSpace.jsx";
 import { CertifiedSpace } from "./screens/certified/CertifiedSpace.jsx";
@@ -96,7 +96,11 @@ export default function App() {
   const typeOf = (c) => db.types.find((t) => t.id === c.certificate_type_id);
   const certByToken = (t) => db.certificates.find((c) => c.public_token === t);
   const certByRef = (r) => db.certificates.find((c) => c.reference.toUpperCase().trim() === r.toUpperCase().trim());
-  const verifyUrl = (c) => `${BASE_URL}/verify/${c.public_token}`;
+  /* L'adresse est construite par le routeur, jamais à la main : c'est elle qui
+     part dans les QR codes imprimés, et un chemin périmé y resterait gravé.
+     Le lien a un temps pointé vers /verify/ alors que le routage attendait
+     /verifier/ — un certificat imprimé entre-temps aurait été invérifiable. */
+  const verifyUrl = (c) => BASE_URL + toPath({ view: "verifyResult", token: c.public_token });
 
   const log = (action, entity_id, metadata) =>
     setDb((d) => ({
