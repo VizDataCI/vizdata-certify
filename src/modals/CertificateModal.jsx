@@ -89,7 +89,10 @@ function CertificateModal({ cert, onClose, telechargeable = true, ...p }) {
           </div>
           <div style={{ textAlign: "right" }}>
             <QRCode value={p.verifyUrl(cert)} size={124} />
-            <div className="vz-mono" style={{ fontSize: 8.5, color: "var(--gris)", marginTop: 4 }}>certify.vizdata.ci/verify</div>
+            {/* Légende du QR code : elle figure sur le document imprimé, donc
+                elle doit désigner un chemin réel. Elle indiquait /verify,
+                disparu lors du passage aux adresses françaises. */}
+            <div className="vz-mono" style={{ fontSize: 8.5, color: "var(--gris)", marginTop: 4 }}>certify.vizdata.ci/verifier</div>
           </div>
         </div>
       </div>
