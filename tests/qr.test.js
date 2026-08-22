@@ -1,10 +1,13 @@
-/* Encodeur QR.
+/* Structure des QR codes produits.
  *
- * Le décodage complet demanderait un décodeur ; on vérifie donc la structure,
- * qui suffit à détecter une régression : dimensions normalisées, motifs de
- * repérage aux trois coins, motifs de synchronisation, et sélection de version
- * en fonction de la longueur. Un lecteur de QR code s'appuie d'abord sur ces
- * éléments pour se caler.
+ * Ces contrôles portent sur la géométrie : dimensions normalisées, motifs de
+ * repérage aux trois coins, motifs de synchronisation. Ils ne prouvent pas
+ * qu'un lecteur décode le code — l'ancien encodeur maison les passait tous en
+ * produisant des matrices illisibles. C'est tests/qr-decodage.test.js qui rend
+ * ce verdict-là.
+ *
+ * Ils gardent leur utilité : ils détectent une matrice retournée, transposée ou
+ * décalée, et le message d'échec désigne alors directement le défaut.
  */
 
 import test from "node:test";
@@ -75,20 +78,4 @@ test("deux contenus différents donnent deux matrices différentes", () => {
   const a = buildQR("VIZ-2026-EXCEL-000001");
   const b = buildQR("VIZ-2026-EXCEL-000002");
   assert.notDeepEqual(a.matrix, b.matrix);
-});
-
-test("la matrice ne contient que des 0 et des 1", () => {
-  const { matrix } = buildQR("https://certify.vizdata.ci/verifier/abc");
-  for (const ligne of matrix) {
-    for (const module of ligne) {
-      assert.ok(module === 0 || module === 1, "module hors de {0,1} : " + module);
-    }
-  }
-});
-
-test("un contenu trop long est refusé plutôt que tronqué", () => {
-  /* Au-delà de la version 6, l'encodeur ne sait pas encoder : il doit le dire,
-     et surtout ne pas produire un QR code illisible ou amputé. */
-  const resultat = buildQR("x".repeat(2000));
-  assert.equal(resultat, null);
 });

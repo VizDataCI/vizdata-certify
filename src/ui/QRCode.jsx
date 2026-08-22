@@ -3,6 +3,9 @@
 import { useMemo } from "react";
 import { buildQR } from "../lib/qr.js";
 
+/* La zone de silence vaut 4 modules : c'est ce qu'impose la norme, et un lecteur
+   peine à isoler le code du fond en deçà. Elle était réglée à 2 partout, ce qui
+   s'ajoutait à un rendu trop petit pour être scannable. */
 function QRCode({ value, size = 160, quiet = 4, color = "#0C1526" }) {
   const qr = useMemo(() => buildQR(value || " "), [value]);
   if (!qr) return null;

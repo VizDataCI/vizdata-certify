@@ -49,7 +49,7 @@ function CertificateDetail({ cert, onClose, setModal, ...p }) {
 
         <div style={{ flex: "0 0 190px" }}>
           <div className="vz-eyebrow" style={{ marginBottom: 9 }}>QR code</div>
-          <QRCode value={p.verifyUrl(cert)} size={168} quiet={2} />
+          <QRCode value={p.verifyUrl(cert)} size={168} />
           <div className="vz-mono" style={{ fontSize: 10, color: "var(--gris)", marginTop: 9, wordBreak: "break-all" }}>{p.verifyUrl(cert)}</div>
           <button className="vz-btn vz-btn-sm" style={{ marginTop: 10 }} onClick={() => { try { navigator.clipboard.writeText(p.verifyUrl(cert)); p.notify("Lien copié."); } catch (e) {} }}>Copier le lien</button>
         </div>

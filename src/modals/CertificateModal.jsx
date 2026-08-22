@@ -74,7 +74,7 @@ function CertificateModal({ cert, onClose, ...p }) {
             <div className="vz-small vz-muted">VIZDATA</div>
           </div>
           <div style={{ textAlign: "right" }}>
-            <QRCode value={p.verifyUrl(cert)} size={74} quiet={2} />
+            <QRCode value={p.verifyUrl(cert)} size={124} />
             <div className="vz-mono" style={{ fontSize: 8.5, color: "var(--gris)", marginTop: 4 }}>certify.vizdata.ci/verify</div>
           </div>
         </div>

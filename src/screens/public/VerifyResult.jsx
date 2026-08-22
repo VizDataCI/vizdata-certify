@@ -159,7 +159,7 @@ function VerifyResult(p) {
             Ce certificat a été délivré par VIZDATA. Son authenticité peut être vérifiée à tout moment à partir de cette page.
             {url && (
               <div style={{ marginTop: 10, display: "flex", gap: 14, alignItems: "center" }}>
-                <QRCode value={url} size={62} quiet={2} />
+                <QRCode value={url} size={148} />
                 <span className="vz-mono" style={{ fontSize: 11, wordBreak: "break-all" }}>{url}</span>
               </div>
             )}

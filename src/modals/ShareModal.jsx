@@ -40,7 +40,7 @@ function ShareModal({ cert, onClose, ...p }) {
         <button className="vz-btn" onClick={() => { countShare("copy_link"); copy(url, "Lien copié."); }}>Copier le lien</button>
       </div>
       <div style={{ marginTop: 20, display: "flex", gap: 16, alignItems: "center", borderTop: "1px solid var(--trait)", paddingTop: 16 }}>
-        <QRCode value={url} size={92} quiet={2} />
+        <QRCode value={url} size={160} />
         <div>
           <div className="vz-eyebrow">Lien de vérification</div>
           <div className="vz-mono vz-small" style={{ marginTop: 6, wordBreak: "break-all" }}>{url}</div>
