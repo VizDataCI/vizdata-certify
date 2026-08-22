@@ -11,7 +11,6 @@ import { useState, useEffect } from "react";
 import { STATUS_META } from "../../lib/certificates.js";
 import { fmtLong } from "../../lib/dates.js";
 import { CertificateModal } from "../../modals/CertificateModal.jsx";
-import { ShareModal } from "../../modals/ShareModal.jsx";
 import { QRCode } from "../../ui/QRCode.jsx";
 import { Badge } from "../../ui/primitives.jsx";
 import { PublicShell } from "./PublicShell.jsx";
@@ -51,7 +50,6 @@ function VerifyResult(p) {
   const [state, setState] = useState(p.route.certificate ? "ready" : "loading");
   const [err, setErr] = useState("");
   const [showCert, setShowCert] = useState(false);
-  const [shareOpen, setShareOpen] = useState(false);
 
   useEffect(() => {
     if (p.route.certificate) return;
@@ -147,11 +145,13 @@ function VerifyResult(p) {
             </div>
           )}
 
-          {(full || url) && (
+          {/* Consultation seule. Ni téléchargement ni partage : celui qui vérifie
+              constate l'authenticité, il n'a pas à repartir avec l'attestation
+              d'autrui. Ces deux actions appartiennent au titulaire, depuis son
+              espace, et à VIZDATA depuis l'administration. */}
+          {full && (
             <div className="vz-slip-actions">
-              {full && <button className="vz-btn vz-btn-primary" onClick={() => setShowCert(true)}>Consulter le certificat</button>}
-              {full && <button className="vz-btn" onClick={() => setShowCert(true)}>Télécharger le PDF</button>}
-              {url && <button className="vz-btn" onClick={() => setShareOpen(true)}>Partager</button>}
+              <button className="vz-btn vz-btn-primary" onClick={() => setShowCert(true)}>Consulter le certificat</button>
             </div>
           )}
 
@@ -167,8 +167,7 @@ function VerifyResult(p) {
         </div>
       </div>
 
-      {showCert && full && <CertificateModal cert={cert} {...p} onClose={() => setShowCert(false)} />}
-      {shareOpen && url && <ShareModal cert={cert} {...p} onClose={() => setShareOpen(false)} />}
+      {showCert && full && <CertificateModal cert={cert} telechargeable={false} {...p} onClose={() => setShowCert(false)} />}
     </PublicShell>
   );
 }

@@ -59,8 +59,15 @@ qui est ce qui figure dans l'URL de vérification et dans le QR code.
 
 **Public — sans compte.** Accueil et recherche par référence, page de vérification
 (verdict, titulaire, dates, score, compétences validées, motif de révocation le cas
-échéant), consultation et impression du certificat, profils publics `/u/{username}`
-pour les titulaires qui l'activent.
+échéant), **consultation** du certificat, profils publics `/u/{identifiant}` pour les
+titulaires qui l'activent.
+
+Consultation seulement : **ni téléchargement, ni partage**. Celui qui vérifie constate
+l'authenticité ; il n'a pas à repartir avec l'attestation d'autrui. Diffuser le document
+appartient à son titulaire, depuis son espace, et à VIZDATA depuis l'administration.
+La zone d'impression n'est pas déclarée sur ce chemin, de sorte qu'un `Ctrl+P` ne produit
+pas un certificat détouré prêt à circuler — sans prétendre empêcher une capture d'écran,
+ce qu'aucune application ne peut faire.
 
 **Espace certifié.** Mes certificats, téléchargement PDF, partage (LinkedIn, WhatsApp,
 e-mail, copie de lien), profil et visibilité publique.

@@ -1,8 +1,20 @@
-/* Certificat imprimable.
+/* Le certificat, en consultation ou en téléchargement.
 
    Reçoit la forme publique normalisée — celle que rendent les fonctions
-   Supabase comme le registre local. L'enregistrement du téléchargement dans
-   l'historique n'a lieu que si l'enregistrement local est disponible. */
+   Supabase comme le registre local.
+
+   Deux régimes, portés par « telechargeable » :
+
+   — consultation : ce que voit un employeur venu vérifier. Il constate
+     l'authenticité, il ne repart pas avec le document. La zone d'impression
+     n'est pas déclarée, de sorte qu'un Ctrl+P ne produit pas un certificat
+     détouré prêt à circuler.
+   — téléchargement : réservé au titulaire et à VIZDATA, seuls fondés à
+     diffuser l'attestation.
+
+   Rien n'empêchera jamais une capture d'écran. Le propos n'est pas de rendre
+   la copie impossible, mais de ne pas la proposer : un document remis par le
+   registre à un tiers n'aurait pas le même sens qu'une vérification. */
 
 import { STATUS_META } from "../lib/certificates.js";
 import { fmtShort } from "../lib/dates.js";
@@ -10,7 +22,7 @@ import { QRCode } from "../ui/QRCode.jsx";
 import { VizdataLogo } from "../ui/VizdataLogo.jsx";
 import { Modal } from "../ui/primitives.jsx";
 
-function CertificateModal({ cert, onClose, ...p }) {
+function CertificateModal({ cert, onClose, telechargeable = true, ...p }) {
   const st = cert.status;
 
   const print = () => {
@@ -20,13 +32,15 @@ function CertificateModal({ cert, onClose, ...p }) {
 
   return (
     <Modal
-      title="Certificat"
+      title={telechargeable ? "Certificat" : "Certificat — consultation"}
       onClose={onClose}
       wide
       foot={
         <>
           <button className="vz-btn" onClick={onClose}>Fermer</button>
-          <button className="vz-btn vz-btn-primary" onClick={print}>Enregistrer en PDF</button>
+          {telechargeable && (
+            <button className="vz-btn vz-btn-primary" onClick={print}>Enregistrer en PDF</button>
+          )}
         </>
       }
     >
@@ -37,7 +51,7 @@ function CertificateModal({ cert, onClose, ...p }) {
             : `Ce certificat n'est plus en vigueur (${STATUS_META[st].label.toLowerCase()}).`}
         </div>
       )}
-      <div className="vz-cert vz-printarea">
+      <div className={"vz-cert" + (telechargeable ? " vz-printarea" : "")}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <VizdataLogo w={96} />
           <div style={{ textAlign: "right" }}>
@@ -80,7 +94,9 @@ function CertificateModal({ cert, onClose, ...p }) {
         </div>
       </div>
       <p className="vz-small vz-muted" style={{ marginTop: 12 }}>
-        « Enregistrer en PDF » ouvre la boîte d'impression du navigateur : choisissez la destination « Enregistrer au format PDF ».
+        {telechargeable
+          ? "« Enregistrer en PDF » ouvre la boîte d'impression du navigateur : choisissez la destination « Enregistrer au format PDF »."
+          : "Cette page atteste de l'authenticité du certificat. Le document lui-même n'est délivré qu'à son titulaire et par VIZDATA."}
       </p>
     </Modal>
   );
