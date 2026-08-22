@@ -109,6 +109,7 @@ async function controler() {
 
   console.log(`Clé ${analyse.format} (rôle ${analyse.role}) — vérification auprès du projet…`);
   const epreuve = await eprouverCle(url, cle);
+  console.log(`Réponse du projet : ${epreuve.detail}`);
 
   if (epreuve.joignable && !epreuve.acceptee) {
     return refuser(`Construction interrompue : le projet Supabase refuse la clé (${epreuve.detail}).`, [
@@ -131,4 +132,15 @@ async function controler() {
 /* On renseigne le code de sortie sans forcer process.exit() : Node se retire
    quand ses gestionnaires se sont refermés. Un exit() brutal pendant la
    fermeture de la connexion HTTP déclenche une assertion libuv sous Windows. */
-process.exitCode = await controler();
+const codeSortie = await controler();
+process.exitCode = codeSortie;
+
+/* Filet de sécurité. Trois constructions ont été bloquées indéfiniment chez
+   l'hébergeur : la vérification aboutissait, mais une connexion réseau restée
+   ouverte maintenait la boucle d'événements, donc le processus ne rendait
+   jamais la main — et le build attendait pour toujours. Ce minuteur n'empêche
+   pas Node de sortir naturellement (unref), mais le force s'il traîne. */
+setTimeout(() => {
+  console.warn("Sortie forcée : une connexion réseau est restée ouverte.");
+  process.exit(codeSortie);
+}, 2000).unref();
