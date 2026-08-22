@@ -250,7 +250,15 @@ build ne connaissent votre base.
 
 L'application est déployée sur Vercel, projet `vizdata-certify-registre` :
 
-**https://vizdata-certify-registre-k4j8lo6f2-vizdatacis-projects.vercel.app**
+**https://vizdata-certify-registre.vercel.app**
+
+C'est l'adresse **stable** du projet : elle suit le dernier déploiement en production.
+Chaque déploiement reçoit en plus une adresse qui lui est propre, du type
+`vizdata-certify-registre-k4j8lo6f2-…vercel.app` — utile pour comparer deux versions,
+mais à ne jamais diffuser : elle fige une version et ne bougera plus.
+
+Si le projet est renommé `vizdata-certify`, l'adresse stable devient
+`https://vizdata-certify.vercel.app`.
 
 Vérifié en conditions réelles le 21 août 2026, sans compte et depuis un navigateur :
 
@@ -276,9 +284,10 @@ registre dont la vocation est d'être vérifiable sans compte ne peut pas rester
 une authentification Vercel. Ce n'est pas la base qui est exposée — seule la clé publiable
 circule, et les politiques RLS protègent les données.
 
-**Un ancien projet `vizdata-certify` subsiste** sur le même compte. Il sert une version
-cassée, restée bloquée après qu'un déploiement a été supprimé en cours de construction.
-À supprimer une fois le nom éventuellement récupéré pour le projet courant.
+**L'ancien projet `vizdata-certify` a été supprimé.** Il était resté bloqué après qu'un
+déploiement a été effacé en cours de construction : toute mise en ligne suivante y restait
+suspendue indéfiniment, y compris un paquet déjà construit. Le nom est donc de nouveau
+disponible pour le projet courant.
 
 ### Ce qui n'est pas branché
 
