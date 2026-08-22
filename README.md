@@ -353,6 +353,23 @@ Dans Supabase, **Authentication → URL Configuration** :
 Faites pointer `certify.vizdata.ci` vers le projet Vercel. Ce n'est pas cosmétique :
 c'est le domaine inscrit en dur dans les QR codes déjà imprimés sur les certificats.
 
+### L'adresse des commits doit être rattachée à GitHub
+
+Vercel **bloque** un déploiement dont l'auteur du commit ne correspond à aucun compte
+GitHub — statut `Blocked`, sans journal de construction. Vu de la CLI, le déploiement
+reste indéfiniment en `UNKNOWN` et l'adresse répond « Deployment is building » : rien
+n'indique la cause, qui n'apparaît que sur la page du déploiement dans le tableau de bord.
+
+L'identité configurée ici convient :
+
+```bash
+git config user.email
+```
+
+Elle doit renvoyer `148683652+VizDataCI@users.noreply.github.com`, l'adresse de
+non-réponse liée au compte GitHub. Ne la remplacez pas par une adresse personnelle qui
+n'y serait pas rattachée : les déploiements seraient refusés sans explication lisible.
+
 ### Mise en ligne
 
 ```bash
