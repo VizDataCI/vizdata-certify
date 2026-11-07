@@ -150,6 +150,48 @@ await doitEtreRefuse("new_public_token", async () => {
   if (error) throw new Error(error.message);
 });
 
+console.log("\nAcadémie — candidatures et cohortes\n");
+await verifier("cohorte_publique", async () => {
+  const { supabase } = await import("../" + SORTIE.replace(/\\/g, "/") + "/supabase.js");
+  const { data, error } = await supabase.rpc("cohorte_publique");
+  if (error) throw new Error(error.message);
+  if (!Array.isArray(data)) throw new Error("réponse inattendue");
+  return data.length ? `cohorte publiée : ${data[0].libelle}` : "aucune cohorte publiée";
+});
+/* On appelle la vraie fonction d'écriture, mais avec un engagement à faux :
+   elle doit refuser avant toute insertion. Le contrat est donc éprouvé sans
+   déposer de candidature de contrôle dans la table. */
+await verifier("soumettre_candidature sans engagement", async () => {
+  const { supabase } = await import("../" + SORTIE.replace(/\\/g, "/") + "/supabase.js");
+  const { data, error } = await supabase.rpc("soumettre_candidature", {
+    p_nom: "Contrôle",
+    p_whatsapp: "+2250000000000",
+    p_email: "controle@exemple.ci",
+    p_profession: "Contrôle",
+    p_niveau: "DEBUTANT",
+    p_formule: "INTEGRAL",
+    p_disponible: false,
+    p_consent: false,
+  });
+  if (!error) throw new Error(`candidature acceptée sans engagement — référence ${data} à supprimer`);
+  if (!/obligatoire/i.test(error.message)) throw new Error("refusée, mais pour une autre raison : " + error.message);
+  return "refusée comme prévu, aucune ligne créée";
+});
+await verifier("candidatures fermées", async () => {
+  const { supabase } = await import("../" + SORTIE.replace(/\\/g, "/") + "/supabase.js");
+  const { data, error } = await supabase.from("candidatures").select("reference");
+  if (error) return "lecture refusée : " + error.code;
+  if (data?.length) throw new Error("des candidatures sortent sans session — données personnelles exposées");
+  return "aucune ligne pour un visiteur anonyme";
+});
+await verifier("cohortes fermées", async () => {
+  const { supabase } = await import("../" + SORTIE.replace(/\\/g, "/") + "/supabase.js");
+  const { data, error } = await supabase.from("cohortes").select("libelle, tarif_integral");
+  if (error) return "lecture refusée : " + error.code;
+  if (data?.length) throw new Error("les cohortes en brouillon sont lisibles publiquement");
+  return "aucune ligne pour un visiteur anonyme";
+});
+
 rmSync(SORTIE, { recursive: true, force: true });
 
 console.log(echecs === 0 ? "\nContrat respecté.\n" : `\n${echecs} vérification(s) en échec.\n`);

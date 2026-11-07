@@ -163,6 +163,27 @@ signatures doivent donc être modifiées ensemble, sous peine de casser la secon
 | `20260819_verification_details.sql` | porte `verify_certificate` et `verify_by_reference` de 9 à 15 colonnes |
 | `20260819_ecritures_manquantes.sql` | politique `audit_admin_insert` + fonction `record_share` |
 
+### Migration en attente
+
+| Fichier | Effet |
+| --- | --- |
+| `20261106_academie.sql` | **pas encore appliquée** — tables `cohortes` et `candidatures` de l'académie |
+
+Elle ajoute quatre types énumérés (`candidature_statut`, `niveau_excel`,
+`formule_paiement`, `cohorte_statut`), deux tables fermées par `is_admin()`, et trois
+fonctions : `cohorte_publique()` et `soumettre_candidature(...)`, toutes deux
+`security definer` et appelables sans session, plus `next_candidature_reference()`,
+réservée au propriétaire comme `next_reference()`.
+
+Le raisonnement est celui du registre : la page publique écrit par une fonction, jamais
+dans la table. Une candidature contient un nom, un numéro de téléphone et une adresse
+e-mail — ouvrir la table en insertion anonyme donnerait aussi la lecture à qui sait
+écrire une requête REST.
+
+Une fois appliquée, `npm run verifier` contrôle les quatre points : la fonction de
+cohorte répond, la soumission refuse une candidature sans engagement, et les deux
+tables ne rendent rien à un visiteur anonyme.
+
 Après la seconde, le registre compte **16 politiques** et **10 fonctions**.
 `record_share(p_token, p_platform)` est `security definer` et appelable sans session :
 elle résout le certificat par son jeton et insère la ligne, sans que la table `shares`

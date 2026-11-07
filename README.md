@@ -199,6 +199,7 @@ depuis la console Supabase.
 | `/verifier/{jeton}` | verdict de vérification — **c'est l'adresse imprimée dans le QR code** |
 | `/u/{identifiant}` | profil public d'un certifié |
 | `/a-propos` | présentation du registre |
+| `/academie` | page de vente de la formation CITIZEN DATA ANALYST |
 | `/connexion` | connexion |
 | `/espace` | espace certifié |
 | `/administration` | espace administrateur |
@@ -211,13 +212,86 @@ lien obtenu est donc partageable tel quel. Le certificat déjà résolu voyage a
 route, de sorte que la page ne redemande pas ce qu'elle vient d'obtenir — sans quoi une
 seconde consultation serait comptée.
 
+## L'académie CITIZEN DATA ANALYST
+
+`/academie` est la page de vente de la formation Excel + Power BI : huit jours en
+présentiel à Abidjan, en cohortes trimestrielles. Elle vit dans la même application que
+le registre parce qu'elle partage sa marque, son projet Supabase, son déploiement et son
+espace d'administration — mais c'est un second métier, et le code le dit : son contenu,
+ses styles et son accès distant sont dans `src/academie/`, ses écrans dans
+`src/screens/academie/`, et ses deux écrans d'administration forment leur propre groupe
+dans la barre latérale.
+
+### Ce que la page n'invente pas
+
+Trois informations ne sont écrites nulle part dans le code : **les dates de session, le
+nombre de places et les tarifs**. Elles vivent dans la table `cohortes`, modifiables
+depuis `Administration → Cohortes`. Sans cohorte publiée, la page affiche le programme
+sans date et invite à écrire sur WhatsApp — c'est préférable à une date inventée qu'il
+faudrait ensuite démentir.
+
+Il n'y a pas non plus de section « témoignages » : il n'y a pas de témoignage à publier.
+
+### Le chemin d'une candidature
+
+1. Le visiteur remplit le formulaire. `validerCandidature()` dit ce qui manque avant
+   l'envoi ; les mêmes règles sont écrites en contraintes dans la base, parce que le
+   navigateur ne fait jamais autorité.
+2. `soumettre_candidature()` — fonction `security definer` — enregistre la ligne et rend
+   une référence `CDA-2026-0001`. La table `candidatures` reste **fermée** : ni lecture
+   ni écriture directe pour un visiteur, comme `certificates`.
+3. La confirmation s'affiche avec la référence.
+4. `api/notifier-candidature.mjs` envoie l'alerte à `contact@vizdata.ci` et l'accusé de
+   réception au candidat.
+
+L'ordre compte. L'e-mail part **après** la confirmation, et son échec ne fait jamais
+échouer la candidature : l'administration la voit dans tous les cas. L'inverse ferait
+dépendre une inscription d'un service tiers.
+
+### La fonction de notification ne croit pas ce qu'on lui envoie
+
+Elle ne retient du corps de la requête que la référence, puis **relit la candidature
+dans la base** avec la clé de service. Sans cela, le destinataire et le contenu du
+message viendraient du client : n'importe qui pourrait faire envoyer, depuis le domaine
+de VIZDATA, le message de son choix à l'adresse de son choix. C'est l'erreur classique
+de ce genre d'endpoint, et elle est évitée ici par construction.
+
+### Mise en service
+
+1. **Appliquer la migration.** `supabase/migrations/20261106_academie.sql`, depuis le
+   SQL Editor de la console Supabase — comme les précédentes. Elle crée `cohortes`,
+   `candidatures`, leurs politiques et les deux fonctions publiques.
+   Tant qu'elle n'est pas appliquée, le formulaire affiche un message qui la nomme.
+2. **Contrôler le contrat.** `npm run verifier` vérifie que `cohorte_publique()` répond,
+   que `soumettre_candidature()` refuse une candidature sans engagement, et que les deux
+   tables restent fermées à un visiteur anonyme.
+3. **Créer la première cohorte** dans `Administration → Cohortes`, puis la publier.
+4. **Les e-mails** (facultatif) : renseigner chez l'hébergeur `SUPABASE_URL`,
+   `SUPABASE_SERVICE_ROLE_KEY` et `RESEND_API_KEY` — voir `.env.example`. Aucune ne porte
+   le préfixe `VITE_`, donc aucune n'entre dans le paquet navigateur. La clé de service
+   ne doit jamais rejoindre `.env.local` : `npm run build` refuse d'ailleurs de
+   construire avec une clé secrète côté client.
+5. **Les photographies** : déposer les portraits officiels dans `public/academie/` —
+   voir [docs/visuels-academie.md](docs/visuels-academie.md). En leur absence, la page affiche
+   les initiales sur un fond de marque — jamais une image cassée, jamais un portrait de
+   banque d'images qui ferait passer un inconnu pour un formateur.
+
+### Les couleurs du graphique ne sont pas celles du logo
+
+L'aperçu de tableau de bord du hero est dessiné en SVG. Ses marques de données
+utilisent `#1578A6`, `#D9700F` et `#7A4C9E`, et non le bleu, l'orange et le violet
+exacts du logo : côte à côte, le bleu et le violet de la charte sont indiscernables pour
+une vision deutéranope (ΔE 3,5 — mesuré, pas estimé). Le trio retenu passe les contrôles
+de séparation, de bande de clarté et de contraste sur fond blanc. Le logo, lui, reste
+intact : il n'est ni redessiné ni recoloré.
+
 ## Tests
 
 ```bash
 npm test
 ```
 
-34 tests, exécutés par le lanceur intégré de Node — **aucune dépendance de test dans le
+66 tests, exécutés par le lanceur intégré de Node — **aucune dépendance de test dans le
 projet**. Ils couvrent trois choses, choisies parce qu'elles sont pures et que leur
 régression serait silencieuse :
 
@@ -226,6 +300,10 @@ régression serait silencieuse :
 - **les règles métier** — `effectiveStatus()`, qui porte le principe « le statut est
   calculé, pas stocké », et qui doit rester d'accord avec `effective_status()` côté
   base ; la numérotation des références ; les identifiants publics ;
+- **les candidatures de l'académie** — normalisation des numéros WhatsApp, validation du
+  formulaire, calcul de l'économie du paiement intégral, et surtout l'export CSV : BOM,
+  point-virgule, guillemets doublés, point-virgule à l'intérieur d'une motivation. Un
+  export qui décale ses colonnes se découvre d'ordinaire dans Excel, devant quelqu'un ;
 - **l'encodeur QR** — dimensions normalisées, motifs de repérage aux trois coins,
   motifs de synchronisation, déterminisme, et refus explicite d'un contenu trop long
   plutôt qu'un code tronqué donc illisible.
@@ -568,6 +646,18 @@ lui donne.
 - **Authentification factice sans clés.** En mode démonstration, aucun mot de passe
   n'est vérifié et la volumétrie des vérifications est tirée au hasard. À ne jamais
   déployer dans cet état.
+- **La page de vente n'a pas d'aperçu de partage propre.** Un lien vers `/academie`
+  partagé sur WhatsApp ou LinkedIn affiche la carte du registre : le titre et la
+  description sont posés en JavaScript, que les robots sociaux n'exécutent pas. Même
+  cause et même remède que pour les certificats — un rendu côté serveur.
+- **La page de vente charge toute l'application.** Le paquet unique fait 162 ko
+  compressés ; un visiteur de `/academie` télécharge donc aussi les écrans
+  d'administration et l'encodeur QR, dont il n'a que faire. Un découpage par route
+  (`React.lazy`) sur les espaces authentifiés en retirerait environ 13 ko compressés ;
+  il n'a pas été fait pour ne pas toucher au routage existant à cette occasion.
+- **Les e-mails de candidature dépendent de trois variables d'hébergeur.** Sans elles,
+  la candidature est enregistrée et visible dans l'administration, mais aucun message ne
+  part — et la page le dit au candidat plutôt que de le laisser croire le contraire.
 - **Les composants React ne sont pas testés.** `npm test` couvre les fonctions pures —
   routage, règles métier, encodeur QR — et `npm run verifier` le contrat avec la base.
   Entre les deux, le rendu et les enchaînements d'écrans ne sont vérifiés qu'à la main.

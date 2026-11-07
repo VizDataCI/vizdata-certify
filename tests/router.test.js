@@ -66,3 +66,8 @@ test("les barres de fin ne changent pas la route", () => {
   assert.equal(toRoute("/a-propos/").view, "about");
   assert.equal(toRoute("//").view, "home");
 });
+
+test("la page de vente de l'académie a sa propre adresse", () => {
+  assert.deepEqual(toRoute("/academie"), { view: "academie" });
+  assert.equal(toPath({ view: "academie" }), "/academie");
+});

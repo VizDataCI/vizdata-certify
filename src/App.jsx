@@ -15,6 +15,7 @@ import { currentUser, isAuthConfigured, onAuthChange, signIn, signOut } from "./
 import { effectiveStatus } from "./lib/certificates.js";
 import { currentRoute, onNavigate, pushRoute, toPath } from "./lib/router.js";
 import { NotFound } from "./screens/public/NotFound.jsx";
+import { Academie } from "./screens/academie/Academie.jsx";
 import { AdminSpace } from "./screens/admin/AdminSpace.jsx";
 import { CertifiedSpace } from "./screens/certified/CertifiedSpace.jsx";
 import { About } from "./screens/public/About.jsx";
@@ -239,6 +240,7 @@ export default function App() {
     case "verifyResult": screen = <VerifyResult {...shared} />; break;
     case "login": screen = <Login {...shared} />; break;
     case "about": screen = <About {...shared} />; break;
+    case "academie": screen = <Academie {...shared} />; break;
     case "publicProfile": screen = <PublicProfile {...shared} />; break;
     case "dashboard":
     case "myprofile":

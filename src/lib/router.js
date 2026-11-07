@@ -15,6 +15,10 @@ const CHEMINS = {
   login: "/connexion",
   dashboard: "/espace",
   admin: "/administration",
+  /* Page de vente de l'académie. L'adresse est publique et partagée dans des
+     publicités : elle doit rester lisible et stable — jamais /page-de-vente,
+     jamais un paramètre de campagne dans le chemin. */
+  academie: "/academie",
 };
 
 /** Chemin correspondant à une route. */
