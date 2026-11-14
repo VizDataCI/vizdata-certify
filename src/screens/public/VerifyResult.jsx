@@ -118,16 +118,19 @@ function VerifyResult(p) {
             <div className="vz-bigref">{cert.reference}</div>
           </div>
 
+          {/* Ce qui est affiché, et rien de plus. Pas de date d'expiration, pas
+              de score : ces deux mentions ont quitté le produit, et les
+              fonctions de la base ne les renvoient même plus — la page ne
+              pourrait donc pas les montrer, quand bien même elle le voudrait.
+              Aucune information privée du compte n'apparaît ici : ni adresse
+              e-mail, ni téléphone, ni identifiant. */}
           <dl className="vz-dl">
             <div className="vz-dl-row"><dt>Titulaire</dt><dd>{cert.holder_name}</dd></div>
             <div className="vz-dl-row"><dt>Certification</dt><dd>{cert.certification}</dd></div>
+            {cert.domain && <div className="vz-dl-row"><dt>Domaine</dt><dd>{cert.domain}</dd></div>}
             <div className="vz-dl-row"><dt>Organisme émetteur</dt><dd>{cert.issuer || "VIZDATA"}</dd></div>
-            <div className="vz-dl-row"><dt>Date d'émission</dt><dd>{fmtLong(cert.issue_date)}</dd></div>
-            <div className="vz-dl-row"><dt>Date d'expiration</dt><dd>{cert.expiry_date ? fmtLong(cert.expiry_date) : "Sans expiration"}</dd></div>
-            {st !== "REVOKED" && st !== "CANCELLED" && cert.score != null && (
-              <div className="vz-dl-row"><dt>Score obtenu</dt><dd className="vz-mono">{cert.score} / 100</dd></div>
-            )}
-            <div className="vz-dl-row"><dt>Statut</dt><dd><Badge status={st} /></dd></div>
+            <div className="vz-dl-row"><dt>Date de délivrance</dt><dd>{fmtLong(cert.issue_date)}</dd></div>
+            <div className="vz-dl-row"><dt>Statut d'authenticité</dt><dd><Badge status={st} /></dd></div>
           </dl>
 
           {cert.revoke_reason && st === "REVOKED" && (

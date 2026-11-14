@@ -30,6 +30,15 @@
   </head>
   <body>
     <div id="root"></div>
+    <!--
+      Zone d'impression. Vide et masquée à l'écran ; à l'impression, c'est
+      l'inverse : #root disparaît et ce conteneur seul est imprimé. Le
+      certificat y est rendu une seconde fois, par un portail React, à son
+      échelle naturelle — 1123 × 794 px, soit exactement une feuille A4 en
+      paysage. C'est ce qui garantit une page et une seule, et une mise en
+      page identique à l'écran, en PDF et sur le papier. Voir certificat.css.
+    -->
+    <div id="impression" aria-hidden="true"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

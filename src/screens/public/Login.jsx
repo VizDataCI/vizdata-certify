@@ -1,7 +1,7 @@
 /* Connexion. Réelle dès que Supabase est configuré, factice sinon. */
 
 import { useState } from "react";
-import { isAuthConfigured, sendPasswordReset } from "../../lib/auth.js";
+import { isAuthConfigured } from "../../lib/auth.js";
 import { Field } from "../../ui/primitives.jsx";
 import { PublicShell } from "./PublicShell.jsx";
 
@@ -21,19 +21,6 @@ function Login(p) {
     } catch (e) {
       setErr(e.message);
       setBusy(false);
-    }
-  };
-
-  const forgotten = async () => {
-    if (!isAuthConfigured) {
-      p.notify("Un lien de réinitialisation serait envoyé par e-mail.");
-      return;
-    }
-    try {
-      await sendPasswordReset(email);
-      p.notify("Si un compte existe pour cette adresse, un lien vient d'être envoyé.");
-    } catch (e) {
-      setErr(e.message);
     }
   };
 
@@ -57,7 +44,11 @@ function Login(p) {
               <button className="vz-btn vz-btn-primary vz-btn-lg" onClick={submit} disabled={busy}>
                 {busy ? "Connexion…" : "Se connecter"}
               </button>
-              <button className="vz-linkbtn" style={{ alignSelf: "center" }} onClick={forgotten}>Mot de passe oublié</button>
+              {/* L'oubli du mot de passe a son propre écran : il doit pouvoir
+                  dire ce qu'il a fait, et surtout accueillir le retour du lien.
+                  Un message fugitif laissait l'utilisateur sans repère, et le
+                  lien retombait sur une page sans formulaire. */}
+              <button className="vz-linkbtn" style={{ alignSelf: "center" }} onClick={() => p.go({ view: "forgotPassword" })}>Mot de passe oublié</button>
             </div>
           </div>
           {!isAuthConfigured && (
@@ -65,6 +56,7 @@ function Login(p) {
               <div className="vz-eyebrow" style={{ marginBottom: 8 }}>Comptes de démonstration</div>
               <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
                 <button className="vz-btn vz-btn-sm" onClick={() => quick("admin@vizdata.ci")}>Administrateur</button>
+                <button className="vz-btn vz-btn-sm" onClick={() => quick("gestion@vizdata.ci")}>Gestionnaire</button>
                 <button className="vz-btn vz-btn-sm" onClick={() => quick("fabrice.boh@vizdata.ci")}>Certifié</button>
               </div>
               <p style={{ marginTop: 9 }}>Le mot de passe est libre en démonstration.</p>

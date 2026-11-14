@@ -1,45 +1,65 @@
-/* Le certificat, en consultation ou en téléchargement.
+/* Le certificat, en consultation ou en délivrance.
+ *
+ * Reçoit la forme publique normalisée — celle que rendent les fonctions
+ * Supabase comme le registre local.
+ *
+ * Deux régimes, portés par « telechargeable »
+ * -------------------------------------------
+ * — consultation : ce que voit un employeur venu vérifier. Il constate
+ *   l'authenticité, il ne repart pas avec le document. Ni téléchargement ni
+ *   impression ne sont proposés, et la zone d'impression n'est pas montée :
+ *   un Ctrl+P ne produit donc pas un certificat détouré prêt à circuler.
+ * — délivrance : réservé au titulaire et à VIZDATA, seuls fondés à diffuser
+ *   l'attestation. Téléchargement et impression sont là.
+ *
+ * Rien n'empêchera jamais une capture d'écran. Le propos n'est pas de rendre la
+ * copie impossible, mais de ne pas la proposer : un document remis par le
+ * registre à un tiers n'aurait pas le même sens qu'une vérification.
+ */
 
-   Reçoit la forme publique normalisée — celle que rendent les fonctions
-   Supabase comme le registre local.
-
-   Deux régimes, portés par « telechargeable » :
-
-   — consultation : ce que voit un employeur venu vérifier. Il constate
-     l'authenticité, il ne repart pas avec le document. La zone d'impression
-     n'est pas déclarée, de sorte qu'un Ctrl+P ne produit pas un certificat
-     détouré prêt à circuler.
-   — téléchargement : réservé au titulaire et à VIZDATA, seuls fondés à
-     diffuser l'attestation.
-
-   Rien n'empêchera jamais une capture d'écran. Le propos n'est pas de rendre
-   la copie impossible, mais de ne pas la proposer : un document remis par le
-   registre à un tiers n'aurait pas le même sens qu'une vérification. */
-
+import { useState } from "react";
 import { STATUS_META } from "../lib/certificates.js";
-import { fmtShort } from "../lib/dates.js";
-import { QRCode } from "../ui/QRCode.jsx";
-import { VizdataLogo } from "../ui/VizdataLogo.jsx";
+import { Certificat, ZoneImpression, imprimerCertificat } from "../ui/Certificat.jsx";
 import { Modal } from "../ui/primitives.jsx";
 
 function CertificateModal({ cert, onClose, telechargeable = true, ...p }) {
   const st = cert.status;
+  const [avis, setAvis] = useState("");
 
-  const print = () => {
-    if (cert.local_record) p.log("CERTIFICATE_DOWNLOADED", cert.local_record.id, cert.reference);
-    setTimeout(() => window.print(), 60);
+  const tracer = (action) => {
+    if (cert.local_record && p.log) p.log(action, cert.local_record.id, cert.reference);
+  };
+
+  /* Les deux gestes ouvrent la même boîte de dialogue — celle du navigateur —
+     et c'est voulu : son moteur produit un texte vectoriel, net à tout
+     agrandissement, et exactement la mise en page de l'écran. Ce qui les
+     distingue est le nom proposé pour le fichier, et ce qu'on dit à
+     l'utilisateur. Le prétendre autrement serait mentir sur le mécanisme. */
+  const telecharger = () => {
+    tracer("CERTIFICATE_DOWNLOADED");
+    setAvis("pdf");
+    imprimerCertificat(cert.reference);
+  };
+
+  const imprimer = () => {
+    tracer("CERTIFICATE_PRINTED");
+    setAvis("impression");
+    imprimerCertificat(cert.reference);
   };
 
   return (
     <Modal
-      title={telechargeable ? "Certificat" : "Certificat — consultation"}
+      title={telechargeable ? `Certificat — ${cert.reference}` : "Certificat — consultation"}
       onClose={onClose}
-      wide
+      taille="certificat"
       foot={
         <>
           <button className="vz-btn" onClick={onClose}>Fermer</button>
           {telechargeable && (
-            <button className="vz-btn vz-btn-primary" onClick={print}>Enregistrer en PDF</button>
+            <>
+              <button className="vz-btn" onClick={imprimer}>Imprimer</button>
+              <button className="vz-btn vz-btn-primary" onClick={telecharger}>Télécharger en PDF</button>
+            </>
           )}
         </>
       }
@@ -51,56 +71,28 @@ function CertificateModal({ cert, onClose, telechargeable = true, ...p }) {
             : `Ce certificat n'est plus en vigueur (${STATUS_META[st].label.toLowerCase()}).`}
         </div>
       )}
-      <div className={"vz-cert" + (telechargeable ? " vz-printarea" : "")}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-          <VizdataLogo w={96} />
-          <div style={{ textAlign: "right" }}>
-            <div className="vz-eyebrow">Référence</div>
-            <div className="vz-ref vz-small" style={{ marginTop: 4 }}>{cert.reference}</div>
-          </div>
+
+      <Certificat cert={cert} verifyUrl={p.verifyUrl(cert)} />
+
+      {/* Le document n'est monté dans la zone d'impression que lorsqu'il a
+          vocation à sortir du registre. En consultation publique, il n'y est
+          pas : il n'y a donc rien à imprimer. */}
+      {telechargeable && <ZoneImpression cert={cert} verifyUrl={p.verifyUrl(cert)} />}
+
+      {telechargeable ? (
+        <div className="vz-alert info" style={{ marginTop: 16 }}>
+          {avis === "pdf"
+            ? "Dans la boîte de dialogue, choisissez la destination « Enregistrer au format PDF ». Le fichier portera la référence du certificat."
+            : avis === "impression"
+            ? "Format A4, orientation paysage, marges nulles : ne modifiez pas ces réglages, le document est déjà à la dimension de la feuille."
+            : "Le document est au format A4 paysage. Ce que vous voyez ici est exactement ce qui sera imprimé ou enregistré."}
         </div>
-        <div className="vz-cert-title">Certificat de compétences</div>
-        <div className="vz-small vz-muted" style={{ marginTop: 18 }}>Décerné à</div>
-        <div className="vz-cert-name">{cert.holder_name}</div>
-        <div className="vz-cert-rule" />
-        <div style={{ fontSize: 17, fontWeight: 600 }}>{cert.certification}</div>
-        <p className="vz-small vz-muted" style={{ marginTop: 8, maxWidth: 440, lineHeight: 1.6 }}>
-          {cert.description} Parcours de {cert.duration} heures{cert.score != null ? `, validé avec un score de ${cert.score}/100` : ""}.
+      ) : (
+        <p className="vz-small vz-muted" style={{ marginTop: 14, lineHeight: 1.7 }}>
+          Cette page atteste de l'authenticité du certificat. Le document lui-même n'est délivré
+          qu'à son titulaire, depuis son espace personnel, et par VIZDATA.
         </p>
-        <div style={{ display: "flex", gap: 26, marginTop: 18, flexWrap: "wrap" }}>
-          <div>
-            <div className="vz-eyebrow">Émission</div>
-            <div className="vz-mono vz-small" style={{ marginTop: 4 }}>{fmtShort(cert.issue_date)}</div>
-          </div>
-          <div>
-            <div className="vz-eyebrow">Expiration</div>
-            <div className="vz-mono vz-small" style={{ marginTop: 4 }}>{cert.expiry_date ? fmtShort(cert.expiry_date) : "—"}</div>
-          </div>
-          <div>
-            <div className="vz-eyebrow">Formateur</div>
-            <div className="vz-small" style={{ marginTop: 4 }}>{cert.trainer}</div>
-          </div>
-        </div>
-        <div className="vz-cert-foot">
-          <div>
-            <div style={{ width: 150, height: 1, background: "var(--encre)" }} />
-            <div className="vz-small" style={{ marginTop: 6, fontWeight: 500 }}>{cert.signatory}</div>
-            <div className="vz-small vz-muted">VIZDATA</div>
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <QRCode value={p.verifyUrl(cert)} size={124} />
-            {/* Légende du QR code : elle figure sur le document imprimé, donc
-                elle doit désigner un chemin réel. Elle indiquait /verify,
-                disparu lors du passage aux adresses françaises. */}
-            <div className="vz-mono" style={{ fontSize: 8.5, color: "var(--gris)", marginTop: 4 }}>certify.vizdata.ci/verifier</div>
-          </div>
-        </div>
-      </div>
-      <p className="vz-small vz-muted" style={{ marginTop: 12 }}>
-        {telechargeable
-          ? "« Enregistrer en PDF » ouvre la boîte d'impression du navigateur : choisissez la destination « Enregistrer au format PDF »."
-          : "Cette page atteste de l'authenticité du certificat. Le document lui-même n'est délivré qu'à son titulaire et par VIZDATA."}
-      </p>
+      )}
     </Modal>
   );
 }

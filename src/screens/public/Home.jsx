@@ -1,6 +1,7 @@
 /* Accueil : recherche par référence. */
 
 import { useState } from "react";
+import { REFERENCE_EXEMPLE } from "../../data/seed.js";
 import { PublicShell } from "./PublicShell.jsx";
 
 function Home(p) {
@@ -18,7 +19,7 @@ function Home(p) {
         <div className="vz-searchbox">
           <input
             className="vz-input"
-            placeholder="VIZ-2026-EXCEL-000125"
+            placeholder={REFERENCE_EXEMPLE}
             value={ref}
             onChange={(e) => setRef(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && submit()}

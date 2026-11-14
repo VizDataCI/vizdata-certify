@@ -12,18 +12,16 @@ function RevokeModal({ cert, onClose, ...p }) {
 
   const submit = async () => {
     if (busy) return;
+    if (action === "REVOKED" && !reason.trim()) {
+      /* Le motif part sur la page publique : une révocation sans motif laisse
+         le titulaire et son employeur sans explication. */
+      setErr("Le motif est obligatoire pour une révocation : il est affiché publiquement.");
+      return;
+    }
     setBusy(true);
     setErr("");
     try {
-      if (p.actions) {
-        await p.actions.setStatus(cert, action, reason);
-      } else {
-        p.setDb((d) => ({
-          ...d,
-          certificates: d.certificates.map((c) => (c.id === cert.id ? { ...c, status: action, revoke_reason: reason } : c)),
-        }));
-        p.log(action === "REVOKED" ? "CERTIFICATE_REVOKED" : "CERTIFICATE_CANCELLED", cert.id, cert.reference);
-      }
+      await p.actions.changerStatutCertificat(cert, action, reason);
       p.notify(action === "REVOKED" ? "Certificat révoqué." : "Certificat annulé.");
       onClose();
     } catch (e) {

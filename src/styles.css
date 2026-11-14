@@ -99,7 +99,10 @@
 /* --- vérification publique (élément signature) --- */
 .vz-public{min-height:100vh;background:var(--surface);display:flex;flex-direction:column}
 .vz-public-bar{height:58px;background:var(--blanc);border-bottom:1px solid var(--trait);display:flex;align-items:center;justify-content:space-between;padding:0 20px}
-.vz-public-body{flex:1;display:flex;justify-content:center;padding:34px 18px 60px}
+/* `align-items:flex-start` : sans cela, le conteneur étire son contenu sur
+   toute la hauteur disponible, et une carte de vérification courte s'affichait
+   comme un panneau vide de huit cents pixels. */
+.vz-public-body{flex:1;display:flex;justify-content:center;align-items:flex-start;padding:34px 18px 60px}
 .vz-slip{width:100%;max-width:560px;background:var(--blanc);border:1px solid var(--trait);border-radius:10px;overflow:hidden;animation:vzrise .34s ease both}
 @keyframes vzrise{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.vz-slip{animation:none}}
@@ -145,27 +148,180 @@
 .vz-alert.err{background:#FDF4F3;border-color:#EBC7C4;color:#8E2620}
 .vz-alert.ok{background:#F1F8F4;border-color:#BFE0D1;color:#0B5C3C}
 
-/* --- certificat imprimable --- */
-.vz-cert{width:100%;max-width:760px;aspect-ratio:1.414/1;background:#fff;border:1px solid var(--trait);padding:38px 42px;display:flex;flex-direction:column;position:relative}
-.vz-cert-title{font-family:var(--mono);font-size:13px;letter-spacing:.34em;text-transform:uppercase;color:var(--bleu);margin-top:22px}
-.vz-cert-name{font-size:32px;font-weight:600;letter-spacing:-0.03em;margin-top:16px}
-.vz-cert-rule{height:1px;background:var(--trait);margin:16px 0}
-.vz-cert-foot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;gap:20px}
+/* ===========================================================================
+   LE CERTIFICAT
 
-@media print{
-  body *{visibility:hidden}
-  .vz-printarea,.vz-printarea *{visibility:visible}
-  .vz-printarea{position:absolute;left:0;top:0;width:100%;border:0}
-  .vz-cert{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+   Le document et ses règles d'impression vivent dans certificat.css : il a son
+   propre système de mesures — un gabarit en pixels fixes, calé sur une feuille
+   A4 — qui n'a rien à voir avec celui de l'interface. Les mélanger avait une
+   conséquence fâcheuse : une retouche de l'interface déplaçait le document
+   imprimé.
+   ========================================================================= */
+
+/* ===========================================================================
+   ÉCRANS DE LA REFONTE
+   ========================================================================= */
+
+/* --- accueil de l'espace personnel --- */
+.vz-welcome{padding:6px 0 26px}
+.vz-welcome h1{font-size:30px;letter-spacing:-0.035em;margin-top:9px}
+.vz-welcome p{color:var(--gris);font-size:14.5px;margin-top:10px;max-width:520px;line-height:1.65}
+
+/* --- cartes de certification --- */
+.vz-cards{grid-template-columns:repeat(auto-fill,minmax(316px,1fr))}
+.vz-certcard{
+  background:var(--blanc);border:1px solid var(--trait);border-radius:10px;padding:19px 20px 16px;
+  display:flex;flex-direction:column;
+  transition:border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+.vz-certcard:hover{border-color:#CFD6E0;box-shadow:0 6px 20px rgba(16,26,43,.07);transform:translateY(-1px)}
+@media (prefers-reduced-motion:reduce){.vz-certcard{transition:none}.vz-certcard:hover{transform:none}}
+.vz-certcard-haut{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:13px}
+.vz-certcard-domaine{
+  font-family:var(--mono);font-size:9.5px;font-weight:500;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--violet);background:#FBFAFC;border:1px solid #EAE4EF;border-radius:11px;padding:3px 9px;
+}
+.vz-certcard h3{font-size:16px;line-height:1.32;letter-spacing:-0.015em}
+.vz-certcard-ref{font-family:var(--mono);font-size:12.5px;font-weight:500;letter-spacing:.04em;color:var(--bleu);margin-top:11px}
+.vz-certcard-date{font-size:12.5px;color:var(--gris);margin-top:5px}
+.vz-certcard-skills{display:flex;gap:5px;flex-wrap:wrap;margin-top:13px}
+.vz-certcard-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:17px;padding-top:15px;border-top:1px solid var(--trait)}
+.vz-certcard-liens{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.vz-certcard-liens .vz-linkbtn{padding:2px 0;font-size:11.5px}
+
+/* --- formulaire par étapes --- */
+.vz-etape{padding:0 0 22px;margin-bottom:22px;border-bottom:1px solid var(--trait)}
+.vz-etape:last-of-type{border-bottom:0;margin-bottom:0;padding-bottom:0}
+.vz-etape-tete{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px}
+.vz-etape-num{
+  flex:0 0 23px;width:23px;height:23px;border-radius:50%;background:var(--surface);border:1px solid var(--trait);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:11px;font-weight:600;color:var(--bleu);
+}
+
+/* --- choix d'un titulaire --- */
+.vz-choix{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:13px 15px;border:1px solid #B7DAE9;background:#F6FBFD;border-radius:8px;
+}
+.vz-resultats{border:1px solid var(--trait);border-radius:8px;margin-top:8px;overflow:hidden;background:var(--blanc)}
+.vz-resultat{
+  display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;
+  padding:10px 14px;border-bottom:1px solid var(--trait);transition:background .12s;
+}
+.vz-resultat:last-child{border-bottom:0}
+.vz-resultat:hover{background:var(--surface)}
+
+/* --- étiquette à bascule --- */
+.vz-chip-bascule{cursor:pointer;transition:background .12s,border-color .12s,color .12s}
+.vz-chip-bascule:hover{border-color:#CFD6E0}
+.vz-chip-bascule.on{background:#EAF4F9;border-color:#B7DAE9;color:var(--bleu);font-weight:500}
+
+/* --- barre de filtres --- */
+.vz-filtres{gap:8px;flex-wrap:wrap;align-items:center}
+.vz-filtre-date{display:flex;align-items:center;gap:6px}
+.vz-filtre-date .vz-input{width:auto}
+
+/* --- pagination --- */
+.vz-pagination{
+  display:flex;align-items:center;justify-content:center;gap:14px;
+  padding:14px 16px;border-top:1px solid var(--trait);
+}
+
+/* --- jauge horizontale --- */
+.vz-jauge{height:6px;background:var(--surface);border-radius:3px;overflow:hidden}
+.vz-jauge>div{height:100%;border-radius:3px;transition:width .3s ease}
+@media (prefers-reduced-motion:reduce){.vz-jauge>div{transition:none}}
+
+/* --- grille à deux colonnes, qui se replie --- */
+.vz-deux{grid-template-columns:1fr 1fr}
+
+/* --- navigation de téléphone : masquée là où la barre latérale existe --- */
+.vz-topbar-mark{display:none}
+.vz-tabbar{display:none}
+
+/* ===========================================================================
+   FINITION
+
+   Peu de choses, mais partout : une transition qui ne saute pas, une ombre qui
+   détache sans peser, un anneau de focus visible au clavier. L'interface d'un
+   registre de certification doit inspirer la même confiance qu'un document
+   officiel — ce qui veut dire sobre, pas spectaculaire.
+   ========================================================================= */
+
+.vz-card{transition:box-shadow .16s ease}
+.vz-modal{box-shadow:0 18px 60px rgba(16,26,43,.16);animation:vzmodal .2s ease both}
+@keyframes vzmodal{from{opacity:0;transform:translateY(-7px) scale(.995)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.vz-modal{animation:none}}
+.vz-btn{transition:background .14s ease,border-color .14s ease,color .14s ease,box-shadow .14s ease}
+.vz-btn-primary:active{transform:translateY(.5px)}
+.vz-input,.vz-select,.vz-textarea{transition:border-color .14s ease,box-shadow .14s ease}
+
+/* ===========================================================================
+   TÉLÉPHONE
+
+   Le registre est consulté au téléphone — un employeur qui scanne un QR code
+   n'est pas devant un ordinateur. Rien ne doit déborder, et rien d'important ne
+   doit se trouver derrière un défilement horizontal.
+   ========================================================================= */
+
+@media (max-width:980px){
+  .vz-deux{grid-template-columns:1fr}
 }
 
 @media (max-width:860px){
   .vz-side{display:none}
+
+  /* La barre latérale emportait la marque et la navigation : les deux
+     reviennent ici, sans quoi l'espace est une impasse sur téléphone. */
+  .vz-topbar-mark{display:block}
+  .vz-topbar-titre{display:none}
+  .vz-topbar-verif{display:none}
+  .vz-tabbar{
+    display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;
+    background:var(--blanc);border-bottom:1px solid var(--trait);
+    padding:7px 10px;position:sticky;top:56px;z-index:4;
+  }
+  .vz-tabbar::-webkit-scrollbar{display:none}
+  .vz-tabbar button{
+    flex:0 0 auto;padding:7px 13px;border-radius:7px;font-size:13px;font-weight:500;
+    color:var(--gris);white-space:nowrap;
+  }
+  .vz-tabbar button.on{background:var(--surface);color:var(--encre)}
+
   .vz-form-grid{grid-template-columns:1fr}
   .vz-page{padding:18px 14px 60px}
   .vz-hero{padding:52px 16px 30px}
   .vz-hero h1{font-size:27px}
+  .vz-welcome h1{font-size:24px}
   .vz-dl-row{flex-direction:column;gap:3px;padding:11px 18px}
   .vz-dl-row dd{text-align:left}
   .vz-refblock,.vz-verdict,.vz-slip-actions,.vz-slip-foot{padding-left:18px;padding-right:18px}
+  .vz-cards{grid-template-columns:1fr}
+  /* Trois boutons empilés plutôt que deux sur une ligne et le troisième
+     orphelin au milieu : au pouce, une cible pleine largeur se touche sans
+     viser. */
+  .vz-certcard-actions{flex-direction:column}
+  .vz-certcard-actions .vz-btn{width:100%;height:38px}
+  .vz-certcard-liens{justify-content:space-between}
+  .vz-filtres{flex-direction:column;align-items:stretch}
+  .vz-filtres .vz-input,.vz-filtres .vz-select{max-width:none!important;width:100%}
+  .vz-filtre-date{justify-content:space-between}
+  .vz-filtre-date .vz-input{flex:1}
+  .vz-modal-bg{padding:14px 10px}
+  .vz-modal-foot{flex-wrap:wrap}
+  .vz-modal-foot .vz-btn{flex:1 1 auto}
+}
+
+@media (max-width:560px){
+  /* La barre publique débordait : la marque complète et deux actions ne
+     tiennent pas dans 375 px. Le mot « CERTIFY » et son filet cèdent la place —
+     c'est le logo qui identifie, pas la mention. */
+  .vz-public-bar{padding:0 12px;gap:8px}
+  .vz-public-bar .vz-mark-div,
+  .vz-public-bar .vz-mark-text{display:none}
+  .vz-public-bar .vz-linkbtn{font-size:12px;padding:3px 5px}
+  .vz-public-body{padding:22px 12px 48px}
+  .vz-searchbox{flex-direction:column}
+  .vz-searchbox .vz-btn{width:100%}
 }

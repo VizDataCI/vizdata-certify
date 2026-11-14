@@ -1,6 +1,7 @@
 /* Saisie d'une référence à vérifier. */
 
 import { useState, useEffect, useRef } from "react";
+import { REFERENCE_EXEMPLE } from "../../data/seed.js";
 import { PublicShell } from "./PublicShell.jsx";
 
 function VerifySearch(p) {
@@ -51,7 +52,7 @@ function VerifySearch(p) {
             <input
               className="vz-input"
               style={{ height: 44, fontFamily: "var(--mono)", letterSpacing: ".04em" }}
-              placeholder="VIZ-2026-EXCEL-000125"
+              placeholder={REFERENCE_EXEMPLE}
               value={ref}
               onChange={(e) => { setRef(e.target.value); setErr(""); }}
               onKeyDown={(e) => e.key === "Enter" && submit()}
@@ -62,7 +63,7 @@ function VerifySearch(p) {
               {busy ? "Vérification…" : "Vérifier"}
             </button>
             <p className="vz-small vz-muted" style={{ marginTop: 16, lineHeight: 1.6 }}>
-              Exemple de référence valide : <span className="vz-ref">VIZ-2026-EXCEL-000125</span>
+              Exemple de référence valide : <span className="vz-ref">{REFERENCE_EXEMPLE}</span>
             </p>
           </div>
         </div>

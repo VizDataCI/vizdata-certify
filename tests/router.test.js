@@ -71,3 +71,19 @@ test("la page de vente de l'académie a sa propre adresse", () => {
   assert.deepEqual(toRoute("/academie"), { view: "academie" });
   assert.equal(toPath({ view: "academie" }), "/academie");
 });
+
+/* Les deux temps de la réinitialisation du mot de passe.
+ *
+ * L'adresse de /nouveau-mot-de-passe est celle que Supabase utilise comme
+ * retour des liens d'invitation et de réinitialisation. Elle est donc inscrite
+ * dans des messages déjà envoyés et dans la configuration du projet : la
+ * changer casserait les liens en circulation. Ce test la fige. */
+test("la demande de réinitialisation a son adresse", () => {
+  assert.deepEqual(toRoute("/mot-de-passe-oublie"), { view: "forgotPassword" });
+  assert.equal(toPath({ view: "forgotPassword" }), "/mot-de-passe-oublie");
+});
+
+test("l'adresse de retour des liens Supabase est /nouveau-mot-de-passe", () => {
+  assert.deepEqual(toRoute("/nouveau-mot-de-passe"), { view: "newPassword" });
+  assert.equal(toPath({ view: "newPassword" }), "/nouveau-mot-de-passe");
+});

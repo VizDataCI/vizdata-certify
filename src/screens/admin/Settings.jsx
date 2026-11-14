@@ -1,44 +1,29 @@
-/* Types de certification et paramètres du registre. */
+/* Paramètres de la plateforme.
+ *
+ * Le catalogue des certifications a quitté cet écran : domaines et programmes
+ * se gèrent désormais dans « Domaines & programmes ». Ce qui reste ici est
+ * ce qui vaut pour toute la plateforme — l'émetteur, l'adresse de
+ * vérification, le format des références — plus le diagnostic de la
+ * configuration, qui est la première chose qu'on vient chercher quand quelque
+ * chose ne fonctionne pas.
+ */
 
 import { useState } from "react";
 import { resetDb } from "../../data/store.js";
 import { Field } from "../../ui/primitives.jsx";
 
 function AdminSettings(p) {
-  const [nt, setNt] = useState({ code: "", name: "", description: "", default_duration: 20, validity_period: 24 });
-  const [askReset, setAskReset] = useState(false);
+  const [confirmer, setConfirmer] = useState(false);
 
-  const doReset = () => {
+  const reinitialiser = () => {
     p.setDb(resetDb());
-    setAskReset(false);
+    setConfirmer(false);
     p.notify("Registre réinitialisé au jeu de démonstration.");
   };
 
-  const addType = async () => {
-    if (!nt.code.trim() || !nt.name.trim()) { p.notify("Le code et le libellé sont obligatoires."); return; }
-    if (p.db.types.some((t) => t.code === nt.code.toUpperCase())) { p.notify("Ce code de certification existe déjà."); return; }
-
-    const champs = {
-      code: nt.code.toUpperCase().trim(),
-      name: nt.name.trim(),
-      description: nt.description,
-      default_duration: Number(nt.default_duration),
-      validity_period: nt.validity_period ? Number(nt.validity_period) : null,
-      status: "ACTIVE",
-    };
-
-    try {
-      if (p.actions) {
-        await p.actions.addType(champs);
-      } else {
-        p.setDb((d) => ({ ...d, types: [...d.types, { id: Math.max(...d.types.map((t) => t.id)) + 1, ...champs }] }));
-      }
-      setNt({ code: "", name: "", description: "", default_duration: 20, validity_period: 24 });
-      p.notify("Type de certification ajouté.");
-    } catch (e) {
-      p.notify(e.message);
-    }
-  };
+  const modeles = p.db.templates || [];
+  const notifications = p.db.notifications || [];
+  const envoisRates = notifications.filter((n) => n.status === "PENDING" || n.status === "FAILED").length;
 
   return (
     <>
@@ -49,62 +34,104 @@ function AdminSettings(p) {
         </div>
       </div>
 
+      {/* --- diagnostic ---------------------------------------------------- */}
       <div className="vz-card" style={{ marginBottom: 16 }}>
-        <div className="vz-card-head"><h3 style={{ fontSize: 14 }}>Types de certification</h3></div>
+        <div className="vz-card-head"><h3 style={{ fontSize: 14 }}>État de la plateforme</h3></div>
         <div className="vz-tablewrap">
           <table className="vz-table">
-            <thead><tr><th>Code</th><th>Libellé</th><th>Durée</th><th>Validité</th><th>Certificats</th></tr></thead>
             <tbody>
-              {p.db.types.map((t) => (
-                <tr key={t.id}>
-                  <td className="vz-mono" style={{ fontWeight: 500 }}>{t.code}</td>
-                  <td>{t.name}</td>
-                  <td className="vz-mono vz-small">{t.default_duration} h</td>
-                  <td className="vz-small">{t.validity_period ? `${t.validity_period} mois` : "Sans expiration"}</td>
-                  <td className="vz-mono vz-small">{p.db.certificates.filter((c) => c.certificate_type_id === t.id).length}</td>
-                </tr>
-              ))}
+              <Ligne
+                quoi="Base de données"
+                etat={p.remote ? "ok" : "warn"}
+                valeur={p.remote ? "Registre Supabase connecté" : "Registre local du navigateur"}
+                detail={p.remote
+                  ? "Les écritures sont réellement enregistrées et soumises aux politiques RLS."
+                  : "Mode démonstration : les données vivent dans ce navigateur et ne sont partagées avec personne."}
+              />
+              <Ligne
+                quoi="Authentification"
+                etat={p.remote ? "ok" : "warn"}
+                valeur={p.remote ? "Supabase Auth" : "Simulée"}
+                detail={p.remote
+                  ? "Les mots de passe sont vérifiés par Supabase ; aucun n'est stocké par l'application."
+                  : "Aucun mot de passe n'est vérifié tant que les clés Supabase ne sont pas renseignées."}
+              />
+              <Ligne
+                quoi="Envoi des notifications"
+                etat={!p.remote ? "warn" : envoisRates === 0 && notifications.length > 0 ? "ok" : "info"}
+                valeur={!p.remote ? "Simulé" : notifications.length === 0 ? "Aucun envoi encore effectué" : `${notifications.length} envoi${notifications.length > 1 ? "s" : ""}, ${envoisRates} en souffrance`}
+                detail="Les invitations et les réinitialisations partent par Supabase Auth. Les avis métier passent par la fonction Edge « notifier » et son fournisseur d'envoi."
+              />
+              <Ligne
+                quoi="Modèles de certificat"
+                etat="ok"
+                valeur={modeles.length > 0 ? modeles.map((m) => m.name).join(", ") : "Modèle officiel VIZDATA"}
+                detail="A4 paysage. Le modèle utilisé est figé à la délivrance : un certificat s'imprime comme au jour où il a été délivré."
+              />
             </tbody>
           </table>
         </div>
-        <div className="vz-card-body" style={{ borderTop: "1px solid var(--trait)" }}>
-          <div className="vz-eyebrow" style={{ marginBottom: 12 }}>Ajouter un type</div>
-          <div className="vz-form-grid">
-            <Field label="Code" hint="Utilisé dans la référence : VIZ-2026-CODE-000001"><input className="vz-input" value={nt.code} onChange={(e) => setNt({ ...nt, code: e.target.value })} placeholder="PYTHON" /></Field>
-            <Field label="Libellé"><input className="vz-input" value={nt.name} onChange={(e) => setNt({ ...nt, name: e.target.value })} placeholder="Python for Data Analysis" /></Field>
-            <Field label="Durée par défaut (heures)"><input className="vz-input" type="number" value={nt.default_duration} onChange={(e) => setNt({ ...nt, default_duration: e.target.value })} /></Field>
-            <Field label="Validité (mois)" hint="Laisser vide pour un certificat sans expiration."><input className="vz-input" type="number" value={nt.validity_period} onChange={(e) => setNt({ ...nt, validity_period: e.target.value })} /></Field>
+      </div>
+
+      {/* --- identité du registre ------------------------------------------ */}
+      <div className="vz-card" style={{ marginBottom: 16 }}>
+        <div className="vz-card-head"><h3 style={{ fontSize: 14 }}>Registre</h3></div>
+        <div className="vz-card-body" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <Field label="Organisme émetteur">
+            <input className="vz-input" defaultValue="VIZDATA" readOnly style={{ background: "var(--surface)" }} />
+          </Field>
+          <Field label="Adresse de vérification" hint="Celle imprimée sur les certificats, sous le QR code.">
+            <input className="vz-input vz-mono" defaultValue="certify.vizdata.ci/verifier" readOnly style={{ background: "var(--surface)" }} />
+          </Field>
+          <Field label="Format de référence" hint="Le code du programme en fait partie : le changer après une délivrance désaccorderait les références imprimées.">
+            <input className="vz-input vz-mono" defaultValue="VIZ-{ANNÉE}-{CODE-PROGRAMME}-{NUMÉRO}" readOnly style={{ background: "var(--surface)" }} />
+          </Field>
+          <div className="vz-alert info">
+            Les certificats délivrés depuis novembre 2026 sont sans date d'expiration et sans score : ces
+            deux mentions ne figurent ni sur le document, ni dans l'espace du certifié, ni sur la page
+            publique de vérification. Les certificats anciens qui en portent les conservent, en l'état.
           </div>
-          <button className="vz-btn vz-btn-primary" style={{ marginTop: 14 }} onClick={addType}>Ajouter le type</button>
         </div>
       </div>
 
-      <div className="vz-card">
-        <div className="vz-card-head"><h3 style={{ fontSize: 14 }}>Registre</h3></div>
-        <div className="vz-card-body" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <Field label="Nom de l'organisme émetteur"><input className="vz-input" defaultValue="VIZDATA" /></Field>
-          <Field label="Domaine de vérification"><input className="vz-input vz-mono" defaultValue="certify.vizdata.ci" /></Field>
-          <Field label="Format de référence"><input className="vz-input vz-mono" defaultValue="VIZ-{ANNÉE}-{CODE}-{NUMÉRO}" readOnly style={{ background: "var(--surface)" }} /></Field>
-          <div className="vz-alert info">
-            L'expiration est calculée automatiquement à partir de la date d'échéance : un certificat échu bascule seul en « Expiré », sans intervention.
-          </div>
-          <div style={{ borderTop: "1px solid var(--trait)", paddingTop: 15 }}>
-            <div className="vz-label">Données de démonstration</div>
-            <p className="vz-small vz-muted" style={{ margin: "5px 0 11px", lineHeight: 1.6 }}>
-              Le registre est conservé dans le stockage de ce navigateur. La réinitialisation efface les modifications locales et restaure le jeu de démonstration.
+      {/* --- démonstration -------------------------------------------------- */}
+      {!p.remote && (
+        <div className="vz-card">
+          <div className="vz-card-head"><h3 style={{ fontSize: 14 }}>Données de démonstration</h3></div>
+          <div className="vz-card-body">
+            <p className="vz-small vz-muted" style={{ margin: "0 0 12px", lineHeight: 1.7 }}>
+              Le registre est conservé dans le stockage de ce navigateur. La réinitialisation efface les
+              modifications locales et restaure le jeu de démonstration — domaines, programmes, comptes et
+              certificats d'exemple.
             </p>
-            {askReset ? (
+            {confirmer ? (
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <button className="vz-btn vz-btn-danger" onClick={doReset}>Confirmer la réinitialisation</button>
-                <button className="vz-btn" onClick={() => setAskReset(false)}>Annuler</button>
+                <button className="vz-btn vz-btn-danger" onClick={reinitialiser}>Confirmer la réinitialisation</button>
+                <button className="vz-btn" onClick={() => setConfirmer(false)}>Annuler</button>
               </div>
             ) : (
-              <button className="vz-btn" onClick={() => setAskReset(true)}>Réinitialiser le registre</button>
+              <button className="vz-btn" onClick={() => setConfirmer(true)}>Réinitialiser le registre</button>
             )}
           </div>
         </div>
-      </div>
+      )}
     </>
+  );
+}
+
+const TONS = { ok: "vert", warn: "orange", info: "gris", err: "rouge" };
+const MOTS = { ok: "En place", warn: "À configurer", info: "À surveiller", err: "En échec" };
+
+function Ligne({ quoi, etat, valeur, detail }) {
+  return (
+    <tr>
+      <td style={{ fontWeight: 500, whiteSpace: "nowrap", verticalAlign: "top" }}>{quoi}</td>
+      <td style={{ verticalAlign: "top" }}><span className={"vz-badge " + TONS[etat]}>{MOTS[etat]}</span></td>
+      <td>
+        <div style={{ fontSize: 13 }}>{valeur}</div>
+        <div className="vz-small vz-muted" style={{ marginTop: 4, lineHeight: 1.6, maxWidth: 560 }}>{detail}</div>
+      </td>
+    </tr>
   );
 }
 

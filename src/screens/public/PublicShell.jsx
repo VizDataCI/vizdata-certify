@@ -1,5 +1,6 @@
 /* Coquille des écrans publics. */
 
+import { estAdministration } from "../../lib/permissions.js";
 import { Mark } from "../../ui/primitives.jsx";
 
 function PublicShell({ go, session, children }) {
@@ -10,7 +11,7 @@ function PublicShell({ go, session, children }) {
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <button className="vz-linkbtn" onClick={() => go({ view: "about" })}>À propos</button>
           {session ? (
-            <button className="vz-btn vz-btn-sm" onClick={() => go({ view: session.role === "ADMIN" ? "admin" : "dashboard", page: "dashboard" })}>Mon espace</button>
+            <button className="vz-btn vz-btn-sm" onClick={() => go(estAdministration(session) ? { view: "admin", page: "dashboard" } : { view: "dashboard" })}>Mon espace</button>
           ) : (
             <button className="vz-btn vz-btn-sm" onClick={() => go({ view: "login" })}>Se connecter</button>
           )}

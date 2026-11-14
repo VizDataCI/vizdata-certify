@@ -1,5 +1,6 @@
 /* Composants d'interface partagés. */
 
+import { useEffect } from "react";
 import { STATUS_META } from "../lib/certificates.js";
 import { VizdataMark } from "./VizdataLogo.jsx";
 
@@ -12,8 +13,10 @@ const Mark = ({ sub = "CERTIFY" }) => (
   </div>
 );
 
+/* Un statut inconnu ne doit pas faire tomber l'écran : la base peut gagner une
+   valeur d'énuméré avant que l'application ne la connaisse. */
 const Badge = ({ status }) => {
-  const m = STATUS_META[status];
+  const m = STATUS_META[status] || { tone: "gris", label: status || "—" };
   return <span className={"vz-badge " + m.tone}>{m.label}</span>;
 };
 
@@ -33,13 +36,29 @@ const Stat = ({ label, value, sub, accent }) => (
   </div>
 );
 
-function Modal({ title, onClose, children, foot, wide }) {
+/* Largeurs nommées plutôt que des nombres semés dans les écrans : « la modale
+   du certificat » est une décision de mise en page, pas un pixel. Le certificat
+   demande 1123 px pour s'afficher sans réduction sur un grand écran ; au-dessous
+   il est simplement mis à l'échelle. */
+const LARGEURS_MODALE = { normal: 660, large: 880, certificat: 1180 };
+
+function Modal({ title, onClose, children, foot, wide, taille }) {
+  const largeur = LARGEURS_MODALE[taille] || (wide ? LARGEURS_MODALE.large : LARGEURS_MODALE.normal);
+
+  /* Échap ferme : une modale qui ne se ferme qu'au clic enferme l'utilisateur
+     au clavier. */
+  useEffect(() => {
+    const auClavier = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", auClavier);
+    return () => window.removeEventListener("keydown", auClavier);
+  }, [onClose]);
+
   return (
     <div className="vz-modal-bg" onClick={onClose}>
-      <div className="vz-modal" style={wide ? { maxWidth: 860 } : null} onClick={(e) => e.stopPropagation()}>
+      <div className="vz-modal" style={{ maxWidth: largeur }} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
         <div className="vz-modal-head">
           <h3 style={{ fontSize: 15 }}>{title}</h3>
-          <button className="vz-linkbtn" onClick={onClose}>Fermer</button>
+          <button className="vz-linkbtn" onClick={onClose} aria-label="Fermer">Fermer</button>
         </div>
         <div className="vz-modal-body">{children}</div>
         {foot && <div className="vz-modal-foot">{foot}</div>}

@@ -76,7 +76,10 @@ function PublicProfile(p) {
         <div key={r.reference} className="vz-dl-row" style={{ alignItems: "center" }}>
           <dt style={{ flex: 1 }}>
             <div style={{ fontWeight: 500, color: "var(--encre)", fontSize: 13.5 }}>{r.certification}</div>
-            <div className="vz-ref vz-small vz-muted" style={{ marginTop: 3 }}>{r.reference}</div>
+            <div className="vz-small vz-muted" style={{ marginTop: 3 }}>
+              {r.domain && <span>{r.domain} · </span>}
+              <span className="vz-ref">{r.reference}</span>
+            </div>
           </dt>
           <dd style={{ flex: "0 0 auto" }}>
             <button className="vz-btn vz-btn-sm" onClick={() => p.go({ view: "verifyResult", token: r.public_token, source: "lien" })}>Vérifier</button>

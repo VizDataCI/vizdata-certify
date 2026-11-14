@@ -19,6 +19,14 @@ const CHEMINS = {
      publicités : elle doit rester lisible et stable — jamais /page-de-vente,
      jamais un paramètre de campagne dans le chemin. */
   academie: "/academie",
+  /* Les deux temps de la réinitialisation. Ils sont séparés parce qu'ils ne
+     répondent pas à la même question : le premier demande « quelle adresse ? »,
+     le second « quel nouveau mot de passe ? ». Le second est aussi l'adresse
+     de retour des liens envoyés par Supabase — invitation comme
+     réinitialisation —, donc elle doit figurer telle quelle dans les URL de
+     redirection autorisées du projet. */
+  forgotPassword: "/mot-de-passe-oublie",
+  newPassword: "/nouveau-mot-de-passe",
 };
 
 /** Chemin correspondant à une route. */

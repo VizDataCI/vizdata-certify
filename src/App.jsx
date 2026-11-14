@@ -1,7 +1,7 @@
 /* ============================================================================
-   VIZDATA CERTIFY — MVP
-   Plateforme de gestion, délivrance, archivage, partage et vérification
-   des certificats délivrés par VIZDATA.
+   VIZDATA CERTIFY
+   Plateforme de gestion, délivrance, archivage, consultation et vérification
+   des certifications délivrées par VIZDATA.
 
    Ce module porte l'état applicatif, le routage et la persistance ;
    les écrans vivent dans src/screens, les briques d'interface dans src/ui.
@@ -13,6 +13,7 @@ import { STORE_KEY, loadDb } from "./data/store.js";
 import * as api from "./data/api.js";
 import { currentUser, isAuthConfigured, onAuthChange, signIn, signOut } from "./lib/auth.js";
 import { effectiveStatus } from "./lib/certificates.js";
+import { estAdministration } from "./lib/permissions.js";
 import { currentRoute, onNavigate, pushRoute, toPath } from "./lib/router.js";
 import { NotFound } from "./screens/public/NotFound.jsx";
 import { Academie } from "./screens/academie/Academie.jsx";
@@ -21,6 +22,7 @@ import { CertifiedSpace } from "./screens/certified/CertifiedSpace.jsx";
 import { About } from "./screens/public/About.jsx";
 import { Home } from "./screens/public/Home.jsx";
 import { Login } from "./screens/public/Login.jsx";
+import { ForgotPassword, NewPassword } from "./screens/public/MotDePasse.jsx";
 import { PublicProfile } from "./screens/public/PublicProfile.jsx";
 import { VerifyResult } from "./screens/public/VerifyResult.jsx";
 import { VerifySearch } from "./screens/public/VerifySearch.jsx";
@@ -46,8 +48,8 @@ export default function App() {
   /* --- session --- */
 
   /** Profil applicatif du compte authentifié.
-      Une fois Supabase configuré, il vient de la table users : le rôle est donc
-      porté par la base et non plus par le registre du navigateur. */
+      Une fois Supabase configuré, il vient de la table users : le rôle et les
+      autorisations sont donc portés par la base, et non par le navigateur. */
   const profileFor = async (account) => {
     if (!account) return null;
     if (isAuthConfigured) return api.fetchProfile(account.id);
@@ -67,6 +69,16 @@ export default function App() {
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, []);
 
+  /** Écran d'accueil d'un compte, selon son rôle et l'état de son mot de passe. */
+  const accueilDe = (profile) => {
+    /* Un compte qui n'a pas encore choisi son mot de passe est envoyé le
+       choisir. Le laisser entrer avec le mot de passe provisoire d'une
+       invitation reviendrait à n'avoir jamais demandé qu'il en choisisse un. */
+    if (profile.must_change_password) return { view: "newPassword" };
+    if (estAdministration(profile)) return { view: "admin", page: "dashboard" };
+    return { view: "dashboard" };
+  };
+
   /** Connexion : Supabase valide l'identité, le registre fournit le profil. */
   const login = async (email, password) => {
     const account = await signIn(email, password);
@@ -80,8 +92,12 @@ export default function App() {
           : "Aucun compte ne correspond à cette adresse."
       );
     }
+    if (profile.account_status === "DISABLED") {
+      await signOut();
+      throw new Error("Ce compte a été désactivé. Contactez VIZDATA.");
+    }
     setSession(profile);
-    go(profile.role === "ADMIN" ? { view: "admin", page: "dashboard" } : { view: "dashboard" });
+    go(accueilDe(profile));
   };
 
   const logout = async () => {
@@ -90,11 +106,29 @@ export default function App() {
     go({ view: "home" });
   };
 
+  /** Le compte vient de choisir son mot de passe : il n'est plus en attente. */
+  const motDePasseChange = async () => {
+    if (!session) return;
+    if (isAuthConfigured) {
+      await api.markPasswordChanged(session.id);
+      setSession({ ...session, must_change_password: false });
+      return;
+    }
+    const maj = { ...session, must_change_password: false };
+    setDb((d) => ({ ...d, users: d.users.map((u) => (u.id === maj.id ? maj : u)) }));
+    setSession(maj);
+  };
+
   const notify = (m) => { setToast(m); setTimeout(() => setToast(""), 2600); };
 
   /* --- helpers d'accès --- */
   const userOf = (c) => db.users.find((u) => u.id === c.user_id);
   const typeOf = (c) => db.types.find((t) => t.id === c.certificate_type_id);
+  /* Le domaine se lit soit à plat (registre local), soit sur la relation
+     imbriquée que PostgREST renvoie. Les deux formes coexistent le temps
+     qu'un écran soit alimenté par l'une ou par l'autre. */
+  const domainOf = (t) =>
+    t?.certification_domains || (db.domains || []).find((d) => d.id === t?.domain_id) || null;
   const certByToken = (t) => db.certificates.find((c) => c.public_token === t);
   const certByRef = (r) => db.certificates.find((c) => c.reference.toUpperCase().trim() === r.toUpperCase().trim());
   /* L'adresse est construite par le routeur, jamais à la main : c'est elle qui
@@ -138,28 +172,33 @@ export default function App() {
      rendent la même forme d'objet ; les champs que les fonctions Supabase ne
      renvoient pas restent simplement absents, et l'interface s'adapte. */
 
-  /** Projection publique d'un certificat local, alignée sur les fonctions Supabase. */
+  /** Projection publique d'un certificat local, alignée sur les fonctions Supabase.
+   *  Ni la date d'expiration ni le score n'en font partie : ils ne sont plus
+   *  exposés, et les fonctions de la base ne les renvoient plus non plus. */
   const toPublic = (c) => {
     const u = userOf(c);
     const t = typeOf(c);
+    const d = domainOf(t);
     return {
+      id: c.id,
       reference: c.reference,
-      holder_name: `${u.first_name} ${u.last_name}`,
-      certification: t.name,
+      holder_name: u ? `${u.first_name} ${u.last_name}` : "—",
+      certification: t?.name || "—",
+      domain: d?.name || "",
+      program_code: t?.code || "",
       issuer: "VIZDATA",
       issue_date: c.issue_date,
-      expiry_date: c.expiry_date,
-      score: c.score,
       status: effectiveStatus(c),
       revoke_reason: c.revoke_reason,
       public_token: c.public_token,
-      description: t.description,
+      description: t?.description || "",
       duration: c.duration,
       trainer: c.trainer,
       signatory: c.signatory,
+      created_at: c.created_at,
       /* Les compétences sont des identifiants dans le registre local et des
          noms côté base : on aligne sur les noms. */
-      skills: (c.skills || []).map((id) => SKILLS.find((s) => s.id === id)?.name).filter(Boolean),
+      skills: (c.skills || []).map((id) => (db.skills || SKILLS).find((s) => s.id === id)?.name).filter(Boolean),
       /* Seul le registre local permet d'alimenter l'historique et les compteurs. */
       local_record: c,
     };
@@ -219,26 +258,37 @@ export default function App() {
   const findProfile = async (username) => {
     if (isAuthConfigured) return api.publicProfile(username);
     const u = db.users.find((x) => x.username === username);
-    if (!u || !u.public_profile) return [];
+    if (!u || !u.public_profile || u.account_status === "DISABLED") return [];
     return db.certificates
       .filter((c) => c.user_id === u.id && effectiveStatus(c) === "ACTIVE")
-      .map((c) => ({
-        holder_name: `${u.first_name} ${u.last_name}`,
-        certification: typeOf(c).name,
-        reference: c.reference,
-        issue_date: c.issue_date,
-        public_token: c.public_token,
-      }));
+      .map((c) => {
+        const t = typeOf(c);
+        return {
+          holder_name: `${u.first_name} ${u.last_name}`,
+          certification: t?.name || "—",
+          domain: domainOf(t)?.name || "",
+          reference: c.reference,
+          issue_date: c.issue_date,
+          public_token: c.public_token,
+        };
+      });
   };
 
   /* --- rendu --- */
-  const shared = { db, setDb, session, setSession, login, logout, route, go, notify, userOf, typeOf, certByToken, certByRef, verifyUrl, log, recordVerification, recordShare, recordPublicShare, toPublic, findByReference, findByToken, findProfile, myCertificates, saveProfile };
+  const shared = {
+    db, setDb, session, setSession, login, logout, motDePasseChange, route, go, notify,
+    userOf, typeOf, domainOf, certByToken, certByRef, verifyUrl, log,
+    recordVerification, recordShare, recordPublicShare, toPublic,
+    findByReference, findByToken, findProfile, myCertificates, saveProfile,
+  };
 
   let screen;
   switch (route.view) {
     case "verify": screen = <VerifySearch {...shared} />; break;
     case "verifyResult": screen = <VerifyResult {...shared} />; break;
     case "login": screen = <Login {...shared} />; break;
+    case "forgotPassword": screen = <ForgotPassword {...shared} />; break;
+    case "newPassword": screen = <NewPassword {...shared} />; break;
     case "about": screen = <About {...shared} />; break;
     case "academie": screen = <Academie {...shared} />; break;
     case "publicProfile": screen = <PublicProfile {...shared} />; break;

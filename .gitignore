@@ -29,3 +29,7 @@ dist-ssr
 .vercel
 .env*
 !.env.example
+
+# Rushes video de la marque : lourds, binaires, et sans rapport avec le code.
+# Ils vivent a cote du depot, pas dedans.
+media/
