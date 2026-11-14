@@ -1,93 +1,94 @@
 # Créer un titulaire
 
-`public.users.id` référence `auth.users(id)`. Une ligne de profil ne peut donc pas
-exister sans compte d'authentification, et créer un tel compte demande la clé
-`service_role` — celle qui contourne toutes les politiques RLS. Elle n'a rien à faire
-dans une application front, qui est publique par nature.
+> Ce document décrivait une limite ; elle est levée. Il décrit désormais le chemin
+> normal, et les deux cas qui restent manuels.
 
-Deux voies, selon le volume.
+## Le chemin normal : depuis l'application
 
-## 1. Depuis la console — sans rien déployer
+Un titulaire se crée depuis **Certifiés → Nouveau certifié**, ou directement depuis le
+formulaire d'attribution quand la recherche ne trouve personne. Rien d'autre n'est
+nécessaire : son compte d'accès s'ouvre et son invitation part.
 
-C'est la voie recommandée tant que les promotions restent de taille humaine.
+Ce qui se passe réellement, dans cet ordre :
 
-1. **Authentication → Users → Add user**, avec l'adresse du titulaire.
-   Cochez l'envoi d'une invitation pour qu'il choisisse son mot de passe.
-2. Relevez l'`id` du compte créé.
-3. **Table Editor → users → Insert row**, en reprenant **exactement** cet `id` :
+1. L'écran appelle la fonction Edge `inviter-titulaire`.
+2. La fonction interroge la base **avec le jeton de l'appelant**, donc sous RLS, pour
+   vérifier qu'il porte l'autorisation `creer_titulaires`.
+3. Si l'adresse est déjà connue, le profil existant est renvoyé et **rien n'est créé**.
+4. Sinon, `inviteUserByEmail` crée le compte **et** envoie le lien d'activation.
+5. Le profil est inséré dans `public.users`, avec `must_change_password = true`.
+6. Le titulaire suit le lien, atterrit sur `/nouveau-mot-de-passe` et choisit son mot
+   de passe.
+
+**Aucun mot de passe n'est produit ni envoyé.** C'est la raison du choix
+d'`inviteUserByEmail` plutôt que de `createUser` : un mot de passe provisoire expédié
+par courrier reste lisible dans la boîte de réception, dans les sauvegardes du serveur
+de messagerie, et souvent pour toujours.
+
+### Pourquoi une fonction Edge
+
+`public.users.id` référence `auth.users(id)`. Créer un titulaire suppose donc de créer
+d'abord un compte d'authentification, ce que la clé publiable ne permet pas — et ne doit
+pas permettre. Seule la clé secrète le peut, et elle contourne toutes les politiques
+RLS : elle n'a aucune raison d'approcher un navigateur, où tout ce qui est embarqué est
+lisible.
+
+La fonction est donc le seul endroit où cette clé existe, et elle n'expose qu'un geste
+très borné : « crée ce titulaire », après avoir vérifié elle-même que l'appelant en a
+le droit.
+
+### Si l'invitation ne part pas
+
+Le compte est tout de même créé, et l'écran le dit. Le titulaire peut alors passer par
+« Mot de passe oublié » sur la page de connexion. Bloquer la création parce qu'un
+courrier n'a pas pu partir serait pire : la certification ne pourrait pas être délivrée.
+
+Les causes habituelles : quota du mailer par défaut de Supabase (quelques messages par
+heure), ou SMTP personnalisé mal configuré. Les envois en souffrance sont visibles dans
+**Notifications**.
+
+## Les deux cas qui restent manuels
+
+### Le premier administrateur
+
+Il n'y a personne pour l'inviter. Depuis la console Supabase :
+
+1. **Authentication → Users → Invite user**, avec son adresse.
+2. Relevez l'identifiant du compte créé.
+3. Dans **SQL Editor** :
 
 ```sql
-insert into public.users (id, first_name, last_name, email, username, public_profile, role)
+insert into public.users (id, email, first_name, last_name, username, role, account_status)
 values (
-  '00000000-0000-0000-0000-000000000000',  -- l'id du compte d'authentification
-  'Awa', 'DIALLO', 'awa.diallo@example.ci',
-  'awa-diallo',
-  false,
-  'CERTIFIED'
+  'COLLEZ-ICI-L-IDENTIFIANT',
+  'direction@vizdata.ci',
+  'Direction',
+  'VIZDATA',
+  'vizdata',
+  'ADMIN',
+  'ACTIVE'
 );
 ```
 
-`username` sert l'adresse publique `/u/{identifiant}` : minuscules, sans accent, tirets
-en séparateur. Il doit rester unique.
+Un compte authentifié sans ligne dans `public.users` est refusé à la connexion et
+immédiatement déconnecté : l'application ne laisse pas de session orpheline.
 
-Le titulaire peut ensuite se voir délivrer des certificats depuis l'administration, et
-l'import CSV l'acceptera.
+### Changer l'adresse e-mail d'un compte
 
-## 2. Par une Edge Function — pour l'import en masse
+Un administrateur peut changer l'adresse **du profil** depuis l'application. L'adresse
+qui sert à **se connecter** appartient à l'authentification : elle se change dans
+**Authentication → Users** de la console Supabase.
 
-Nécessaire seulement si vous voulez que l'import CSV crée les comptes lui-même.
+Les deux doivent rester cohérentes, sans quoi la personne se connecte avec une adresse
+et en voit une autre dans son profil. C'est la seule opération où les deux côtés
+demandent une intervention distincte.
 
-La fonction détient la clé `service_role`, vérifie que l'appelant est administrateur,
-crée le compte puis le profil. Le principe :
+## Ce qu'un titulaire ne peut pas faire lui-même
 
-```ts
-// supabase/functions/creer-titulaire/index.ts
-import { createClient } from "npm:@supabase/supabase-js@2";
+- **Changer son adresse e-mail.** Elle identifie le compte. Le déclencheur
+  `guard_user_privileges` refuse l'écriture côté base, pas seulement à l'écran.
+- **Changer son rôle ou ses autorisations.** Même déclencheur.
+- **Se réactiver après désactivation.** Même déclencheur.
 
-Deno.serve(async (req) => {
-  const jeton = req.headers.get("Authorization")?.replace("Bearer ", "");
-  if (!jeton) return new Response("Non authentifié", { status: 401 });
-
-  // Deux clients : l'un pour vérifier l'appelant, l'autre pour agir.
-  const appelant = createClient(
-    Deno.env.get("SUPABASE_URL"),
-    Deno.env.get("SUPABASE_ANON_KEY"),
-    { global: { headers: { Authorization: `Bearer ${jeton}` } } },
-  );
-
-  const { data: estAdmin } = await appelant.rpc("is_admin");
-  if (!estAdmin) return new Response("Réservé aux administrateurs", { status: 403 });
-
-  const admin = createClient(
-    Deno.env.get("SUPABASE_URL"),
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),  // jamais côté navigateur
-  );
-
-  const { first_name, last_name, email, username } = await req.json();
-
-  const { data: compte, error } = await admin.auth.admin.inviteUserByEmail(email);
-  if (error) return new Response(error.message, { status: 400 });
-
-  const { error: erreurProfil } = await admin.from("users").insert({
-    id: compte.user.id,
-    first_name, last_name, email, username,
-    public_profile: false,
-    role: "CERTIFIED",
-  });
-  if (erreurProfil) return new Response(erreurProfil.message, { status: 400 });
-
-  return Response.json({ id: compte.user.id });
-});
-```
-
-Points de vigilance :
-
-- **La vérification `is_admin()` n'est pas décorative.** Sans elle, n'importe quel
-  visiteur muni de la clé publiable pourrait créer des comptes en masse.
-- `SUPABASE_SERVICE_ROLE_KEY` est injectée automatiquement dans l'environnement des
-  Edge Functions : elle ne doit être écrite nulle part ailleurs.
-- Le déploiement se fait par `npx supabase functions deploy creer-titulaire`, ce qui
-  suppose `supabase login` et un lien vers le projet.
-
-Côté application, il resterait à appeler cette fonction depuis `src/data/api.js` puis à
-lever le refus affiché par le formulaire et par l'import lorsqu'une adresse est inconnue.
+Il peut modifier son prénom, son nom, son téléphone, son profil LinkedIn, la visibilité
+de son profil public, et son mot de passe — ce dernier en fournissant l'ancien.

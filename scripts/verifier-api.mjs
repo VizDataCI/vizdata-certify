@@ -102,8 +102,26 @@ await verifier("fetchRegistry", async () => {
   const r = await api.fetchRegistry();
   if (r.users.length > 0) throw new Error("la table users est lisible sans session");
   if (r.certificates.length > 0) throw new Error("la table certificates est lisible sans session");
-  if (r.types.length === 0) throw new Error("les types ne sont plus lisibles publiquement");
-  return `users et certificates fermés, ${r.types.length} types et ${r.skills.length} compétences ouverts`;
+  if (r.notifications.length > 0) throw new Error("les notifications sont lisibles sans session");
+  if (r.templates.length > 0) throw new Error("les modèles de certificat sont lisibles sans session");
+  if (r.types.length === 0) throw new Error("les programmes ne sont plus lisibles publiquement");
+  return `users, certificates, notifications et modèles fermés ; ${r.types.length} programmes et ${r.skills.length} compétences ouverts`;
+});
+await verifier("fetchDomains", async () => {
+  /* Les domaines sont lisibles sans session, et c'est voulu : la page publique
+     de vérification affiche le domaine du certificat. */
+  const r = await api.fetchDomains();
+  if (!Array.isArray(r)) throw new Error("réponse inattendue");
+  if (r.length === 0) throw new Error("aucun domaine — la migration de refonte n'est pas appliquée");
+  return `${r.length} domaines lisibles publiquement`;
+});
+await verifier("fetchPrograms", async () => {
+  /* La jointure vers certification_domains est celle dont dépend tout le
+     catalogue : si la clé étrangère disparaît, PostgREST refuse l'imbrication. */
+  const r = await api.fetchPrograms();
+  if (!Array.isArray(r)) throw new Error("réponse inattendue");
+  const rattaches = r.filter((t) => t.certification_domains).length;
+  return `${r.length} programmes, dont ${rattaches} rattachés à un domaine`;
 });
 await verifier("fetchMyCertificates", async () => {
   const r = await api.fetchMyCertificates("Contrôle");
@@ -116,16 +134,30 @@ await verifier("fetchProfile", async () => {
   return "aucun profil";
 });
 
+console.log("\nAutorisations — un visiteur sans session n'en a aucune\n");
+for (const [nom, params] of [
+  ["is_admin", {}],
+  ["is_staff", {}],
+  ["has_perm", { p_perm: "attribuer_certificats" }],
+  ["has_perm", { p_perm: "creer_titulaires" }],
+]) {
+  await verifier(`${nom}${params.p_perm ? `(${params.p_perm})` : "()"}`, async () => {
+    const { supabase } = await import("../" + SORTIE.replace(/\\/g, "/") + "/supabase.js");
+    const { data, error } = await supabase.rpc(nom, params);
+    if (error) throw new Error(error.message);
+    if (data !== false) throw new Error(`répond ${JSON.stringify(data)} à un visiteur anonyme`);
+    return "faux, comme attendu";
+  });
+}
+
 console.log("\nÉcritures — doivent être bornées par les politiques\n");
 await doitEtreRefuse("createCertificate", () =>
   api.createCertificate(
     {
-      code: "EXCEL",
+      code: "EXCEL-AVA",
       user_id: INEXISTANT,
       certificate_type_id: INEXISTANT,
       issue_date: "2026-01-01",
-      expiry_date: null,
-      score: 1,
       duration: 1,
       trainer: "contrôle",
       signatory: "contrôle",
@@ -133,10 +165,20 @@ await doitEtreRefuse("createCertificate", () =>
     [],
   ),
 );
-await doitEtreRefuse("createType", () =>
-  api.createType({ code: "CONTROLE", name: "contrôle", description: "", default_duration: 1, validity_period: null, status: "ACTIVE" }),
+await doitEtreRefuse("createProgram", () =>
+  api.createProgram({ code: "CONTROLE", name: "contrôle", description: "", default_duration: 1, status: "ACTIVE" }),
 );
-await doitEtreRefuse("logAction", () => api.logAction(INEXISTANT, "CONTROLE", INEXISTANT, ""));
+await doitEtreRefuse("createDomain", () =>
+  api.createDomain({ code: "CONTROLE", name: "contrôle", description: "", status: "ACTIVE" }),
+);
+await doitEtreRefuse("setAccountRole", () => api.setAccountRole(INEXISTANT, "ADMIN", {}));
+/* Le journal ne lève pas : il ne doit jamais faire échouer l'acte qu'il
+   journalise. Son refus se lit dans la valeur renvoyée. */
+await verifier("logAction", async () => {
+  const r = await api.logAction(INEXISTANT, "CONTROLE", INEXISTANT, "");
+  if (r.ok) throw new Error("le journal accepte une écriture sans session");
+  return "refusé sans lever d'exception, comme prévu";
+});
 
 console.log("\nDurcissement — ces fonctions ne doivent plus être publiques\n");
 await doitEtreRefuse("next_reference", async () => {
@@ -148,6 +190,31 @@ await doitEtreRefuse("new_public_token", async () => {
   const { supabase } = await import("../" + SORTIE.replace(/\\/g, "/") + "/supabase.js");
   const { error } = await supabase.rpc("new_public_token");
   if (error) throw new Error(error.message);
+});
+
+console.log("\nFonctions Edge — déployées, et fermées sans autorisation\n");
+/* Un appel sans session porte la clé publiable comme jeton : la fonction doit
+   répondre, puis refuser. Les deux comptent — une fonction non déployée
+   donnerait une erreur de transport, et c'est précisément ce qu'on veut
+   distinguer d'un refus d'autorisation. */
+await verifier("inviter-titulaire", async () => {
+  try {
+    await api.inviteHolder({ email: "controle@exemple.ci", first_name: "Contrôle", last_name: "Contrôle" });
+  } catch (e) {
+    if (/injoignable|functions deploy/i.test(e.message)) throw new Error("fonction non déployée");
+    if (/autorisation|Authentification/i.test(e.message)) return "déployée, et refuse sans autorisation";
+    throw new Error("refusée, mais pour une autre raison : " + e.message);
+  }
+  throw new Error("un titulaire a été créé sans session — vérifiez le contrôle d'autorisation");
+});
+await verifier("notifier", async () => {
+  /* `notifier` n'est volontairement pas une fonction qui lève : elle rend
+     { envoye: false, raison } pour qu'un avis manqué n'interrompe jamais une
+     délivrance. C'est donc la raison qu'on lit. */
+  const r = await api.notifier("CERTIFICAT_ATTRIBUE", INEXISTANT, {});
+  if (r.envoye) throw new Error("un courrier est parti sans session");
+  if (/injoignable|functions deploy/i.test(r.raison || "")) throw new Error("fonction non déployée");
+  return "déployée, et refuse sans autorisation";
 });
 
 console.log("\nAcadémie — candidatures et cohortes\n");

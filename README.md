@@ -3,91 +3,210 @@
 Plateforme de gestion, de délivrance, d'archivage, de partage et de **vérification publique**
 des certificats délivrés par VIZDATA.
 
-> **État : en ligne.** L'application est déployée sur Vercel et branchée sur
-> Supabase — authentification, vérification publique, espace certifié et espace
-> administrateur, lectures comme écritures. Une vérification de certificat a été
-> effectuée en production, sans compte. Voir « En production ».
+> **État : le code est complet, la base est à rebrancher.**
 >
-> Sans clés, l'application retombe sur un mode démonstration autonome. Une limite
-> subsiste : la création d'un titulaire passe par la console Supabase.
+> La plateforme porte l'ensemble du périmètre fonctionnel : catégorisation à deux
+> niveaux, trois rôles avec autorisations nommées, attribution en un geste avec
+> création du titulaire, certificat A4 paysage, espace personnel, notifications,
+> tableau de bord. Tout a été éprouvé à l'usage sur le registre local.
+>
+> **Le projet Supabase `cwyxvmzodipbdawojpeh` n'existe plus** : son sous-domaine
+> renvoie NXDOMAIN sur les résolveurs publics. Le site en ligne affiche donc
+> « Registre injoignable » à chaque vérification. Voir « Reconstruire la base ».
 
 ## Démarrer
 
 ```bash
 npm install
-npm run dev
+npm run demo
 ```
 
 | Script | Effet |
 | --- | --- |
-| `npm run dev` | serveur de développement Vite |
+| `npm run dev` | serveur de développement, avec les clés de `.env.local` |
+| `npm run demo` | serveur de développement **sans base** — registre local, authentification factice |
 | `npm run build` | build de production dans `dist/` |
 | `npm run preview` | sert le build de production |
 | `npm run lint` | Oxlint |
-| `npm test` | tests unitaires (routage, règles métier, encodeur QR, clés) |
+| `npm test` | tests unitaires (routage, règles métier, rôles, mots de passe, catalogue, QR) |
 | `npm run verifier` | vérifie le contrat avec la base Supabase (voir plus bas) |
+
+`npm run demo` lit `.env.demo`, qui neutralise les clés sans toucher à `.env.local` :
+Vite charge `.env.<mode>` après `.env.local`, et le dernier chargé l'emporte. C'est le
+seul moyen d'éprouver les écrans sans projet Supabase joignable — et de faire une
+démonstration hors ligne.
 
 ### Comptes de démonstration
 
-Tant que Supabase n'est pas configuré, l'écran de connexion propose deux accès directs
+Tant que Supabase n'est pas configuré, l'écran de connexion propose trois accès directs
 et **le mot de passe est libre** : toute valeur non vide est acceptée dès lors que
 l'adresse existe au registre. Ces raccourcis disparaissent dès que l'auth est réelle.
 
-| Rôle | Adresse |
-| --- | --- |
-| Administrateur | `admin@vizdata.ci` |
-| Certifié | `fabrice.boh@vizdata.ci` |
+| Rôle | Adresse | Ce qu'il montre |
+| --- | --- | --- |
+| Administrateur | `admin@vizdata.ci` | tous les écrans |
+| Gestionnaire | `gestion@vizdata.ci` | deux autorisations sur quatre — ni catalogue, ni rôles, ni révocation |
+| Certifié | `fabrice.boh@vizdata.ci` | espace personnel, trois certifications |
 
-Référence de certificat valide pour tester la vérification : `VIZ-2026-EXCEL-000125`.
+Référence valide pour tester la vérification : `VIZ-2026-EXCEL-AVA-000125`. Les
+références du jeu de démonstration sont recalculées à chaque registre vierge, à partir
+de dates relatives à aujourd'hui — sans quoi le tableau de bord finirait par s'ouvrir
+sur « 0 délivrance sur les trente derniers jours ».
 
 ## Principes de conception
 
-Deux règles structurent tout le reste :
+Quatre règles structurent tout le reste :
 
-1. **Le statut n'est pas stocké, il est calculé.** `effectiveStatus()` recalcule
-   l'expiration à la date du jour : un certificat échu bascule seul en « Expiré »,
-   sans intervention ni tâche planifiée.
+1. **Le statut n'est pas stocké, il est calculé.** `effectiveStatus()` lit la date
+   plutôt qu'un champ : aucune tâche planifiée n'est nécessaire pour qu'un certificat
+   échu bascule en « Expiré ».
 2. **On partage la page de vérification, jamais le fichier.** Le lien diffusé pointe
    vers `/verifier/{jeton}`. Un certificat révoqué ne peut donc jamais apparaître comme
    valide, même si son PDF continue de circuler.
+3. **L'autorisation est tenue par la base, pas par l'écran.** Les politiques RLS,
+   `has_perm()` et un déclencheur sur `users` décident ; l'interface se contente de ne
+   pas proposer ce qu'elle sait refusé. Si les deux divergent, l'écran propose une
+   action que la base refuse — désagréable, jamais dangereux. L'inverse serait une faille.
+4. **Un certificat atteste d'un acquis.** Ni date d'expiration, ni score : la note
+   relève de l'évaluation, pas de l'attestation, et une péremption ferait douter d'un
+   acquis qui ne se perd pas. Les colonnes restent en base pour les certificats
+   anciens, mais ne sortent plus nulle part.
 
-Les références suivent le format `VIZ-{ANNÉE}-{CODE}-{NUMÉRO}`, par exemple
-`VIZ-2026-EXCEL-000125`. Chaque certificat porte en plus un `public_token` opaque,
+Les références suivent le format `VIZ-{ANNÉE}-{CODE-PROGRAMME}-{NUMÉRO}`, par exemple
+`VIZ-2026-EXCEL-AVA-000125`. Chaque certificat porte en plus un `public_token` opaque,
 qui est ce qui figure dans l'URL de vérification et dans le QR code.
+
+## Domaines et programmes
+
+Le registre ne connaissait qu'une liste plate de « types » : `EXCEL`, `PBI`, `DATA`. Or
+VIZDATA délivre six certifications Excel distinctes — débutant, intermédiaire, avancé,
+expert, tableaux croisés dynamiques, structuration. Un code par domaine ne pouvait pas
+les porter.
+
+| Niveau | Table | Porte |
+| --- | --- | --- |
+| Domaine | `certification_domains` | `EXCEL`, `POWERBI`, `DATA`… |
+| Programme | `certificate_types` | l'intitulé exact imprimé, son code unique, sa durée, son modèle |
+
+`certificate_types` **devient** la table des programmes plutôt que d'être doublée par
+une table neuve : elle portait déjà code, intitulé, description, durée et statut, et les
+certificats délivrés gardent ainsi leur clé étrangère — donc restent vérifiables. Le
+domaine n'est qu'une colonne de plus.
+
+Ajouter un domaine ou un programme se fait depuis **Domaines & programmes**, sans
+intervention technique. Le code entre dans la référence : l'écran prévient quand un
+programme a déjà servi, car le modifier alors désaccorderait les références imprimées.
+
+## Rôles et autorisations
+
+| Rôle | Portée |
+| --- | --- |
+| `ADMIN` | tous les droits, sans configuration |
+| `MANAGER` | ce que l'administrateur lui a accordé, autorisation par autorisation |
+| `CERTIFIED` | son espace personnel, ses propres certifications |
+
+Quatre autorisations se règlent une par une pour un gestionnaire :
+`creer_titulaires`, `attribuer_certificats`, `revoquer_certificats`, `exporter_donnees`.
+
+Elles sont stockées dans `users.permissions` (jsonb) et appliquées **par la base** :
+les politiques RLS appellent `has_perm()`, et le déclencheur `guard_user_privileges`
+refuse à quiconque n'est pas administrateur de modifier un rôle, une autorisation, un
+statut de compte ou une adresse e-mail — y compris par appel REST direct, hors de toute
+interface. Décocher une case retire donc réellement un droit.
+
+Deux verrous valent d'être connus : personne ne peut modifier son propre rôle (sans
+quoi le dernier administrateur pourrait se retirer ses droits et verrouiller la
+plateforme), et personne ne peut désactiver son propre compte.
 
 ## Les trois espaces
 
 **Public — sans compte.** Accueil et recherche par référence, page de vérification
-(verdict, titulaire, dates, score, compétences validées, motif de révocation le cas
-échéant), **consultation** du certificat, profils publics `/u/{identifiant}` pour les
-titulaires qui l'activent.
+(verdict, titulaire, certification, domaine, date de délivrance, statut, compétences
+validées, motif de révocation le cas échéant), **consultation** du certificat, profils
+publics `/u/{identifiant}` pour les titulaires qui l'activent.
 
 Consultation seulement : **ni téléchargement, ni partage**. Celui qui vérifie constate
 l'authenticité ; il n'a pas à repartir avec l'attestation d'autrui. Diffuser le document
-appartient à son titulaire, depuis son espace, et à VIZDATA depuis l'administration.
-La zone d'impression n'est pas déclarée sur ce chemin, de sorte qu'un `Ctrl+P` ne produit
-pas un certificat détouré prêt à circuler — sans prétendre empêcher une capture d'écran,
-ce qu'aucune application ne peut faire.
+appartient à son titulaire, depuis son espace, et à VIZDATA depuis l'administration. Sur
+ce chemin, le document n'est pas monté dans la zone d'impression : il n'y a donc rien à
+imprimer — sans prétendre empêcher une capture d'écran, ce qu'aucune application ne peut
+faire.
 
-**Espace certifié.** Mes certificats, téléchargement PDF, partage (LinkedIn, WhatsApp,
-e-mail, copie de lien), profil et visibilité publique.
+**Espace certifié.** Tableau de bord personnel : nombre de certifications, domaines
+couverts, et une carte par certification avec trois actions — consulter, télécharger en
+PDF, imprimer — plus le partage et le lien vers la page de vérification. Profil
+modifiable, sauf l'adresse e-mail qui identifie le compte. Changement de mot de passe
+avec vérification du mot de passe actuel.
 
-**Espace administrateur.** Tableau de bord, gestion des certificats avec filtres,
-révocation motivée, annuaire des certifiés, journal des vérifications, **import CSV
-en masse** avec analyse préalable ligne à ligne, statistiques, et paramétrage des
-types de certification.
+**Espace d'administration.** Tableau de bord par période, registre des certificats avec
+filtres combinés et pagination, attribution, annuaire des certifiés, catalogue des
+domaines et programmes, utilisateurs et rôles, journal des vérifications, notifications
+envoyées, import en série, statistiques.
 
-### Import CSV
+### Attribuer une certification
+
+Trois étapes, dans cet ordre, parce qu'un certificat ne peut pas exister sans titulaire :
+
+1. **Le certifié** — on le cherche par nom ou par adresse. S'il n'existe pas, on le crée
+   sur place : son compte d'accès s'ouvre et son invitation part avant que la
+   certification ne lui soit attribuée. Si l'adresse est déjà connue, le compte existant
+   est réutilisé — un doublon donnerait un second espace personnel, vide.
+2. **La certification** — domaine, puis programme.
+3. **La délivrance** — date, durée, formateur, signataire, compétences validées.
+
+La référence et le jeton public sont produits par la base, non par le navigateur : deux
+administrateurs qui délivrent au même instant ne doivent pas obtenir le même numéro.
+
+### Import en série
 
 Séparateur `;`, `,` ou tabulation, détecté automatiquement.
-Colonnes requises : `NOM`, `PRENOM`, `EMAIL`, `CERTIFICATION`, `DATE_EMISSION`.
-Facultatives : `DATE_EXPIRATION`, `SCORE`.
+Colonnes : `NOM`, `PRENOM`, `EMAIL`, `PROGRAMME`, `DATE_DELIVRANCE`.
 
-`CERTIFICATION` doit reprendre le **code** d'un type existant (`EXCEL`, `PBI`, `DATA`,
-`EXPERT`, `VIZ`, ou tout code ajouté depuis les paramètres). Chaque ligne est validée
-avant écriture : adresse mal formée, code inconnu, date invalide, doublon dans le
-fichier, ou certificat déjà présent au registre. Seules les lignes saines sont
-importées. En mode démonstration, un titulaire inconnu est créé au passage ; sur la base, il doit exister au préalable et la ligne est refusée sinon.
+`PROGRAMME` reprend le **code d'un programme** (`EXCEL-AVA`, `PBI-MOD`…), pas un code de
+domaine. Les anciens intitulés `CERTIFICATION` et `DATE_EMISSION` sont acceptés ;
+`DATE_EXPIRATION` et `SCORE` sont ignorées, et l'écran le dit plutôt que de faire
+silence.
+
+Chaque ligne est analysée avant la moindre écriture : adresse mal formée, programme
+inconnu, date invalide, doublon dans le fichier, certification déjà délivrée à ce
+titulaire. Les titulaires manquants sont créés et invités. Aucun avis n'est envoyé par
+ligne : cinquante messages partis d'un coup finissent en indésirables, et le fournisseur
+d'envoi applique des quotas.
+
+## Le certificat
+
+Format **A4 paysage**, gabarit de 1123 × 794 pixels CSS. Ce n'est pas un chiffre
+arbitraire : un navigateur imprime le pixel CSS à 96 points par pouce, et 1123 × 794 px
+à 96 ppp font exactement 297 × 210 mm.
+
+La conséquence est celle qu'on attend d'un document officiel : **le PDF téléchargé et le
+document imprimé ont exactement la mise en page de l'écran.** Le document n'est jamais
+remis en page pour l'impression — à l'écran il est réduit par une transformation
+d'échelle, sur le papier l'échelle est retirée et le gabarit tombe pile dans la feuille.
+Aucune dimension intérieure n'est relative à la fenêtre : une seule suffirait à faire
+mentir l'aperçu.
+
+Il est rendu **une seconde fois**, par un portail React, dans `#impression` — un
+conteneur frère de l'application, vide et masqué à l'écran. À l'impression, c'est
+l'application entière qui disparaît et lui seul qui s'affiche. La recette classique
+(`body * { visibility: hidden }` puis réafficher la zone) laisse les éléments masqués
+occuper leur place : le nombre de pages dépendait alors de la hauteur de l'écran
+sous-jacent. Ici, une page, toujours.
+
+Le basculement n'a lieu **que** lorsqu'un document est réellement monté dans cette zone
+— une classe posée sur `<html>` par `ZoneImpression`. Sans ce détail, la règle
+s'appliquerait en permanence et un `Ctrl+P` n'importe où dans la plateforme sortirait une
+page blanche, y compris sur la page publique de vérification, qu'on peut légitimement
+vouloir imprimer comme preuve de consultation. L'orientation de la feuille est injectée
+avec le document pour la même raison : une règle `@page` ne se laisse pas conditionner
+par une classe.
+
+« Télécharger en PDF » et « Imprimer » ouvrent la même boîte de dialogue — celle du
+navigateur — et c'est délibéré : son moteur produit un texte vectoriel, net à tout
+agrandissement. Les bibliothèques PDF disponibles côté navigateur passent par une capture
+en pixels, plus lourde et floue à l'impression. Ce qui distingue les deux gestes est le
+nom proposé pour le fichier : le titre du document est remplacé par la référence, de
+sorte que le titulaire enregistre `VIZ-2026-EXCEL-AVA-000125.pdf` et non le titre du site.
 
 ## Architecture
 
@@ -95,37 +214,55 @@ Aucune dépendance hors React : le QR code, les styles et le routage sont écrit
 
 ```
 src/
-  main.jsx                  point d'entrée, charge styles.css
+  main.jsx                  point d'entrée, charge les feuilles de style
   App.jsx                   état applicatif, routage, persistance
-  styles.css                feuille de style unique
+  styles.css                interface
+  certificat.css            le document seul — mesures en pixels fixes, règles d'impression
   lib/
-    qr.js                   encodeur QR — Galois Field, Reed-Solomon, versions 1 à 6, 8 masques
+    qr.js                   encodage QR (enveloppe autour de la bibliothèque qrcode)
     router.js               correspondance URL ↔ écran, historique du navigateur
     supabase.js             client, lecture des clés d'environnement
-    auth.js                 connexion, session, réinitialisation du mot de passe
+    auth.js                 connexion, session, mot de passe
+    mot-de-passe.js         exigences du mot de passe, lecture des liens de récupération
+    permissions.js          rôles et autorisations — pour l'affichage seulement
     dates.js                TODAY, formats français
     certificates.js         effectiveStatus, STATUS_META, nextReference, slugify
     series.js               agrégation mensuelle des histogrammes
   data/
     api.js                  tous les échanges avec Supabase
-    seed.js                 jeu de démonstration (types, titulaires, certificats)
+    seed.js                 jeu de démonstration (domaines, programmes, comptes, certificats)
     store.js                lecture / écriture / réinitialisation du localStorage
   ui/
+    Certificat.jsx          le document, son cadre à l'échelle et sa zone d'impression
     QRCode.jsx              rendu SVG
     VizdataLogo.jsx         logo VIZDATA en SVG
     primitives.jsx          Mark, Badge, Field, Stat, Modal, BarChart
-    AppShell.jsx            coquille des espaces authentifiés
+    AppShell.jsx            coquille des espaces authentifiés, navigation de téléphone comprise
   modals/
-    CertificateModal.jsx    certificat imprimable
+    CertificateModal.jsx    consultation, téléchargement, impression
     ShareModal.jsx          partage LinkedIn / WhatsApp / e-mail / lien
   screens/
-    public/                 PublicShell, Home, About, VerifySearch,
-                            VerifyResult, PublicProfile, Login, NotFound
+    public/                 PublicShell, Home, About, VerifySearch, VerifyResult,
+                            PublicProfile, Login, MotDePasse, NotFound
     certified/              CertifiedSpace
-    admin/                  AdminSpace, Dashboard, Certificates, CertificateDetail,
-                            CertificateForm, RevokeModal, Certified, Verifications,
-                            Import, Stats, Settings
+    admin/                  AdminSpace, actions.js, Dashboard, Certificates,
+                            CertificateDetail, CertificateForm, RevokeModal,
+                            Certified, HolderForm, Catalogue, Utilisateurs,
+                            Verifications, Notifications, Import, Stats, Settings
+supabase/
+  migrations/               le schéma, rejouable sur un projet vierge
+  functions/
+    inviter-titulaire/      crée le compte d'accès et envoie l'invitation
+    notifier/               envoie les avis métier
 ```
+
+**`screens/admin/actions.js` mérite une mention.** Chaque écran portait sa propre
+bifurcation « si le registre distant est configuré, appeler l'API ; sinon, modifier
+l'objet local ». Le même raisonnement était donc réécrit dans le formulaire de
+certificat, dans les paramètres, dans l'import — avec des divergences inévitables. La
+bifurcation est désormais prise une fois : les écrans appellent toujours la même méthode
+et ignorent d'où vient la donnée. Les deux régimes se comportent pareil, et la
+démonstration reste une démonstration honnête du produit.
 
 Le routage est fait maison, sans dépendance : `lib/router.js` traduit l'URL en écran et
 inversement, `App.jsx` empile les changements dans l'historique du navigateur. L'état
@@ -136,21 +273,23 @@ en local, seul le chemin compte.
 
 ### Modèle de données
 
-Le modèle de référence est celui de la base Supabase, relevé dans
-[docs/schema.md](docs/schema.md) : neuf tables, quatre types énumérés, RLS partout.
+Le modèle de référence est celui de la base Supabase, décrit dans
+[docs/schema.md](docs/schema.md) : douze tables, RLS partout, et le chemin public servi
+par des fonctions `security definer`.
 
-Le registre local n'est plus qu'un mode de repli, utilisé quand les clés sont absentes.
-Il regroupe `users` · `types` · `certificates` · `verifications` · `shares` ·
-`audit_logs` en un objet unique, conservé sous la clé `vizdata_certify_v1` du
-`localStorage` et réécrit 400 ms après chaque modification. Au premier chargement — ou
-si le stockage est indisponible — le jeu de `buildSeed()` prend le relais.
-**Paramètres → Registre → Réinitialiser le registre** revient à cet état initial.
+Le registre local n'est qu'un mode de repli, utilisé quand les clés sont absentes. Il
+regroupe `users` · `domains` · `types` · `templates` · `certificates` · `verifications`
+· `shares` · `audit_logs` · `notifications` en un objet unique, conservé sous la clé
+`vizdata_certify_v2` du `localStorage` et réécrit 400 ms après chaque modification.
+
+La clé porte un numéro de version, et ce numéro ne suffit pas : la forme est vérifiée
+avant d'être acceptée. Un registre écrit par une version intermédiaire, ou tronqué par
+un quota, est écarté au profit du jeu de démonstration plutôt que de laisser
+l'application se casser sur un `undefined`.
+**Paramètres → Données de démonstration → Réinitialiser** revient à l'état initial.
 
 Les deux sources rendent la même forme d'objet, si bien que les écrans ignorent laquelle
 les alimente.
-
-Le PDF n'est pas généré : « Enregistrer en PDF » ouvre la boîte d'impression du
-navigateur sur une zone mise en forme par `@media print`.
 
 ## Authentification
 
@@ -161,7 +300,7 @@ L'application tourne sous deux régimes, selon que les clés Supabase sont prés
 | Clés `VITE_SUPABASE_*` | absentes | présentes |
 | Mot de passe | non vérifié | vérifié par Supabase |
 | Session | perdue au rechargement | persistée et rafraîchie |
-| Mot de passe oublié | message factice | lien envoyé par courriel |
+| Mot de passe oublié | écran complet, sans envoi réel | lien envoyé par courriel |
 | SDK Supabase dans le bundle | éliminé (≈200 ko économisés) | embarqué |
 
 Le profil affiché — prénom, nom, **rôle** — est lu dans la table `users`, dont la clé
@@ -174,21 +313,105 @@ orpheline.
 En mode démonstration, le profil reste cherché dans le registre local par correspondance
 d'adresse e-mail.
 
+Il n'y a volontairement pas d'inscription libre : un registre de certifications n'a pas
+à laisser n'importe qui se créer un compte. Les titulaires sont invités par
+l'administration.
+
+### La réinitialisation du mot de passe
+
+Elle ne fonctionnait pas, et pour une raison qui ne se voyait pas : l'e-mail partait,
+le lien était valide, et le mot de passe restait l'ancien. `redirectTo` pointait vers
+`window.location.origin` — la page d'accueil. Supabase y ouvrait bien une session de
+récupération, puis plus rien : aucun formulaire n'attendait. Le lien n'était pas en
+cause ; il n'y avait pas d'arrivée.
+
+La chaîne compte désormais trois pièces :
+
+| Étape | Où |
+| --- | --- |
+| Demander un lien | `/mot-de-passe-oublie` |
+| Recevoir le lien | Supabase, vers `/nouveau-mot-de-passe` |
+| Écrire le mot de passe | `/nouveau-mot-de-passe` |
+
+`/nouveau-mot-de-passe` traite les **quatre** états de l'arrivée : le lien est reconnu
+mais la session n'est pas encore ouverte ; la session est ouverte et le formulaire
+écrit ; Supabase a refusé — lien expiré, déjà utilisé, altéré — et l'on propose d'en
+redemander un ; le mot de passe est écrit et on emmène l'utilisateur. Le refus est lu
+**avant** que le SDK n'efface le fragment de l'adresse, et dans les deux emplacements
+que Supabase a utilisés selon les versions : le fragment et la chaîne de requête.
+
+La même adresse sert de retour aux invitations : un titulaire invité y choisit son
+premier mot de passe. Tant qu'il ne l'a pas fait (`users.must_change_password`), toute
+connexion l'y ramène.
+
+Deux exigences côté produit : huit caractères avec une lettre et un chiffre — modeste à
+dessein, des règles plus sévères poussent à écrire son mot de passe sur un papier — et
+la vérification du **mot de passe actuel** lors d'un changement depuis l'espace
+personnel. Supabase ne la fait pas : `updateUser` écrit sans rien demander, de sorte
+qu'un poste laissé déverrouillé suffirait à prendre le compte.
+
 ### Mise en service
 
 1. Créez un projet sur [supabase.com](https://supabase.com) — c'est à vous de le faire,
    la création de compte ne peut pas être déléguée.
-2. Dans **Project Settings → API**, relevez l'URL du projet et la clé `anon` **publique**.
-   La clé `service_role` ne doit jamais entrer dans ce dépôt : elle contourne toutes les
-   règles d'accès et le front est public par nature.
-3. Copiez `.env.example` en `.env.local` et renseignez les deux valeurs.
-4. Créez les comptes dans **Authentication → Users**, avec exactement les mêmes adresses
-   que celles du registre — c'est l'adresse qui fait la jointure.
-5. Relancez `npm run dev` : Vite ne relit pas les variables d'environnement à chaud.
+2. Rejouez les migrations dans l'ordre des noms de fichiers (voir « Reconstruire la base »).
+3. Dans **Project Settings → API Keys**, relevez l'URL du projet et la clé **publiable**
+   (`sb_publishable_…`). La clé secrète ne doit jamais entrer dans ce dépôt : elle
+   contourne toutes les règles d'accès, et le paquet livré au navigateur est public.
+4. Copiez `.env.example` en `.env.local` et renseignez les deux valeurs.
+5. Dans **Authentication → URL Configuration**, déclarez `https://certify.vizdata.ci/nouveau-mot-de-passe`
+   et `http://localhost:5173/nouveau-mot-de-passe` parmi les **Redirect URLs**. Sans
+   cela, Supabase substitue le Site URL et l'on retombe exactement sur le défaut décrit
+   plus haut.
+6. Déployez les deux fonctions Edge (voir « Les fonctions Edge »).
+7. Créez le premier administrateur à la main : invitez-le depuis **Authentication →
+   Users**, puis insérez sa ligne dans `public.users` avec `role = 'ADMIN'`. C'est le
+   seul compte qui ne peut pas être créé depuis l'application — il n'y a personne pour
+   l'inviter.
+8. Relancez `npm run dev` : Vite ne relit pas les variables d'environnement à chaud.
 
-Il n'y a volontairement pas d'inscription libre : un registre de certifications
-n'a pas à laisser n'importe qui se créer un compte. Les titulaires sont invités
-depuis la console Supabase.
+## Les fonctions Edge
+
+Deux gestes demandent la clé secrète du projet, qui ne doit jamais approcher un
+navigateur. Ils vivent donc côté serveur, et **vérifient eux-mêmes l'autorisation de
+l'appelant** en interrogeant la base avec le jeton de celui-ci, donc sous RLS.
+
+| Fonction | Rôle |
+| --- | --- |
+| `inviter-titulaire` | crée le compte d'authentification, le profil, et envoie l'invitation |
+| `notifier` | envoie les avis métier — certification attribuée, profil modifié |
+
+```bash
+supabase functions deploy inviter-titulaire
+supabase functions deploy notifier
+supabase secrets set SITE_URL=https://certify.vizdata.ci
+```
+
+`inviter-titulaire` utilise `inviteUserByEmail`, qui crée le compte **et** envoie le
+lien : aucun mot de passe n'est produit, donc aucun secret ne circule par courrier. Si
+l'adresse existe déjà, le profil existant est renvoyé tel quel — un doublon donnerait
+deux espaces personnels à la même personne, dont un vide. Si le courrier ne part pas, le
+compte est tout de même créé et l'écran le dit : le titulaire passera par « mot de passe
+oublié » plutôt que d'être bloqué.
+
+Si l'insertion du profil échoue après la création du compte, le compte est supprimé :
+une session authentifiée sans profil serait refusée à la connexion, et resterait là
+indéfiniment.
+
+`notifier` a besoin d'un fournisseur d'envoi — Supabase n'envoie que les courriers
+d'authentification. À défaut, il **n'échoue pas** : la notification est inscrite en
+attente et l'écran **Notifications** la montre. L'attribution d'un certificat ne doit
+pas échouer parce qu'un e-mail n'a pas pu partir ; le certificat est délivré, et déjà
+visible dans l'espace du titulaire.
+
+```bash
+supabase secrets set RESEND_API_KEY=re_...
+supabase secrets set NOTIFY_FROM="VIZDATA CERTIFY <certify@vizdata.ci>"
+```
+
+Le destinataire est toujours lu en base, jamais pris dans la requête : sans cela,
+l'adresse de la fonction suffirait à envoyer du courrier au nom de VIZDATA à n'importe
+qui.
 
 ## Adresses
 
@@ -201,8 +424,14 @@ depuis la console Supabase.
 | `/a-propos` | présentation du registre |
 | `/academie` | page de vente de la formation CITIZEN DATA ANALYST |
 | `/connexion` | connexion |
+| `/mot-de-passe-oublie` | demande d'un lien de réinitialisation |
+| `/nouveau-mot-de-passe` | **adresse de retour des liens Supabase** — invitation et réinitialisation |
 | `/espace` | espace certifié |
-| `/administration` | espace administrateur |
+| `/administration` | espace d'administration |
+
+`/nouveau-mot-de-passe` est inscrite dans la configuration du projet Supabase et dans
+des messages déjà envoyés : la changer casserait les liens en circulation. Un test la
+fige.
 
 Tout autre chemin affiche une page « introuvable » sobre, qui ne dit rien de ce qui
 existe ou non à cette adresse.
@@ -291,25 +520,34 @@ intact : il n'est ni redessiné ni recoloré.
 npm test
 ```
 
-66 tests, exécutés par le lanceur intégré de Node — **aucune dépendance de test dans le
-projet**. Ils couvrent trois choses, choisies parce qu'elles sont pures et que leur
-régression serait silencieuse :
+107 tests, exécutés par le lanceur intégré de Node — **aucune dépendance de test dans le
+projet**. Ils couvrent ce qui est pur et dont la régression serait silencieuse :
 
 - **le routage** — aller-retour entre adresse et écran, encodage des jetons, chemins
-  inconnus ; c'est ce qui garantit qu'un lien de certificat ouvre la bonne page ;
+  inconnus, et les deux adresses de la chaîne de mot de passe, qui sont inscrites dans
+  la configuration Supabase et dans des courriers déjà envoyés ;
 - **les règles métier** — `effectiveStatus()`, qui porte le principe « le statut est
-  calculé, pas stocké », et qui doit rester d'accord avec `effective_status()` côté
-  base ; la numérotation des références ; les identifiants publics ;
+  calculé, pas stocké » et doit rester d'accord avec `effective_status()` côté base ;
+  la numérotation des références ; les identifiants publics ;
+- **les rôles et autorisations** — l'administrateur peut tout, le gestionnaire ce qu'on
+  lui a accordé, le gestionnaire sans autorisation rien, et un compte désactivé perd
+  l'accès sans perdre son rôle ;
+- **le mot de passe** — les exigences, et surtout la lecture du lien de retour :
+  invitation, flux PKCE, lien expiré, refus posé en chaîne de requête. C'est la
+  correction centrale du cahier des charges, et la seule partie de la chaîne qui ne
+  dépende ni du réseau ni du navigateur ;
+- **le catalogue et le registre de démonstration** — chaque programme rattaché à un
+  domaine, codes uniques, intitulé distinct du code, aucune expiration ni score
+  résiduel, références au bon format et uniques, délivrances récentes, trois rôles
+  représentés ;
 - **les candidatures de l'académie** — normalisation des numéros WhatsApp, validation du
   formulaire, calcul de l'économie du paiement intégral, et surtout l'export CSV : BOM,
   point-virgule, guillemets doublés, point-virgule à l'intérieur d'une motivation. Un
   export qui décale ses colonnes se découvre d'ordinaire dans Excel, devant quelqu'un ;
-- **l'encodeur QR** — dimensions normalisées, motifs de repérage aux trois coins,
-  motifs de synchronisation, déterminisme, et refus explicite d'un contenu trop long
-  plutôt qu'un code tronqué donc illisible.
-
-Le décodage complet d'un QR code n'est pas vérifié : il faudrait un décodeur. Le
-contrôle porte sur la structure, c'est-à-dire ce sur quoi un lecteur se cale d'abord.
+- **les QR codes** — structure (motifs de repérage, synchronisation, déterminisme) et
+  **décodage réel** par jsQR. Les deux sont nécessaires : un encodeur écrit à la main
+  passait tous les contrôles de structure et ne produisait aucun code lisible par un
+  téléphone. La structure ne prouve pas la lisibilité.
 
 ## Vérifier le contrat avec la base
 
@@ -318,10 +556,12 @@ npm run verifier
 ```
 
 Le script exécute le **vrai** code de `src/data/api.js` contre la **vraie** base, en
-position de visiteur anonyme, et contrôle douze points : les fonctions publiques
-répondent, les tables restent fermées, les jointures correspondent au schéma, les
-écritures sont refusées par les politiques, et les deux fonctions utilitaires durcies
-ne sont plus exécutables sans session.
+position de visiteur anonyme. Il contrôle que les fonctions publiques répondent, que les
+tables sensibles restent fermées — `users`, `certificates`, `notifications`, les modèles
+—, que les jointures correspondent au schéma, que `is_admin`, `is_staff` et `has_perm`
+répondent faux sans session, que les écritures sont refusées par les politiques, que les
+deux fonctions utilitaires durcies ne sont plus exécutables, et que les deux fonctions
+Edge sont déployées **et** refusent un appel sans autorisation.
 
 Il ne remplace pas des tests unitaires. Il répond à la question qui casse le plus
 souvent en silence : *les requêtes correspondent-elles encore au schéma, et les
@@ -333,34 +573,69 @@ build ne connaissent votre base.
 
 ## En production
 
-L'application est déployée sur Vercel, projet `vizdata-certify-registre` :
+**https://certify.vizdata.ci** — c'est l'adresse qui compte : elle est inscrite en dur
+dans tous les QR codes déjà imprimés.
 
-**https://vizdata-certify-registre.vercel.app**
+Relevé le 14 novembre 2026 :
 
-C'est l'adresse **stable** du projet : elle suit le dernier déploiement en production.
-Chaque déploiement reçoit en plus une adresse qui lui est propre, du type
-`vizdata-certify-registre-k4j8lo6f2-…vercel.app` — utile pour comparer deux versions,
-mais à ne jamais diffuser : elle fige une version et ne bougera plus.
+| Constat | Détail |
+| --- | --- |
+| Hébergement | **nginx sur Scaleway** (51.15.160.8), plus Vercel |
+| Routes | les dix répondent 200, repli SPA compris |
+| En-têtes de sécurité | les quatre sont appliqués |
+| Registre | **inopérant** — « Registre injoignable » à chaque vérification |
+| Paquet servi | en retard de plusieurs commits |
 
-Si le projet est renommé `vizdata-certify`, l'adresse stable devient
-`https://vizdata-certify.vercel.app`.
+Le changement d'hébergeur n'est documenté nulle part dans ce dépôt : **la procédure de
+mise à jour du serveur nginx reste à établir et à écrire ici.** Tant qu'elle ne l'est
+pas, personne ne peut remettre le site à jour sans accès à ce serveur.
 
-Vérifié en conditions réelles le 21 août 2026, sans compte et depuis un navigateur :
+L'ancienne adresse Vercel sert encore un paquet plus ancien encore. Deux sites vivants,
+aucun fonctionnel.
 
-- les huit adresses répondent 200, dont `/verifier/{jeton}` — le lien imprimé sur les
-  certificats — grâce au repli SPA ;
-- une vérification affiche le verdict complet : titulaire, dates, score, statut,
-  compétences validées ;
-- les quatre en-têtes de sécurité sont appliqués ;
-- `users` et `certificates` renvoient zéro ligne à un visiteur anonyme **alors que la
-  table contient un certificat** : le verrouillage RLS est mesuré, plus seulement déduit ;
-- CORS autorise le domaine déployé.
+### Reconstruire la base
 
-Un certificat de démonstration reste au registre pour ces contrôles. Pour le retirer :
+Le projet Supabase `cwyxvmzodipbdawojpeh` n'existe plus — `NXDOMAIN` sur Google DNS
+comme sur Cloudflare, alors que `supabase.co` résout normalement. Ce n'est ni un
+pare-feu ni une panne passagère.
 
-```sql
-delete from public.certificates where reference = 'VIZ-2026-EXCEL-000001';
-```
+Le schéma, lui, est désormais reconstructible : il est dans ce dépôt. Sur un projet
+vierge, rejouez les migrations **dans l'ordre des noms de fichiers** :
+
+| Fichier | Effet |
+| --- | --- |
+| `20260818_socle.sql` | neuf tables, quatre énumérés, fonctions du chemin public, RLS |
+| `20260819_verification_details.sql` | projection étendue des fonctions de vérification |
+| `20260819_ecritures_manquantes.sql` | écriture du journal, `record_share` |
+| `20260819_durcissement.sql` | retire deux fonctions utilitaires au rôle PUBLIC |
+| `20261106_academie.sql` | cohortes et candidatures |
+| `20261114_refonte.sql` | domaines, programmes, rôles, modèles, notifications |
+
+Toutes sont **rejouables** : chaque objet est créé « si absent », chaque politique est
+supprimée avant d'être recréée. Elles s'appliquent donc aussi bien à un projet vierge
+qu'à un projet qui porte déjà une partie du schéma.
+
+Le socle est une **reconstruction**. Le schéma d'origine avait été écrit à la main dans
+la console SQL et n'avait jamais été versionné : seules les migrations qui le faisaient
+évoluer étaient suivies. Le jour où le projet a disparu, le schéma a disparu avec lui.
+C'est la dette que `20260818_socle.sql` solde — et la leçon vaut d'être retenue : un
+schéma qui ne vit que dans une console n'est pas sauvegardé.
+
+**Ce que le dépôt ne peut pas reconstituer, ce sont les certificats délivrés.** Si des
+certifications avaient été enregistrées dans ce projet, leurs références et leurs jetons
+publics sont perdus, et les QR codes imprimés correspondants ne mèneront plus à rien.
+
+### Sauvegardes
+
+À mettre en place sur le nouveau projet, parce que l'incident ci-dessus se reproduira
+autrement :
+
+- **Point-in-time recovery** dans Supabase (offre payante) — c'est la seule protection
+  contre une suppression ou une erreur d'écriture.
+- Un export régulier hors de Supabase : `supabase db dump --data-only`, conservé
+  ailleurs que chez l'hébergeur. Un registre de certifications est une pièce probante ;
+  sa perte ne se rattrape pas.
+- Les migrations de ce dépôt couvrent la **structure**, jamais les données.
 
 ### Deux points à traiter
 
@@ -533,23 +808,21 @@ Un aperçu par certificat suppose un rendu côté serveur. Deux voies, par ordre
 Il manque également une image de partage : `og:image` n'est pas renseigné, faute de
 visuel VIZDATA disponible.
 
-## Où en est la migration
-
-Le projet Supabase `cwyxvmzodipbdawojpeh` porte le schéma complet : 9 tables, RLS active
-sur toutes, 15 politiques, et 9 fonctions dont trois `security definer` qui servent le
-chemin public. Le détail est relevé dans [docs/schema.md](docs/schema.md).
+## Ce qui passe par la base
 
 | Écran | Source des données | Écriture |
 | --- | --- | --- |
-| Connexion | **Supabase** — mot de passe vérifié, profil et rôle lus dans `users` | — |
-| Accueil, vérification par référence | **Supabase** — `verify_by_reference` | consultation enregistrée |
-| Vérification par jeton (QR, lien) | **Supabase** — `verify_certificate` | consultation enregistrée |
-| Profil public | **Supabase** — `public_profile` | — |
-| Espace certifié | **Supabase** — table `certificates`, RLS `certificates_owner_select` | profil modifiable |
-| Espace administrateur | **Supabase** | création, modification, révocation, types, import |
+| Connexion | **Supabase** — mot de passe vérifié, profil, rôle et autorisations lus dans `users` | — |
+| Accueil, vérification par référence | `verify_by_reference` | consultation enregistrée |
+| Vérification par jeton (QR, lien) | `verify_certificate` | consultation enregistrée |
+| Profil public | `public_profile` | — |
+| Espace certifié | table `certificates`, RLS `certificates_owner_select` | profil, mot de passe |
+| Administration | tables, sous RLS | attribution, révocation, catalogue, rôles, import |
+| Création d'un titulaire | fonction Edge `inviter-titulaire` | compte, profil, invitation |
+| Avis métier | fonction Edge `notifier` | trace dans `notifications` |
 
-L'application est donc hybride le temps de la migration. Les deux chemins rendent la même
-forme d'objet : les écrans publics ne savent pas d'où viennent les données.
+Les deux chemins — distant et local — rendent la même forme d'objet : les écrans ne
+savent pas d'où viennent les données.
 
 ### Écritures
 
@@ -562,20 +835,18 @@ La référence et le jeton public sont produits par `next_reference()` et
 `new_public_token()` côté base, pour que la numérotation reste cohérente si deux
 administrateurs créent un certificat en même temps.
 
-### La limite qui subsiste
+### La limite qui a été levée
 
-`public.users.id` référence `auth.users(id)` : **créer un titulaire suppose de créer
-d'abord un compte d'authentification**, ce que la clé publiable ne permet pas — et ne
-doit pas permettre. En mode Supabase :
+`public.users.id` référence `auth.users(id)` : créer un titulaire suppose de créer
+d'abord un compte d'authentification, ce que la clé publiable ne permet pas — et ne doit
+pas permettre. L'application refusait donc toute adresse inconnue, et demandait d'aller
+ouvrir le compte dans la console Supabase avant de revenir : l'attribution était une
+opération en deux visites, et l'import en masse écartait purement et simplement les
+titulaires nouveaux.
 
-- le formulaire refuse une adresse inconnue et explique qu'il faut ouvrir le compte
-  depuis la console ;
-- l'import CSV marque les lignes concernées « Titulaire inconnu du registre » et ne
-  les crée pas.
-
-La marche à suivre — invitation depuis la console, ou Edge Function pour l'import en
-masse — est détaillée dans [docs/creation-titulaires.md](docs/creation-titulaires.md),
-avec le code de la fonction et ses pièges.
+La fonction Edge `inviter-titulaire` lève cette limite sans affaiblir quoi que ce soit :
+la clé secrète reste côté serveur, et la fonction vérifie elle-même, sous RLS, que
+l'appelant porte l'autorisation `creer_titulaires`.
 
 ### Durcissement
 
@@ -597,19 +868,23 @@ continuent de répondre normalement.
 Les fonctions publiques et le registre local rendent le même objet :
 
 ```
-reference, holder_name, certification, issuer, issue_date, expiry_date, score,
-status, revoke_reason, public_token, description, duration, trainer, signatory, skills
+reference, holder_name, certification, domain, issuer, issue_date, status,
+revoke_reason, public_token, description, duration, trainer, signatory, skills
 ```
 
 Les écrans publics ignorent donc d'où viennent les données, et la page de vérification
-affiche la même chose dans les deux modes : compétences validées, certificat imprimable,
-QR code et partage.
+affiche la même chose dans les deux modes.
 
-Cette égalité a demandé d'étendre les fonctions de vérification — voir
-`supabase/migrations/20260819_verification_details.sql`. Elles ne renvoyaient au départ
-que neuf colonnes, sans les compétences, sans `duration`, `trainer` ni `signatory`, et
-sans `public_token`, ce qui privait de QR code toute vérification faite par saisie de
-référence.
+Cette projection a bougé deux fois. D'abord pour s'élargir
+(`20260819_verification_details.sql`) : elle ne rendait que neuf colonnes, sans les
+compétences, sans `duration`, `trainer` ni `signatory`, et sans `public_token` — ce qui
+privait de QR code toute vérification faite par saisie de référence. Puis pour se
+resserrer (`20261114_refonte.sql`) : `expiry_date` et `score` en sortent, `domain` y
+entre. Les deux mentions retirées ne sont donc pas seulement masquées à l'écran — elles
+ne quittent plus la base.
+
+`verify_by_reference` délègue à `verify_certificate` par un `select *` : **les deux
+signatures doivent changer ensemble**, sous peine de casser la seconde.
 
 Une seule différence subsiste, et elle est voulue : le **comptage des partages** n'existe
 qu'en mode démonstration. La table `shares` n'accepte aucune écriture anonyme, et il
@@ -633,14 +908,25 @@ lui donne.
   trouvent détaillées — dont celle-ci, qui prime : une entreprise sort souvent par une
   seule adresse IP, et un service RH vérifiant vingt candidats se verrait répondre
   « certificat introuvable », le pire message possible pour un registre officiel.
-- **Créer un titulaire passe par la console Supabase.** Voir
-  [docs/creation-titulaires.md](docs/creation-titulaires.md).
+- **Le registre en ligne est inopérant.** Le projet Supabase n'existe plus. Voir
+  « Reconstruire la base ».
+- **La procédure de déploiement du serveur nginx n'est pas écrite.** L'hébergement est
+  passé de Vercel à Scaleway sans que ce dépôt en garde trace. Tout ce qui suit sur
+  Vercel reste exact pour Vercel, et sans objet pour l'hébergement courant.
 - **Les aperçus de partage sont génériques.** Un lien vers un certificat affiche la
   carte du registre, pas le nom du titulaire : les robots sociaux n'exécutent pas le
   JavaScript. Voir « Aperçus de partage ».
-- **Le PDF n'est pas un fichier.** « Enregistrer en PDF » ouvre la boîte d'impression du
-  navigateur sur une zone mise en forme par `@media print`. La colonne `pdf_url` de la
-  base n'est pas alimentée.
+- **Le PDF n'est pas un fichier produit par le serveur.** « Télécharger en PDF » ouvre la
+  boîte d'impression du navigateur. C'est un choix, pas un manque : le moteur
+  d'impression produit un texte vectoriel, là où les bibliothèques PDF côté navigateur
+  passent par une capture en pixels. La colonne `pdf_url` n'est pas alimentée.
+- **Les notifications métier demandent un fournisseur d'envoi.** Sans `RESEND_API_KEY`,
+  elles sont inscrites en attente et visibles dans l'écran Notifications ; rien n'est
+  envoyé, et rien ne prétend l'avoir été.
+- **Les composants ne sont pas testés automatiquement.** Les enchaînements d'écrans ont
+  été éprouvés à la main, en mode démonstration, jusqu'à la délivrance d'une
+  certification complète — création du titulaire, attribution, vérification publique,
+  espace personnel. Ce n'est pas une suite de tests.
 - **Les onglets internes ne sont pas dans l'URL.** `/administration` et `/espace`
   ouvrent toujours leur premier onglet ; un lien vers un sous-écran précis n'existe pas.
 - **Authentification factice sans clés.** En mode démonstration, aucun mot de passe
