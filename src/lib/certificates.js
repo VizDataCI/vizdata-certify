@@ -1,11 +1,20 @@
 /* Règles métier du certificat : statut, numérotation, identifiants. */
 
-import { TODAY } from "./dates.js";
-
-/** Statut effectif : l'expiration est calculée automatiquement à la date. */
-function effectiveStatus(c) {
+/**
+ * Statut effectif : l'expiration est calculée à la date, jamais stockée.
+ *
+ * La date de référence est lue à CHAQUE appel, et non une fois pour toutes au
+ * chargement du module. La nuance était sans effet dans un navigateur, où la
+ * page se recharge ; elle ne l'est plus depuis qu'un serveur appelle cette
+ * fonction : démarré un lundi, il aurait considéré jusqu'au mois suivant que
+ * l'on est toujours lundi, et un certificat échu entre-temps serait resté
+ * « valide ».
+ *
+ * Le paramètre existe pour les tests, qui ont besoin d'une date fixe.
+ */
+function effectiveStatus(c, aujourdhui = new Date()) {
   if (c.status === "REVOKED" || c.status === "CANCELLED") return c.status;
-  if (c.expiry_date && new Date(c.expiry_date) < TODAY) return "EXPIRED";
+  if (c.expiry_date && new Date(c.expiry_date) < aujourdhui) return "EXPIRED";
   return "ACTIVE";
 }
 

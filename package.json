@@ -9,6 +9,7 @@
     "prebuild": "node scripts/verifier-build.mjs",
     "build": "vite build",
     "preview": "vite preview",
+    "serveur": "node server/index.mjs",
     "base": "node scripts/base.mjs",
     "sauvegarde": "node scripts/sauvegarde.mjs",
     "lint": "oxlint",
