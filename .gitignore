@@ -37,3 +37,12 @@ dist-ssr
 # Rushes video de la marque : lourds, binaires, et sans rapport avec le code.
 # Ils vivent a cote du depot, pas dedans.
 media/
+
+# La base SQLite et ses sauvegardes. Elles portent des donnees personnelles et
+# des empreintes de mots de passe : elles n'ont rien a faire dans un depot, qui
+# se clone, se pousse et se partage. Le schema, lui, est versionne — c'est
+# server/schema/.
+data/
+*.db
+*.db-wal
+*.db-shm
