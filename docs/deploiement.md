@@ -17,6 +17,97 @@ Node   :4321 ──┘   ├── /api/*        le registre
                         └── /var/lib/vizdata-certify/certify.db
 ```
 
+## En une commande
+
+Sur le serveur, en SSH :
+
+```bash
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/VizDataCI/vizdata-certify/main/scripts/installer.sh)"
+```
+
+Ou, si le code est déjà là :
+
+```bash
+sudo bash /opt/vizdata-certify/scripts/installer.sh
+```
+
+Le script installe la première fois et met à jour les suivantes. Il est **conçu pour
+être relancé** : trois choses ne sont jamais écrasées, parce qu'une réexécution
+malheureuse coûterait le registre.
+
+| Jamais écrasé | Pourquoi |
+| --- | --- |
+| la base | évidemment |
+| la clé de chiffrement | la régénérer rendrait illisibles **toutes** les sauvegardes déjà faites, irréversiblement |
+| la configuration nginx du domaine | elle sert peut-être déjà autre chose |
+
+Il prend une sauvegarde **avant** toute mise à jour, refuse de mettre en ligne si les
+tests échouent, et s'arrête net si Node est trop ancien.
+
+Le reste de ce document explique ce qu'il fait, pour le jour où il faudra le faire à la
+main ou comprendre ce qui ne va pas.
+
+## Sur un serveur Plesk
+
+`certify.vizdata.ci` est servi par une machine administrée par Plesk
+(`web17.vename.ci:8443`). Deux choses à savoir, et elles décident de tout.
+
+**Le gestionnaire de fichiers ne suffit pas.** Le registre n'est plus un site statique :
+c'est une application qui tourne. Y déposer `dist/` donnerait une interface qui répond
+« Registre injoignable » à chaque vérification — exactement la situation d'aujourd'hui.
+Il faut un processus Node vivant.
+
+**La version de Node du panneau ne compte pas.** L'extension Node.js de Plesk gère ses
+propres applications avec sa propre version ; le registre, lui, tourne en service
+système et demande un **Node 22 ou plus installé à l'échelle du serveur** — `node:sqlite`
+en dépend, et c'est la seule exigence non contournable du projet.
+
+```bash
+node --version    # doit répondre v22 ou plus
+```
+
+Si c'est en dessous :
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt-get install -y nodejs
+```
+
+### Faire passer le domaine par le registre
+
+Plesk gère lui-même la configuration nginx du domaine : on n'édite pas les fichiers à la
+main, ils seraient réécrits. On passe par le panneau.
+
+**Sites web & domaines → certify.vizdata.ci → Apache & nginx → Directives nginx
+additionnelles :**
+
+```nginx
+location / {
+    proxy_pass         http://127.0.0.1:4321;
+    proxy_http_version 1.1;
+    proxy_set_header   Host              $host;
+    proxy_set_header   X-Real-IP         $remote_addr;
+    proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header   X-Forwarded-Proto $scheme;
+}
+```
+
+Puis **décochez « Servir les fichiers statiques directement par nginx »**. C'est le
+réglage qu'on oublie : laissé coché, nginx cherche un fichier pour `/verifier/{jeton}`,
+n'en trouve pas, et répond 404 — précisément sur l'adresse imprimée dans les QR codes.
+
+`X-Forwarded-For` n'est pas décoratif : c'est ce que le registre utilise pour limiter les
+tentatives de connexion. Sans cet en-tête, toutes les requêtes semblent venir de nginx, et
+la limitation s'appliquerait à tout le monde d'un coup.
+
+Le certificat TLS reste géré par Plesk (Let's Encrypt). Le registre n'écoute que sur la
+boucle locale et ne voit jamais le trafic extérieur directement.
+
+### Si vous n'avez pas d'accès SSH
+
+Demandez-le à l'hébergeur : sans lui, rien de ce qui suit n'est possible. Une application
+qui tourne ne s'installe pas par un gestionnaire de fichiers, quel que soit le panneau.
+
 ## Ce qu'il faut sur le serveur
 
 - **Node 22 ou plus.** `node:sqlite` en dépend, et c'est la seule exigence du projet.
