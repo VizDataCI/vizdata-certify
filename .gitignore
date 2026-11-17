@@ -46,3 +46,6 @@ data/
 *.db
 *.db-wal
 *.db-shm
+
+# Paquet de deploiement, reconstructible a tout moment par « npm run paquet ».
+paquet/

@@ -14,7 +14,8 @@
     "sauvegarde": "node scripts/sauvegarde.mjs",
     "lint": "oxlint",
     "test": "node --test \"tests/**/*.test.js\"",
-    "restaurer": "node scripts/restaurer.mjs"
+    "restaurer": "node scripts/restaurer.mjs",
+    "paquet": "npm run build && node scripts/paquet.mjs"
   },
   "dependencies": {
     "qrcode": "^1.5.4",
