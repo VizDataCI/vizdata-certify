@@ -1,57 +1,76 @@
 # VIZDATA CERTIFY
 
-Plateforme de gestion, de délivrance, d'archivage, de partage et de **vérification publique**
-des certificats délivrés par VIZDATA.
+Plateforme de gestion, de délivrance, d'archivage, de partage et de **vérification
+publique** des certificats délivrés par VIZDATA.
 
-> **État : le code est complet, la base est à rebrancher.**
+> **État : complet, et prêt à être déployé.**
 >
-> La plateforme porte l'ensemble du périmètre fonctionnel : catégorisation à deux
-> niveaux, trois rôles avec autorisations nommées, attribution en un geste avec
-> création du titulaire, certificat A4 paysage, espace personnel, notifications,
-> tableau de bord. Tout a été éprouvé à l'usage sur le registre local.
+> La base est un fichier SQLite sur le serveur VIZDATA, servi par un processus Node sans
+> aucune dépendance. Le registre précédent — un projet hébergé chez un tiers — a cessé
+> d'exister sans préavis, emportant un schéma qui n'était écrit nulle part ailleurs. Tout
+> ce qui suit découle de cette leçon : **la base doit appartenir à VIZDATA.**
 >
-> **Le projet Supabase `cwyxvmzodipbdawojpeh` n'existe plus** : son sous-domaine
-> renvoie NXDOMAIN sur les résolveurs publics. Le site en ligne affiche donc
-> « Registre injoignable » à chaque vérification. Voir « Reconstruire la base ».
+> Reste à faire côté serveur : suivre [docs/deploiement.md](docs/deploiement.md).
 
 ## Démarrer
 
+Deux processus en développement : le registre, et l'interface.
+
 ```bash
 npm install
-npm run demo
+npm run base -- init
+npm run base -- admin votre@adresse.ci
 ```
+
+```bash
+npm run serveur
+```
+
+```bash
+npm run dev
+```
+
+Puis `http://localhost:5173`, et le lien imprimé par la commande `admin` pour choisir
+votre mot de passe. Vite redirige `/api` vers le registre : sans ce mandataire, le cookie
+de session viendrait d'une autre origine que la page et ne serait jamais renvoyé.
+
+Pour tout voir sans rien installer : `npm run demo`, qui tourne seul, sans base ni
+serveur.
 
 | Script | Effet |
 | --- | --- |
-| `npm run dev` | serveur de développement, avec les clés de `.env.local` |
-| `npm run demo` | serveur de développement **sans base** — registre local, authentification factice |
-| `npm run build` | build de production dans `dist/` |
-| `npm run preview` | sert le build de production |
+| `npm run serveur` | le registre — API et application construite, port 4321 |
+| `npm run dev` | l'interface en développement, port 5173 |
+| `npm run demo` | l'interface **sans base** — registre local, authentification factice |
+| `npm run base -- init` | crée la base et le catalogue de départ |
+| `npm run base -- admin <email>` | ouvre ou promeut un administrateur |
+| `npm run base -- etat` | ce que contient la base |
+| `npm run base -- menage` | retire sessions et jetons périmés |
+| `npm run sauvegarde` | copie la base **à chaud**, base ouverte |
+| `npm run build` | construit l'interface dans `dist/` |
+| `npm test` | 203 tests, sans aucune dépendance de test |
 | `npm run lint` | Oxlint |
-| `npm test` | tests unitaires (routage, règles métier, rôles, mots de passe, catalogue, QR) |
-| `npm run verifier` | vérifie le contrat avec la base Supabase (voir plus bas) |
-
-`npm run demo` lit `.env.demo`, qui neutralise les clés sans toucher à `.env.local` :
-Vite charge `.env.<mode>` après `.env.local`, et le dernier chargé l'emporte. C'est le
-seul moyen d'éprouver les écrans sans projet Supabase joignable — et de faire une
-démonstration hors ligne.
 
 ### Comptes de démonstration
 
-Tant que Supabase n'est pas configuré, l'écran de connexion propose trois accès directs
-et **le mot de passe est libre** : toute valeur non vide est acceptée dès lors que
-l'adresse existe au registre. Ces raccourcis disparaissent dès que l'auth est réelle.
+`npm run demo` lit `.env.demo`, qui pose `VITE_MODE_DEMO=1` sans toucher à quoi que ce
+soit d'autre. L'écran de connexion propose alors trois accès directs et **le mot de passe
+est libre**.
 
 | Rôle | Adresse | Ce qu'il montre |
 | --- | --- | --- |
 | Administrateur | `admin@vizdata.ci` | tous les écrans |
 | Gestionnaire | `gestion@vizdata.ci` | deux autorisations sur quatre — ni catalogue, ni rôles, ni révocation |
-| Certifié | `fabrice.boh@vizdata.ci` | espace personnel, trois certifications |
+| Certifié | `fabrice.boh@vizdata.ci` | espace personnel, plusieurs certifications |
 
 Référence valide pour tester la vérification : `VIZ-2026-EXCEL-AVA-000125`. Les
-références du jeu de démonstration sont recalculées à chaque registre vierge, à partir
-de dates relatives à aujourd'hui — sans quoi le tableau de bord finirait par s'ouvrir
-sur « 0 délivrance sur les trente derniers jours ».
+références du jeu de démonstration sont recalculées à chaque registre vierge, à partir de
+dates relatives à aujourd'hui — sans quoi le tableau de bord finirait par s'ouvrir sur
+« 0 délivrance sur les trente derniers jours ».
+
+Ce mode ne doit jamais être mis en ligne : la connexion y accepte n'importe quel mot de
+passe. `scripts/verifier-build.mjs` refuse de construire avec cette variable, sauf
+`npm run build -- --mode demo` explicite.
 
 ## Principes de conception
 
@@ -63,10 +82,11 @@ Quatre règles structurent tout le reste :
 2. **On partage la page de vérification, jamais le fichier.** Le lien diffusé pointe
    vers `/verifier/{jeton}`. Un certificat révoqué ne peut donc jamais apparaître comme
    valide, même si son PDF continue de circuler.
-3. **L'autorisation est tenue par la base, pas par l'écran.** Les politiques RLS,
-   `has_perm()` et un déclencheur sur `users` décident ; l'interface se contente de ne
-   pas proposer ce qu'elle sait refusé. Si les deux divergent, l'écran propose une
-   action que la base refuse — désagréable, jamais dangereux. L'inverse serait une faille.
+3. **L'autorisation est tenue par le serveur, pas par l'écran.** Un seul module décide —
+   `server/autorisations.mjs` —, et il lève au lieu de rendre un booléen, parce qu'un
+   booléen se laisse oublier. L'interface se contente de ne pas proposer ce qu'elle sait
+   refusé. Si les deux divergent, l'écran propose une action que le serveur refuse :
+   désagréable, jamais dangereux. L'inverse serait une faille.
 4. **Un certificat atteste d'un acquis.** Ni date d'expiration, ni score : la note
    relève de l'évaluation, pas de l'attestation, et une péremption ferait douter d'un
    acquis qui ne se perd pas. Les colonnes restent en base pour les certificats
@@ -108,11 +128,11 @@ programme a déjà servi, car le modifier alors désaccorderait les références
 Quatre autorisations se règlent une par une pour un gestionnaire :
 `creer_titulaires`, `attribuer_certificats`, `revoquer_certificats`, `exporter_donnees`.
 
-Elles sont stockées dans `users.permissions` (jsonb) et appliquées **par la base** :
-les politiques RLS appellent `has_perm()`, et le déclencheur `guard_user_privileges`
-refuse à quiconque n'est pas administrateur de modifier un rôle, une autorisation, un
-statut de compte ou une adresse e-mail — y compris par appel REST direct, hors de toute
-interface. Décocher une case retire donc réellement un droit.
+Elles sont stockées dans `users.permissions` et appliquées **par le serveur**, sur chaque
+route, avant toute écriture. Rôle, autorisations, statut de compte et adresse e-mail sont
+réservés à l'administrateur : un gestionnaire qui enverrait une requête HTTP sur sa propre
+fiche en y glissant `role: 'ADMIN'` est refusé. Décocher une case retire donc réellement
+un droit, y compris hors de toute interface.
 
 Deux verrous valent d'être connus : personne ne peut modifier son propre rôle (sans
 quoi le dernier administrateur pourrait se retirer ses droits et verrouiller la
@@ -210,242 +230,224 @@ sorte que le titulaire enregistre `VIZ-2026-EXCEL-AVA-000125.pdf` et non le titr
 
 ## Architecture
 
-Aucune dépendance hors React : le QR code, les styles et le routage sont écrits à la main.
+Trois dépendances en tout : React, React-DOM, et `qrcode`. Le serveur n'en a aucune —
+`node:http` et `node:sqlite` sont livrés avec Node.
 
 ```
+server/                     le registre
+  index.mjs                 serveur HTTP, routes, fichiers statiques
+  db.mjs                    ouverture SQLite, pragmas, migrations
+  schema/001_socle.sql      le schéma
+  comptes.mjs               mots de passe, sessions, liens à usage unique
+  autorisations.mjs         qui a le droit de quoi — le remplaçant de RLS
+  registre.mjs              les opérations du registre
+  academie.mjs              cohortes et candidatures
+  courrier.mjs              invitation, réinitialisation, avis
+
 src/
-  main.jsx                  point d'entrée, charge les feuilles de style
+  main.jsx                  point d'entrée
   App.jsx                   état applicatif, routage, persistance
   styles.css                interface
-  certificat.css            le document seul — mesures en pixels fixes, règles d'impression
+  certificat.css            le document seul — mesures fixes, règles d'impression
   lib/
-    qr.js                   encodage QR (enveloppe autour de la bibliothèque qrcode)
-    router.js               correspondance URL ↔ écran, historique du navigateur
-    supabase.js             client, lecture des clés d'environnement
+    registre.js             le client : un fetch, un cookie
     auth.js                 connexion, session, mot de passe
-    mot-de-passe.js         exigences du mot de passe, lecture des liens de récupération
-    permissions.js          rôles et autorisations — pour l'affichage seulement
-    dates.js                TODAY, formats français
-    certificates.js         effectiveStatus, STATUS_META, nextReference, slugify
-    series.js               agrégation mensuelle des histogrammes
+    mot-de-passe.js         exigences, lecture du lien — partagé avec le serveur
+    permissions.js          rôles et autorisations — partagé avec le serveur
+    router.js               correspondance URL ↔ écran
+    qr.js                   encodage QR
+    certificates.js         effectiveStatus, nextReference, slugify
+    dates.js, series.js
   data/
-    api.js                  tous les échanges avec Supabase
-    seed.js                 jeu de démonstration (domaines, programmes, comptes, certificats)
-    store.js                lecture / écriture / réinitialisation du localStorage
+    api.js                  carnet d'adresses du registre
+    seed.js, store.js       le registre de démonstration
   ui/
-    Certificat.jsx          le document, son cadre à l'échelle et sa zone d'impression
-    QRCode.jsx              rendu SVG
-    VizdataLogo.jsx         logo VIZDATA en SVG
-    primitives.jsx          Mark, Badge, Field, Stat, Modal, BarChart
-    AppShell.jsx            coquille des espaces authentifiés, navigation de téléphone comprise
-  modals/
-    CertificateModal.jsx    consultation, téléchargement, impression
-    ShareModal.jsx          partage LinkedIn / WhatsApp / e-mail / lien
+    Certificat.jsx          le document, son cadre à l'échelle, sa zone d'impression
+    QRCode.jsx, VizdataLogo.jsx, primitives.jsx, AppShell.jsx
+  modals/                   CertificateModal, ShareModal
   screens/
-    public/                 PublicShell, Home, About, VerifySearch, VerifyResult,
-                            PublicProfile, Login, MotDePasse, NotFound
-    certified/              CertifiedSpace
-    admin/                  AdminSpace, actions.js, Dashboard, Certificates,
-                            CertificateDetail, CertificateForm, RevokeModal,
-                            Certified, HolderForm, Catalogue, Utilisateurs,
-                            Verifications, Notifications, Import, Stats, Settings
-supabase/
-  migrations/               le schéma, rejouable sur un projet vierge
-  functions/
-    inviter-titulaire/      crée le compte d'accès et envoie l'invitation
-    notifier/               envoie les avis métier
+    public/                 accueil, vérification, profil public, connexion, mot de passe
+    certified/              espace du titulaire
+    admin/                  AdminSpace, actions.js, et les douze écrans
+    academie/               page de vente
+
+scripts/
+  base.mjs                  administration de la base en ligne de commande
+  sauvegarde.mjs            copie à chaud
+  verifier-build.mjs        refuse de construire une démonstration par mégarde
+
+supabase/                   l'ANCIENNE base — histoire, plus lue par personne
 ```
+
+**Deux modules sont partagés entre le navigateur et le serveur** :
+`src/lib/permissions.js` et `src/lib/mot-de-passe.js`. Ce n'est pas une commodité. Si le
+serveur redéclarait sa propre liste d'autorisations, ou ses propres exigences de mot de
+passe, l'écran finirait par cacher une action que le serveur accepte — ou, bien pire, par
+en proposer une qu'il refuse. En les important, la divergence devient impossible.
 
 **`screens/admin/actions.js` mérite une mention.** Chaque écran portait sa propre
 bifurcation « si le registre distant est configuré, appeler l'API ; sinon, modifier
 l'objet local ». Le même raisonnement était donc réécrit dans le formulaire de
 certificat, dans les paramètres, dans l'import — avec des divergences inévitables. La
-bifurcation est désormais prise une fois : les écrans appellent toujours la même méthode
-et ignorent d'où vient la donnée. Les deux régimes se comportent pareil, et la
-démonstration reste une démonstration honnête du produit.
+bifurcation est prise une fois : les écrans appellent toujours la même méthode et
+ignorent d'où vient la donnée.
 
-Le routage est fait maison, sans dépendance : `lib/router.js` traduit l'URL en écran et
-inversement, `App.jsx` empile les changements dans l'historique du navigateur. L'état
-global et les fonctions d'accès descendent en cascade par les props sous le nom `shared`.
+### Le registre
 
-L'adresse `certify.vizdata.ci` inscrite dans les QR codes est la cible de production ;
-en local, seul le chemin compte.
+Un processus, un fichier, aucune dépendance. Il sert l'API **et** l'application
+construite : même origine, donc pas de CORS à configurer, et un cookie de session qui
+fonctionne sans rien de particulier.
+
+Ce qui tient la sécurité, dans l'ordre :
+
+1. La session est lue au début de chaque requête, depuis un cookie **HttpOnly** — donc
+   inaccessible au JavaScript de la page, ce qui met les sessions hors de portée d'une
+   injection dans l'interface. **SameSite=Lax** ferme la falsification de requête
+   inter-site sans qu'il faille gérer de jeton anti-CSRF.
+2. Chaque route déclare si elle est publique. **Une route qui ne le déclare pas exige une
+   session** : l'oubli penche du bon côté.
+3. L'autorisation fine est demandée à `server/autorisations.mjs`, **qui lève au lieu de
+   rendre un booléen**. Une fonction qui rend `false` se laisse oublier — `if (peut(…))`
+   sans `else` est une faille muette. Une fonction qui lève interrompt la route.
+4. Les erreurs inattendues ne sortent jamais telles quelles : elles sont journalisées
+   côté serveur et répondues en « une erreur interne ». Un message de SQLite renseignerait
+   sur le schéma.
+5. La connexion et la demande de réinitialisation sont limitées en débit, par adresse
+   **et** par client. Supabase s'en chargeait ; plus personne ne le fait à notre place.
 
 ### Modèle de données
 
-Le modèle de référence est celui de la base Supabase, décrit dans
-[docs/schema.md](docs/schema.md) : douze tables, RLS partout, et le chemin public servi
-par des fonctions `security definer`.
+Le schéma complet est décrit dans [docs/schema.md](docs/schema.md). Dix-sept tables, une
+vue, sept déclencheurs.
 
-Le registre local n'est qu'un mode de repli, utilisé quand les clés sont absentes. Il
-regroupe `users` · `domains` · `types` · `templates` · `certificates` · `verifications`
-· `shares` · `audit_logs` · `notifications` en un objet unique, conservé sous la clé
-`vizdata_certify_v2` du `localStorage` et réécrit 400 ms après chaque modification.
+Ce que la base refuse, aucune application ne peut le contourner : clés étrangères,
+unicité, CHECK. Un statut hors liste, une référence en double, un certificat sans
+titulaire, une révocation sans motif — refusés par le moteur.
 
-La clé porte un numéro de version, et ce numéro ne suffit pas : la forme est vérifiée
-avant d'être acceptée. Un registre écrit par une version intermédiaire, ou tronqué par
-un quota, est écarté au profit du jeu de démonstration plutôt que de laisser
-l'application se casser sur un `undefined`.
-**Paramètres → Données de démonstration → Réinitialiser** revient à l'état initial.
+Deux contraintes structurent le produit :
 
-Les deux sources rendent la même forme d'objet, si bien que les écrans ignorent laquelle
-les alimente.
+- `certificates.user_id` est en **RESTRICT** : on ne supprime pas un titulaire qui porte
+  des certificats délivrés. C'est pourquoi l'application désactive un compte et ne le
+  supprime jamais.
+- `certificats_revocation_motivee` exige un motif pour toute révocation. Il s'affiche sur
+  la page publique ; une révocation muette laisserait le titulaire et son employeur sans
+  explication.
+
+Le **registre local** reste comme mode de repli, utilisé par `npm run demo`. Il regroupe
+les mêmes collections en un objet unique, conservé sous la clé `vizdata_certify_v2` du
+`localStorage`. La clé porte un numéro de version, et ce numéro ne suffit pas : la forme
+est vérifiée avant d'être acceptée, sinon un registre écrit par une version intermédiaire
+ferait planter les écrans sur un `undefined`.
 
 ## Authentification
 
-L'application tourne sous deux régimes, selon que les clés Supabase sont présentes.
-
-| | Démonstration | Configuré |
+| | Démonstration | Registre |
 | --- | --- | --- |
-| Clés `VITE_SUPABASE_*` | absentes | présentes |
-| Mot de passe | non vérifié | vérifié par Supabase |
-| Session | perdue au rechargement | persistée et rafraîchie |
-| Mot de passe oublié | écran complet, sans envoi réel | lien envoyé par courriel |
-| SDK Supabase dans le bundle | éliminé (≈200 ko économisés) | embarqué |
+| Déclenché par | `npm run demo` | tout le reste |
+| Mot de passe | non vérifié | scrypt, vérifié par le serveur |
+| Session | perdue au rechargement | cookie HttpOnly, trente jours |
+| Mot de passe oublié | écran complet, sans envoi réel | lien envoyé par courrier |
+| Clé dans le paquet livré | aucune | **aucune** |
 
-Le profil affiché — prénom, nom, **rôle** — est lu dans la table `users`, dont la clé
-primaire référence `auth.users(id)`. Le rôle administrateur découle donc de l'identité
-authentifiée et non plus du registre du navigateur : c'est lui que la fonction
-`is_admin()` interroge pour appliquer les politiques. Un compte authentifié sans ligne
-dans `users` est refusé et immédiatement déconnecté, pour ne pas laisser de session
-orpheline.
+### Le navigateur ne détient plus aucun secret
 
-En mode démonstration, le profil reste cherché dans le registre local par correspondance
-d'adresse e-mail.
+C'est le changement le plus important, et il mérite d'être dit clairement.
 
-Il n'y a volontairement pas d'inscription libre : un registre de certifications n'a pas
-à laisser n'importe qui se créer un compte. Les titulaires sont invités par
-l'administration.
+Avec Supabase, le paquet livré au navigateur devait embarquer la clé publiable du projet.
+Tout un garde-fou de construction existait pour éviter qu'une clé **secrète** s'y glisse
+par mégarde — garde-fou ajouté après trois incidents réels : une clé absente, une clé
+secrète livrée au navigateur, une clé tronquée au collage qui avait produit un
+déploiement d'apparence saine sur lequel chaque vérification répondait « Invalid API
+key ».
+
+Ces trois incidents ne peuvent plus se produire. Les identifiants du registre ne quittent
+pas le serveur, et la session est un cookie que la page ne peut même pas lire. Une
+catégorie entière d'accidents a disparu avec la dépendance qui l'apportait — et avec
+elle 217 ko de paquet.
+
+### Les mots de passe
+
+**scrypt**, livré avec Node, avec un sel par mot de passe et les paramètres de calcul
+inscrits dans chaque empreinte, au format `scrypt$N$r$p$sel$empreinte`.
+
+Trois décisions, et leurs raisons :
+
+- **scrypt plutôt qu'un hachage rapide.** SHA-256 sur un mot de passe se casse à des
+  milliards d'essais par seconde sur une carte graphique. scrypt est lent *et* gourmand
+  en mémoire, ce qui rend l'attaque matérielle coûteuse.
+- **Un sel par mot de passe.** Sans sel, deux personnes ayant le même mot de passe ont la
+  même empreinte, et une table précalculée les casse toutes les deux d'un coup.
+- **Les paramètres stockés avec l'empreinte.** Le coût devra être relevé dans quelques
+  années ; en l'inscrivant dans chaque empreinte, les anciens mots de passe restent
+  vérifiables pendant que les nouveaux coûtent plus cher. Sans cela, relever le coût
+  invaliderait tous les comptes d'un coup.
+
+La comparaison est à temps constant. Comparer deux empreintes avec `===` s'arrête au
+premier octet différent, et la durée de la réponse renseigne alors sur le nombre d'octets
+corrects. L'attaque est réelle, et l'éviter ne coûte rien.
+
+Le calcul est effectué **même lorsque l'adresse est inconnue** : sans cela, une réponse
+immédiate trahirait l'absence du compte.
 
 ### La réinitialisation du mot de passe
 
-Elle ne fonctionnait pas, et pour une raison qui ne se voyait pas : l'e-mail partait,
-le lien était valide, et le mot de passe restait l'ancien. `redirectTo` pointait vers
-`window.location.origin` — la page d'accueil. Supabase y ouvrait bien une session de
-récupération, puis plus rien : aucun formulaire n'attendait. Le lien n'était pas en
-cause ; il n'y avait pas d'arrivée.
-
-La chaîne compte désormais trois pièces :
+Elle ne fonctionnait pas, et pour une raison qui ne se voyait pas : l'e-mail partait, le
+lien était valide, et le mot de passe restait l'ancien. L'adresse de retour visait la
+page d'accueil, où aucun formulaire n'attendait. Le lien n'était pas en cause ; il n'y
+avait pas d'arrivée.
 
 | Étape | Où |
 | --- | --- |
 | Demander un lien | `/mot-de-passe-oublie` |
-| Recevoir le lien | Supabase, vers `/nouveau-mot-de-passe` |
+| Recevoir le lien | par courrier, vers `/nouveau-mot-de-passe?jeton=…` |
 | Écrire le mot de passe | `/nouveau-mot-de-passe` |
 
-`/nouveau-mot-de-passe` traite les **quatre** états de l'arrivée : le lien est reconnu
-mais la session n'est pas encore ouverte ; la session est ouverte et le formulaire
-écrit ; Supabase a refusé — lien expiré, déjà utilisé, altéré — et l'on propose d'en
-redemander un ; le mot de passe est écrit et on emmène l'utilisateur. Le refus est lu
-**avant** que le SDK n'efface le fragment de l'adresse, et dans les deux emplacements
-que Supabase a utilisés selon les versions : le fragment et la chaîne de requête.
+Le mécanisme a maigri en même temps qu'il était réparé. Le lien porte un secret dans son
+adresse, l'écran l'envoie au serveur avec le nouveau mot de passe, et **c'est le serveur
+qui tranche** : valide, expiré, ou déjà utilisé. Plus de session à attendre, plus de
+fragment à lire avant qu'un SDK ne l'efface, plus de quatre états dont trois venaient de
+l'URL.
 
-La même adresse sert de retour aux invitations : un titulaire invité y choisit son
-premier mot de passe. Tant qu'il ne l'a pas fait (`users.must_change_password`), toute
-connexion l'y ramène.
+Trois garde-fous, parce qu'un lien de réinitialisation est une clé du compte :
 
-Deux exigences côté produit : huit caractères avec une lettre et un chiffre — modeste à
-dessein, des règles plus sévères poussent à écrire son mot de passe sur un papier — et
-la vérification du **mot de passe actuel** lors d'un changement depuis l'espace
-personnel. Supabase ne la fait pas : `updateUser` écrit sans rien demander, de sorte
-qu'un poste laissé déverrouillé suffirait à prendre le compte.
+- **Seule l'empreinte du jeton est stockée.** Le fichier de base est copié pour les
+  sauvegardes ; s'il contenait des jetons utilisables, toute sauvegarde égarée donnerait
+  accès aux comptes.
+- **Le lien expire** — une heure pour une réinitialisation, sept jours pour une
+  invitation — **et ne sert qu'une fois.** Sans cela, un lien qui traîne dans une boîte
+  de réception reste une clé, des années durant.
+- **Demander un second lien invalide le premier.** Deux liens valides en circulation,
+  c'est une porte de plus, et la plus ancienne est celle qui a eu le plus de temps pour
+  être lue par quelqu'un d'autre.
 
-### Mise en service
+Le secret est **retiré de la barre d'adresse** dès qu'il est lu. Sinon il reste dans
+l'historique du navigateur, sur une capture d'écran, et dans l'en-tête `Referer` de la
+première requête vers un site tiers.
 
-1. Créez un projet sur [supabase.com](https://supabase.com) — c'est à vous de le faire,
-   la création de compte ne peut pas être déléguée.
-2. Rejouez les migrations dans l'ordre des noms de fichiers (voir « Reconstruire la base »).
-3. Dans **Project Settings → API Keys**, relevez l'URL du projet et la clé **publiable**
-   (`sb_publishable_…`). La clé secrète ne doit jamais entrer dans ce dépôt : elle
-   contourne toutes les règles d'accès, et le paquet livré au navigateur est public.
-4. Copiez `.env.example` en `.env.local` et renseignez les deux valeurs.
-5. Dans **Authentication → URL Configuration**, déclarez `https://certify.vizdata.ci/nouveau-mot-de-passe`
-   et `http://localhost:5173/nouveau-mot-de-passe` parmi les **Redirect URLs**. Sans
-   cela, Supabase substitue le Site URL et l'on retombe exactement sur le défaut décrit
-   plus haut.
-6. Déployez les deux fonctions Edge (voir « Les fonctions Edge »).
-7. Créez le premier administrateur à la main : invitez-le depuis **Authentication →
-   Users**, puis insérez sa ligne dans `public.users` avec `role = 'ADMIN'`. C'est le
-   seul compte qui ne peut pas être créé depuis l'application — il n'y a personne pour
-   l'inviter.
-8. Relancez `npm run dev` : Vite ne relit pas les variables d'environnement à chaud.
+Changer de mot de passe depuis l'espace personnel exige **le mot de passe actuel**, et
+**ferme les sessions des autres appareils** : c'est exactement ce qu'on fait quand on
+soupçonne que le compte est compromis.
 
-## Les fonctions Edge
+### Les courriers
 
-Deux gestes demandent la clé secrète du projet, qui ne doit jamais approcher un
-navigateur. Ils vivent donc côté serveur, et **vérifient eux-mêmes l'autorisation de
-l'appelant** en interrogeant la base avec le jeton de celui-ci, donc sous RLS.
+Quatre messages : invitation, réinitialisation, certification attribuée, profil modifié.
+Un seul gabarit, en tableaux — ce qui survit aux clients de messagerie, qui ignorent
+flexbox et une bonne part du CSS.
 
-| Fonction | Rôle |
-| --- | --- |
-| `inviter-titulaire` | crée le compte d'authentification, le profil, et envoie l'invitation |
-| `notifier` | envoie les avis métier — certification attribuée, profil modifié |
-
-```bash
-supabase functions deploy inviter-titulaire
-supabase functions deploy notifier
-supabase secrets set SITE_URL=https://certify.vizdata.ci
-```
-
-`inviter-titulaire` utilise `inviteUserByEmail`, qui crée le compte **et** envoie le
-lien : aucun mot de passe n'est produit, donc aucun secret ne circule par courrier. Si
-l'adresse existe déjà, le profil existant est renvoyé tel quel — un doublon donnerait
-deux espaces personnels à la même personne, dont un vide. Si le courrier ne part pas, le
-compte est tout de même créé et l'écran le dit : le titulaire passera par « mot de passe
-oublié » plutôt que d'être bloqué.
-
-Si l'insertion du profil échoue après la création du compte, le compte est supprimé :
-une session authentifiée sans profil serait refusée à la connexion, et resterait là
-indéfiniment.
-
-`notifier` a besoin d'un fournisseur d'envoi — Supabase n'envoie que les courriers
-d'authentification. À défaut, il **n'échoue pas** : la notification est inscrite en
-attente et l'écran **Notifications** la montre. L'attribution d'un certificat ne doit
-pas échouer parce qu'un e-mail n'a pas pu partir ; le certificat est délivré, et déjà
-visible dans l'espace du titulaire.
-
-```bash
-supabase secrets set RESEND_API_KEY=re_...
-supabase secrets set NOTIFY_FROM="VIZDATA CERTIFY <certify@vizdata.ci>"
-```
+Sans `RESEND_API_KEY`, l'envoi **n'échoue pas** : la notification est inscrite en attente,
+l'écran Notifications la montre, et le lien est imprimé dans la console du serveur — ce
+qui rend la chaîne d'invitation éprouvable sans compte tiers. Attribuer un certificat ne
+doit pas échouer parce qu'un e-mail n'a pas pu partir : le certificat est délivré, et
+déjà visible dans l'espace du titulaire.
 
 Le destinataire est toujours lu en base, jamais pris dans la requête : sans cela,
-l'adresse de la fonction suffirait à envoyer du courrier au nom de VIZDATA à n'importe
-qui.
-
-## Adresses
-
-| Chemin | Écran |
-| --- | --- |
-| `/` | accueil, recherche par référence |
-| `/verifier` | saisie d'une référence |
-| `/verifier/{jeton}` | verdict de vérification — **c'est l'adresse imprimée dans le QR code** |
-| `/u/{identifiant}` | profil public d'un certifié |
-| `/a-propos` | présentation du registre |
-| `/academie` | page de vente de la formation CITIZEN DATA ANALYST |
-| `/connexion` | connexion |
-| `/mot-de-passe-oublie` | demande d'un lien de réinitialisation |
-| `/nouveau-mot-de-passe` | **adresse de retour des liens Supabase** — invitation et réinitialisation |
-| `/espace` | espace certifié |
-| `/administration` | espace d'administration |
-
-`/nouveau-mot-de-passe` est inscrite dans la configuration du projet Supabase et dans
-des messages déjà envoyés : la changer casserait les liens en circulation. Un test la
-fige.
-
-Tout autre chemin affiche une page « introuvable » sobre, qui ne dit rien de ce qui
-existe ou non à cette adresse.
-
-Une vérification faite par saisie de référence redirige vers `/verifier/{jeton}` : le
-lien obtenu est donc partageable tel quel. Le certificat déjà résolu voyage avec la
-route, de sorte que la page ne redemande pas ce qu'elle vient d'obtenir — sans quoi une
-seconde consultation serait comptée.
+l'adresse de l'API suffirait à envoyer du courrier au nom de VIZDATA à n'importe qui.
 
 ## L'académie CITIZEN DATA ANALYST
 
 `/academie` est la page de vente de la formation Excel + Power BI : huit jours en
 présentiel à Abidjan, en cohortes trimestrielles. Elle vit dans la même application que
-le registre parce qu'elle partage sa marque, son projet Supabase, son déploiement et son
+le registre parce qu'elle partage sa marque, sa base, son déploiement et son
 espace d'administration — mais c'est un second métier, et le code le dit : son contenu,
 ses styles et son accès distant sont dans `src/academie/`, ses écrans dans
 `src/screens/academie/`, et ses deux écrans d'administration forment leur propre groupe
@@ -466,9 +468,12 @@ Il n'y a pas non plus de section « témoignages » : il n'y a pas de témoignag
 1. Le visiteur remplit le formulaire. `validerCandidature()` dit ce qui manque avant
    l'envoi ; les mêmes règles sont écrites en contraintes dans la base, parce que le
    navigateur ne fait jamais autorité.
-2. `soumettre_candidature()` — fonction `security definer` — enregistre la ligne et rend
-   une référence `CDA-2026-0001`. La table `candidatures` reste **fermée** : ni lecture
-   ni écriture directe pour un visiteur, comme `certificates`.
+2. `POST /api/academie/candidature` enregistre la ligne et rend une référence
+   `CDA-2026-0001`. **Aucune route publique ne lit cette table** : une candidature porte
+   un nom, un numéro de téléphone et une adresse e-mail. Les deux engagements du
+   candidat sont exigés par la base autant que par le formulaire, et trois candidatures
+   par adresse et par jour suffisent — au-delà, le formulaire public servirait à remplir
+   la table.
 3. La confirmation s'affiche avec la référence.
 4. `api/notifier-candidature.mjs` envoie l'alerte à `contact@vizdata.ci` et l'accusé de
    réception au candidat.
@@ -487,23 +492,18 @@ de ce genre d'endpoint, et elle est évitée ici par construction.
 
 ### Mise en service
 
-1. **Appliquer la migration.** `supabase/migrations/20261106_academie.sql`, depuis le
-   SQL Editor de la console Supabase — comme les précédentes. Elle crée `cohortes`,
-   `candidatures`, leurs politiques et les deux fonctions publiques.
-   Tant qu'elle n'est pas appliquée, le formulaire affiche un message qui la nomme.
-2. **Contrôler le contrat.** `npm run verifier` vérifie que `cohorte_publique()` répond,
-   que `soumettre_candidature()` refuse une candidature sans engagement, et que les deux
-   tables restent fermées à un visiteur anonyme.
-3. **Créer la première cohorte** dans `Administration → Cohortes`, puis la publier.
-4. **Les e-mails** (facultatif) : renseigner chez l'hébergeur `SUPABASE_URL`,
-   `SUPABASE_SERVICE_ROLE_KEY` et `RESEND_API_KEY` — voir `.env.example`. Aucune ne porte
-   le préfixe `VITE_`, donc aucune n'entre dans le paquet navigateur. La clé de service
-   ne doit jamais rejoindre `.env.local` : `npm run build` refuse d'ailleurs de
-   construire avec une clé secrète côté client.
-5. **Les photographies** : déposer les portraits officiels dans `public/academie/` —
-   voir [docs/visuels-academie.md](docs/visuels-academie.md). En leur absence, la page affiche
-   les initiales sur un fond de marque — jamais une image cassée, jamais un portrait de
-   banque d'images qui ferait passer un inconnu pour un formateur.
+1. **Rien à migrer** : les tables `cohortes` et `candidatures` font partie du socle,
+   appliqué au premier démarrage du serveur.
+2. **Créer la première cohorte** dans `Administration → Cohortes`, puis la publier.
+   Sans cohorte publiée, la page affiche le programme sans date — c'est préférable à une
+   date inventée qu'il faudrait ensuite démentir.
+3. **Les e-mails** (facultatif) : `RESEND_API_KEY` sur le serveur. Aucune variable du
+   registre ne porte le préfixe `VITE_`, donc aucune n'entre dans le paquet livré au
+   navigateur.
+4. **Les photographies** : déposer les portraits officiels dans `public/academie/` —
+   voir [docs/visuels-academie.md](docs/visuels-academie.md). En leur absence, la page
+   affiche les initiales sur un fond de marque — jamais une image cassée, jamais un
+   portrait de banque d'images qui ferait passer un inconnu pour un formateur.
 
 ### Les couleurs du graphique ne sont pas celles du logo
 
@@ -514,272 +514,135 @@ une vision deutéranope (ΔE 3,5 — mesuré, pas estimé). Le trio retenu passe
 de séparation, de bande de clarté et de contraste sur fond blanc. Le logo, lui, reste
 intact : il n'est ni redessiné ni recoloré.
 
+## Adresses
+
+| Chemin | Écran |
+| --- | --- |
+| `/` | accueil, recherche par référence |
+| `/verifier` | saisie d'une référence |
+| `/verifier/{jeton}` | verdict de vérification — **c'est l'adresse imprimée dans le QR code** |
+| `/u/{identifiant}` | profil public d'un certifié |
+| `/a-propos` | présentation du registre |
+| `/academie` | page de vente de la formation CITIZEN DATA ANALYST |
+| `/connexion` | connexion |
+| `/mot-de-passe-oublie` | demande d'un lien de réinitialisation |
+| `/nouveau-mot-de-passe` | **arrivée des liens d'invitation et de réinitialisation** |
+| `/espace` | espace certifié |
+| `/administration` | espace d'administration |
+
+`/nouveau-mot-de-passe` figure dans des messages déjà envoyés : la changer casserait les
+liens en circulation. Un test la fige.
+
+Tout autre chemin affiche une page « introuvable » sobre, qui ne dit rien de ce qui
+existe ou non à cette adresse.
+
+Une vérification faite par saisie de référence redirige vers `/verifier/{jeton}` : le
+lien obtenu est donc partageable tel quel. Le certificat déjà résolu voyage avec la
+route, de sorte que la page ne redemande pas ce qu'elle vient d'obtenir — sans quoi une
+seconde consultation serait comptée.
+
+### L'API
+
+| Méthode | Chemin | Accès |
+| --- | --- | --- |
+| GET | `/api/verifier/{jeton}` | public |
+| GET | `/api/verifier?reference=` | public |
+| GET | `/api/profil/{identifiant}` | public |
+| POST | `/api/partage` | public |
+| POST · GET · DELETE | `/api/session` | public |
+| POST | `/api/mot-de-passe/oubli` · `/definir` | public |
+| POST | `/api/mot-de-passe/changer` | session |
+| GET | `/api/mes-certificats` | session |
+| PATCH | `/api/moi` | session |
+| GET | `/api/registre` | administration |
+| POST | `/api/titulaires` | `creer_titulaires` |
+| PATCH | `/api/comptes/{id}` | selon le champ écrit |
+| POST · PATCH | `/api/certificats` | `attribuer_certificats` |
+| POST | `/api/certificats/{id}/statut` | `revoquer_certificats` |
+| POST · PATCH | `/api/domaines` · `/api/programmes` | administrateur |
+| GET | `/api/academie/cohorte` | public |
+| POST | `/api/academie/candidature` | public |
+| le reste de `/api/academie/*` | | administration |
+
+Une méthode inadaptée répond **405** et nomme la bonne, plutôt que de parler d'adresse
+inconnue : la table des routes n'est pas un secret, elle est dans le paquet servi au
+navigateur.
+
 ## Tests
 
 ```bash
 npm test
 ```
 
-107 tests, exécutés par le lanceur intégré de Node — **aucune dépendance de test dans le
-projet**. Ils couvrent ce qui est pur et dont la régression serait silencieuse :
+**203 tests**, exécutés par le lanceur intégré de Node — aucune dépendance de test dans
+le projet.
 
-- **le routage** — aller-retour entre adresse et écran, encodage des jetons, chemins
-  inconnus, et les deux adresses de la chaîne de mot de passe, qui sont inscrites dans
-  la configuration Supabase et dans des courriers déjà envoyés ;
-- **les règles métier** — `effectiveStatus()`, qui porte le principe « le statut est
-  calculé, pas stocké » et doit rester d'accord avec `effective_status()` côté base ;
-  la numérotation des références ; les identifiants publics ;
-- **les rôles et autorisations** — l'administrateur peut tout, le gestionnaire ce qu'on
-  lui a accordé, le gestionnaire sans autorisation rien, et un compte désactivé perd
-  l'accès sans perdre son rôle ;
-- **le mot de passe** — les exigences, et surtout la lecture du lien de retour :
-  invitation, flux PKCE, lien expiré, refus posé en chaîne de requête. C'est la
-  correction centrale du cahier des charges, et la seule partie de la chaîne qui ne
-  dépende ni du réseau ni du navigateur ;
-- **le catalogue et le registre de démonstration** — chaque programme rattaché à un
-  domaine, codes uniques, intitulé distinct du code, aucune expiration ni score
-  résiduel, références au bon format et uniques, délivrances récentes, trois rôles
-  représentés ;
-- **les candidatures de l'académie** — normalisation des numéros WhatsApp, validation du
-  formulaire, calcul de l'économie du paiement intégral, et surtout l'export CSV : BOM,
-  point-virgule, guillemets doublés, point-virgule à l'intérieur d'une motivation. Un
-  export qui décale ses colonnes se découvre d'ordinaire dans Excel, devant quelqu'un ;
-- **les QR codes** — structure (motifs de repérage, synchronisation, déterminisme) et
-  **décodage réel** par jsQR. Les deux sont nécessaires : un encodeur écrit à la main
-  passait tous les contrôles de structure et ne produisait aucun code lisible par un
-  téléphone. La structure ne prouve pas la lisibilité.
+| Ce qui est couvert | Pourquoi |
+| --- | --- |
+| **Autorisations** (31) | le remplaçant de RLS. Si ce module se trompe, rien ne rattrape l'erreur. |
+| **Serveur, de bout en bout** (35) | un vrai processus, une vraie base, de vraies requêtes avec cookies |
+| **Comptes** (25) | mots de passe, sessions, liens à usage unique |
+| **Schéma** (14) | ce que la base refuse, quoi que fasse le code au-dessus |
+| **Catalogue et démonstration** | programmes rattachés, codes uniques, aucun score résiduel |
+| **Routage** | aller-retour adresse ↔ écran ; les deux adresses de la chaîne de mot de passe |
+| **Mot de passe** | exigences, lecture du lien, effacement du secret de l'adresse |
+| **QR codes** | structure **et** décodage réel par jsQR |
+| **Académie** | validation, calcul des tarifs, export CSV |
 
-## Vérifier le contrat avec la base
+Deux remarques sur ce choix de couverture.
 
-```bash
-npm run verifier
-```
+**Les tests d'autorisation sont ce que la migration fait gagner.** Les politiques RLS de
+Postgres étaient plus sûres par construction — elles vivaient dans la base — mais elles
+n'ont jamais pu être éprouvées, faute de projet vivant. L'autorisation est passée d'un
+endroit sûr et invérifiable à un endroit ordinaire et entièrement vérifié. Les tests
+unitaires disent que la serrure fonctionne ; les tests d'intégration disent qu'elle est
+posée sur la porte.
 
-Le script exécute le **vrai** code de `src/data/api.js` contre la **vraie** base, en
-position de visiteur anonyme. Il contrôle que les fonctions publiques répondent, que les
-tables sensibles restent fermées — `users`, `certificates`, `notifications`, les modèles
-—, que les jointures correspondent au schéma, que `is_admin`, `is_staff` et `has_perm`
-répondent faux sans session, que les écritures sont refusées par les politiques, que les
-deux fonctions utilitaires durcies ne sont plus exécutables, et que les deux fonctions
-Edge sont déployées **et** refusent un appel sans autorisation.
-
-Il ne remplace pas des tests unitaires. Il répond à la question qui casse le plus
-souvent en silence : *les requêtes correspondent-elles encore au schéma, et les
-politiques tiennent-elles ?* Une colonne renommée, une relation supprimée, une politique
-relâchée par mégarde — cela se voit ici et nulle part ailleurs, puisque ni le lint ni le
-build ne connaissent votre base.
-
-À lancer après toute modification du schéma, et avant chaque mise en production.
+**Les QR codes sont testés deux fois.** Un encodeur écrit à la main passait jadis tous
+les contrôles de structure sans produire un seul code lisible par un téléphone. La
+structure ne prouve pas la lisibilité.
 
 ## En production
 
-**https://certify.vizdata.ci** — c'est l'adresse qui compte : elle est inscrite en dur
-dans tous les QR codes déjà imprimés.
+Tout est dans **[docs/deploiement.md](docs/deploiement.md)** : nginx, systemd,
+sauvegardes, mise à jour, et ce qui peut mal se passer.
 
-Relevé le 14 novembre 2026 :
-
-| Constat | Détail |
-| --- | --- |
-| Hébergement | **nginx sur Scaleway** (51.15.160.8), plus Vercel |
-| Routes | les dix répondent 200, repli SPA compris |
-| En-têtes de sécurité | les quatre sont appliqués |
-| Registre | **inopérant** — « Registre injoignable » à chaque vérification |
-| Paquet servi | en retard de plusieurs commits |
-
-Le changement d'hébergeur n'est documenté nulle part dans ce dépôt : **la procédure de
-mise à jour du serveur nginx reste à établir et à écrire ici.** Tant qu'elle ne l'est
-pas, personne ne peut remettre le site à jour sans accès à ce serveur.
-
-L'ancienne adresse Vercel sert encore un paquet plus ancien encore. Deux sites vivants,
-aucun fonctionnel.
-
-### Reconstruire la base
-
-Le projet Supabase `cwyxvmzodipbdawojpeh` n'existe plus — `NXDOMAIN` sur Google DNS
-comme sur Cloudflare, alors que `supabase.co` résout normalement. Ce n'est ni un
-pare-feu ni une panne passagère.
-
-Le schéma, lui, est désormais reconstructible : il est dans ce dépôt. Sur un projet
-vierge, rejouez les migrations **dans l'ordre des noms de fichiers** :
-
-| Fichier | Effet |
-| --- | --- |
-| `20260818_socle.sql` | neuf tables, quatre énumérés, fonctions du chemin public, RLS |
-| `20260819_verification_details.sql` | projection étendue des fonctions de vérification |
-| `20260819_ecritures_manquantes.sql` | écriture du journal, `record_share` |
-| `20260819_durcissement.sql` | retire deux fonctions utilitaires au rôle PUBLIC |
-| `20261106_academie.sql` | cohortes et candidatures |
-| `20261114_refonte.sql` | domaines, programmes, rôles, modèles, notifications |
-
-Toutes sont **rejouables** : chaque objet est créé « si absent », chaque politique est
-supprimée avant d'être recréée. Elles s'appliquent donc aussi bien à un projet vierge
-qu'à un projet qui porte déjà une partie du schéma.
-
-Le socle est une **reconstruction**. Le schéma d'origine avait été écrit à la main dans
-la console SQL et n'avait jamais été versionné : seules les migrations qui le faisaient
-évoluer étaient suivies. Le jour où le projet a disparu, le schéma a disparu avec lui.
-C'est la dette que `20260818_socle.sql` solde — et la leçon vaut d'être retenue : un
-schéma qui ne vit que dans une console n'est pas sauvegardé.
-
-**Ce que le dépôt ne peut pas reconstituer, ce sont les certificats délivrés.** Si des
-certifications avaient été enregistrées dans ce projet, leurs références et leurs jetons
-publics sont perdus, et les QR codes imprimés correspondants ne mèneront plus à rien.
+En résumé : un processus Node derrière nginx, et un fichier dans
+`/var/lib/vizdata-certify/`. Pas de base à administrer, pas de service tiers, pas de clé
+dans le paquet livré au navigateur.
 
 ### Sauvegardes
 
-À mettre en place sur le nouveau projet, parce que l'incident ci-dessus se reproduira
-autrement :
-
-- **Point-in-time recovery** dans Supabase (offre payante) — c'est la seule protection
-  contre une suppression ou une erreur d'écriture.
-- Un export régulier hors de Supabase : `supabase db dump --data-only`, conservé
-  ailleurs que chez l'hébergeur. Un registre de certifications est une pièce probante ;
-  sa perte ne se rattrape pas.
-- Les migrations de ce dépôt couvrent la **structure**, jamais les données.
-
-### Deux points à traiter
-
-**La protection de déploiement est désactivée** sur ce projet, ce qui est nécessaire : un
-registre dont la vocation est d'être vérifiable sans compte ne peut pas rester derrière
-une authentification Vercel. Ce n'est pas la base qui est exposée — seule la clé publiable
-circule, et les politiques RLS protègent les données.
-
-**L'ancien projet `vizdata-certify` a été supprimé.** Il était resté bloqué après qu'un
-déploiement a été effacé en cours de construction : toute mise en ligne suivante y restait
-suspendue indéfiniment, y compris un paquet déjà construit. Le nom est donc de nouveau
-disponible pour le projet courant.
-
-### Ce qui n'est pas branché
-
-Le dépôt GitHub n'est pas relié à Vercel : l'application GitHub de Vercel n'a pas accès au
-dépôt, qui est privé. Chaque mise en ligne se fait donc à la main :
+**C'est la partie que personne ne fait, et c'est celle qui a coûté le registre
+précédent.**
 
 ```bash
-npm test && npm run verifier && npx vercel --prod
+npm run sauvegarde
 ```
 
-Pour obtenir le déploiement à chaque `git push`, installez
-[l'application Vercel](https://github.com/apps/vercel) sur le compte VizDataCI et
-donnez-lui accès au dépôt.
+La copie est faite **à chaud**, base ouverte, page par page. Un simple `cp certify.db`
+pendant une écriture produit un fichier incohérent — SQLite en mode WAL tient une partie
+des données dans un journal séparé —, et l'on s'en aperçoit le jour où l'on restaure,
+c'est-à-dire au pire moment.
 
-## Déploiement sur Vercel
-
-`vercel.json` est déjà dans le dépôt : préréglage Vite, repli SPA, en-têtes de sécurité
-et cache long sur les fichiers versionnés. Restent trois choses à faire de votre côté.
-
-### 1. Les variables d'environnement
-
-Dans **Settings → Environment Variables**, pour **Production** *et* **Preview** :
-
-| Nom | Valeur |
-| --- | --- |
-| `VITE_SUPABASE_URL` | l'URL du projet Supabase |
-| `VITE_SUPABASE_ANON_KEY` | la clé **publiable** (`sb_publishable_…`) |
-
-Jamais la clé `service_role` : le paquet livré au navigateur est public par nature, tout
-ce qu'il contient est lisible par n'importe qui.
-
-**La construction échoue volontairement** si la clé manque, si son format est mauvais,
-ou si le projet Supabase la refuse. Le garde-fou est `scripts/verifier-build.mjs` et il
-contrôle trois choses :
-
-1. **Présence** — sans clés, l'application se replierait sur son mode démonstration, où
-   la connexion accepte n'importe quel mot de passe.
-2. **Format** — une clé `sb_secret_…`, ou un jeton portant le rôle `service_role`, est
-   refusée net : embarquée dans un paquet navigateur, elle contournerait toutes les
-   politiques RLS.
-3. **Validité** — la clé est éprouvée auprès du projet avant de construire quoi que ce
-   soit. Ce troisième contrôle a été ajouté après une mise en production où la clé,
-   présente mais tronquée au collage, avait produit un déploiement d'apparence saine sur
-   lequel chaque vérification répondait « Invalid API key ». Présence ne vaut pas
-   validité.
-
-Si le réseau est indisponible, la construction se poursuit avec un avertissement : un
-hébergeur injoignable ne doit pas bloquer une mise en production.
-
-### 2. Les adresses de redirection Supabase
-
-C'est l'oubli classique, et il ne se voit qu'au moment où un titulaire demande un
-nouveau mot de passe : le lien reçu par courriel le renvoie vers `localhost`.
-
-Dans Supabase, **Authentication → URL Configuration** :
-
-- **Site URL** : `https://certify.vizdata.ci`
-- **Redirect URLs** : ajoutez le domaine définitif, l'adresse `*.vercel.app` du projet,
-  et `http://localhost:5173` pour le développement.
-
-### 3. Le domaine
-
-Faites pointer `certify.vizdata.ci` vers le projet Vercel. Ce n'est pas cosmétique :
-c'est le domaine inscrit en dur dans les QR codes déjà imprimés sur les certificats.
-
-### L'adresse des commits doit être rattachée à GitHub
-
-Vercel **bloque** un déploiement dont l'auteur du commit ne correspond à aucun compte
-GitHub — statut `Blocked`, sans journal de construction. Vu de la CLI, le déploiement
-reste indéfiniment en `UNKNOWN` et l'adresse répond « Deployment is building » : rien
-n'indique la cause, qui n'apparaît que sur la page du déploiement dans le tableau de bord.
-
-L'identité configurée ici convient :
-
-```bash
-git config user.email
-```
-
-Elle doit renvoyer `148683652+VizDataCI@users.noreply.github.com`, l'adresse de
-non-réponse liée au compte GitHub. Ne la remplacez pas par une adresse personnelle qui
-n'y serait pas rattachée : les déploiements seraient refusés sans explication lisible.
-
-### Mise en ligne
-
-```bash
-npx vercel login
-```
-
-```bash
-npx vercel --prod
-```
-
-La première commande ouvre votre navigateur ; je ne peux pas la lancer à votre place,
-et c'est aussi bien. Vous pouvez tout aussi bien connecter le dépôt à Vercel depuis
-l'interface, chaque `git push` déclenchant alors un déploiement.
-
-### Avant chaque mise en production
-
-```bash
-npm test && npm run verifier && npm run build
-```
-
-Les tests couvrent les fonctions pures, `verifier` contrôle que les requêtes
-correspondent toujours au schéma et que les politiques tiennent, et le build refuse de
-produire un paquet sans clés.
-
-### Autres hébergeurs
-
-Le point à ne pas manquer est partout le même : **renvoyer `index.html` sur les chemins
-inconnus**, faute de quoi `/verifier/{jeton}` — précisément le lien imprimé sur les
-certificats — répondra 404.
-
-| Hébergeur | Configuration |
-| --- | --- |
-| Netlify | `public/_redirects` contenant `/*  /index.html  200` |
-| nginx | `try_files $uri $uri/ /index.html;` |
-| Apache | `FallbackResource /index.html` |
+Une sauvegarde qui reste sur la même machine ne protège que des erreurs humaines. Elle ne
+protège ni d'une panne de disque, ni de la perte du serveur. **Copiez-la ailleurs.** Un
+registre de certifications est une pièce probante ; sa perte ne se rattrape pas.
 
 ### En-têtes de sécurité
 
-`vercel.json` pose `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`,
-`Referrer-Policy` et `Permissions-Policy`. Le refus d'être affiché dans un cadre n'est
-pas décoratif ici : sans lui, un site tiers pourrait incruster une page de vérification
-authentique à côté d'un faux nom et faire passer le tout pour une preuve.
+Le registre pose `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`,
+`Referrer-Policy` et `Permissions-Policy` sur chaque réponse. Le refus d'être affiché
+dans un cadre n'est pas décoratif : sans lui, un site tiers pourrait incruster une page
+de vérification authentique à côté d'un faux nom et faire passer le tout pour une preuve.
 
 Une politique de contenu (`Content-Security-Policy`) manque encore. Elle demande d'être
-juste du premier coup, sous peine de casser l'application en production, et n'a pas pu
-être éprouvée d'ici. Le squelette à éprouver sur un déploiement de préversion :
+juste du premier coup, sous peine de casser l'application en production. Le squelette à
+éprouver :
 
 ```
 default-src 'self';
-connect-src 'self' https://VOTRE-PROJET.supabase.co;
+connect-src 'self';
 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
 font-src https://fonts.gstatic.com;
 img-src 'self' data:;
@@ -787,163 +650,48 @@ frame-ancestors 'none';
 base-uri 'self'
 ```
 
-`'unsafe-inline'` sur les styles est requis par les styles en ligne des composants ;
-les supprimer serait un chantier à part entière.
+`connect-src 'self'` suffit désormais : plus aucun domaine tiers n'est contacté.
 
 ### Aperçus de partage
 
-`index.html` porte des balises Open Graph, mais **statiques** : un lien vers un certificat
-précis affichera la carte générique du registre, pas le nom du titulaire ni son statut.
-Les robots de LinkedIn et WhatsApp n'exécutent pas le JavaScript, donc ils ne verront
-jamais le contenu rendu par React.
+`index.html` porte des balises Open Graph **statiques** : un lien vers un certificat
+précis affiche la carte générique du registre, pas le nom du titulaire. Les robots de
+LinkedIn et WhatsApp n'exécutent pas le JavaScript.
 
-Un aperçu par certificat suppose un rendu côté serveur. Deux voies, par ordre de coût :
+C'est désormais réparable sans changer de nature : le serveur rend déjà les pages. Il
+suffirait qu'il reconnaisse `/verifier/{jeton}`, appelle `verifierParJeton` et injecte
+les balises avant d'envoyer `index.html`. Ce n'est pas fait.
 
-1. une fonction serverless qui intercepte `/verifier/{jeton}`, appelle
-   `verify_certificate` et renvoie une page minimale portant les bonnes balises aux
-   robots — le reste du trafic continuant vers l'application ;
-2. une migration vers un framework à rendu serveur, qui règle le problème par
-   construction mais change la nature du projet.
+## L'ancienne base
 
-Il manque également une image de partage : `og:image` n'est pas renseigné, faute de
-visuel VIZDATA disponible.
-
-## Ce qui passe par la base
-
-| Écran | Source des données | Écriture |
-| --- | --- | --- |
-| Connexion | **Supabase** — mot de passe vérifié, profil, rôle et autorisations lus dans `users` | — |
-| Accueil, vérification par référence | `verify_by_reference` | consultation enregistrée |
-| Vérification par jeton (QR, lien) | `verify_certificate` | consultation enregistrée |
-| Profil public | `public_profile` | — |
-| Espace certifié | table `certificates`, RLS `certificates_owner_select` | profil, mot de passe |
-| Administration | tables, sous RLS | attribution, révocation, catalogue, rôles, import |
-| Création d'un titulaire | fonction Edge `inviter-titulaire` | compte, profil, invitation |
-| Avis métier | fonction Edge `notifier` | trace dans `notifications` |
-
-Les deux chemins — distant et local — rendent la même forme d'objet : les écrans ne
-savent pas d'où viennent les données.
-
-### Écritures
-
-Après chaque écriture, le registre est **redemandé à la base** plutôt que rejoué côté
-client : la base seule fait autorité, et elle a pu appliquer une règle ou refuser.
-Aucune autorisation n'est vérifiée dans le navigateur — les politiques `is_admin()`
-s'en chargent, et une erreur `42501` remonte telle quelle si elles refusent.
-
-La référence et le jeton public sont produits par `next_reference()` et
-`new_public_token()` côté base, pour que la numérotation reste cohérente si deux
-administrateurs créent un certificat en même temps.
-
-### La limite qui a été levée
-
-`public.users.id` référence `auth.users(id)` : créer un titulaire suppose de créer
-d'abord un compte d'authentification, ce que la clé publiable ne permet pas — et ne doit
-pas permettre. L'application refusait donc toute adresse inconnue, et demandait d'aller
-ouvrir le compte dans la console Supabase avant de revenir : l'attribution était une
-opération en deux visites, et l'import en masse écartait purement et simplement les
-titulaires nouveaux.
-
-La fonction Edge `inviter-titulaire` lève cette limite sans affaiblir quoi que ce soit :
-la clé secrète reste côté serveur, et la fonction vérifie elle-même, sous RLS, que
-l'appelant porte l'autorisation `creer_titulaires`.
-
-### Durcissement
-
-`next_reference()` et `new_public_token()` étaient exécutables **sans session** : la
-première laissait deviner le nombre de certificats émis pour un code et une année donnés.
-`supabase/migrations/20260819_durcissement.sql` les a fermées.
-
-Le piège, à retenir pour toute fonction : **`revoke ... from anon` seul ne sert à rien.**
-Le rôle `anon` hérite de `PUBLIC`, à qui Postgres accorde `EXECUTE` par défaut sur toute
-fonction créée. Il faut révoquer `PUBLIC`, puis ré-accorder à `authenticated` — dont
-l'administration a besoin pour numéroter les certificats qu'elle crée.
-
-Vérifié : les deux fonctions répondent désormais `42501 permission denied` sans session,
-tandis que `verify_certificate`, `verify_by_reference`, `public_profile` et `record_share`
-continuent de répondre normalement.
-
-### Une seule forme d'objet, deux sources
-
-Les fonctions publiques et le registre local rendent le même objet :
-
-```
-reference, holder_name, certification, domain, issuer, issue_date, status,
-revoke_reason, public_token, description, duration, trainer, signatory, skills
-```
-
-Les écrans publics ignorent donc d'où viennent les données, et la page de vérification
-affiche la même chose dans les deux modes.
-
-Cette projection a bougé deux fois. D'abord pour s'élargir
-(`20260819_verification_details.sql`) : elle ne rendait que neuf colonnes, sans les
-compétences, sans `duration`, `trainer` ni `signatory`, et sans `public_token` — ce qui
-privait de QR code toute vérification faite par saisie de référence. Puis pour se
-resserrer (`20261114_refonte.sql`) : `expiry_date` et `score` en sortent, `domain` y
-entre. Les deux mentions retirées ne sont donc pas seulement masquées à l'écran — elles
-ne quittent plus la base.
-
-`verify_by_reference` délègue à `verify_certificate` par un `select *` : **les deux
-signatures doivent changer ensemble**, sous peine de casser la seconde.
-
-Une seule différence subsiste, et elle est voulue : le **comptage des partages** n'existe
-qu'en mode démonstration. La table `shares` n'accepte aucune écriture anonyme, et il
-n'était pas souhaitable de la lui ouvrir pour un compteur.
-
-### Le statut, désormais calculé par la base
-
-`effective_status(c certificates)` reprend côté Postgres la règle que le prototype tenait
-dans le navigateur : un certificat échu bascule seul en « Expiré ». L'interface n'a plus
-à recalculer quoi que ce soit sur le chemin public — elle affiche le statut que la source
-lui donne.
+`supabase/` est conservé tel quel : six migrations Postgres, deux fonctions Edge, et le
+socle reconstruit en novembre 2026 après la disparition du projet. **Rien dans le code ne
+les lit plus.** C'est l'histoire de la base précédente, gardée parce qu'un registre ne
+jette pas ses archives — et parce que les deux schémas se correspondent table pour table,
+si des données devaient un jour en être reprises.
 
 ## Limites connues
 
-- **Le garde-fou anti-énumération est inerte.** `verification_rate_ok()` existe dans la
-  base, mais `verify_certificate()` ne l'appelle pas, et `verifications.ip_hash` n'est
-  jamais renseignée — la fonction n'a donc rien à mesurer. Les colonnes `country`,
-  `user_agent` et `ip_hash` restent vides sur toute vérification servie par la base.
-  `supabase/migrations/PROPOSITION_tracabilite_verifications.sql` les renseigne et
-  branche le garde-fou ; elle n'est **pas appliquée**, pour trois raisons qui s'y
-  trouvent détaillées — dont celle-ci, qui prime : une entreprise sort souvent par une
-  seule adresse IP, et un service RH vérifiant vingt candidats se verrait répondre
-  « certificat introuvable », le pire message possible pour un registre officiel.
-- **Le registre en ligne est inopérant.** Le projet Supabase n'existe plus. Voir
-  « Reconstruire la base ».
-- **La procédure de déploiement du serveur nginx n'est pas écrite.** L'hébergement est
-  passé de Vercel à Scaleway sans que ce dépôt en garde trace. Tout ce qui suit sur
-  Vercel reste exact pour Vercel, et sans objet pour l'hébergement courant.
-- **Les aperçus de partage sont génériques.** Un lien vers un certificat affiche la
-  carte du registre, pas le nom du titulaire : les robots sociaux n'exécutent pas le
-  JavaScript. Voir « Aperçus de partage ».
+- **Les notifications métier demandent un fournisseur d'envoi.** Sans `RESEND_API_KEY`,
+  elles sont inscrites en attente et visibles dans l'écran Notifications ; rien n'est
+  envoyé, et rien ne prétend l'avoir été. Les liens d'invitation restent lisibles dans
+  le journal du serveur.
+- **Un seul processus.** SQLite n'aime pas qu'on écrive depuis plusieurs processus à la
+  fois, et un seul suffit largement à cette charge. Si le trafic l'imposait un jour,
+  c'est le moment où la question du moteur se reposerait.
+- **Les aperçus de partage sont génériques.** Voir plus haut.
 - **Le PDF n'est pas un fichier produit par le serveur.** « Télécharger en PDF » ouvre la
   boîte d'impression du navigateur. C'est un choix, pas un manque : le moteur
   d'impression produit un texte vectoriel, là où les bibliothèques PDF côté navigateur
-  passent par une capture en pixels. La colonne `pdf_url` n'est pas alimentée.
-- **Les notifications métier demandent un fournisseur d'envoi.** Sans `RESEND_API_KEY`,
-  elles sont inscrites en attente et visibles dans l'écran Notifications ; rien n'est
-  envoyé, et rien ne prétend l'avoir été.
+  passent par une capture en pixels.
+- **Les onglets internes ne sont pas dans l'URL.** `/administration` et `/espace` ouvrent
+  toujours leur premier onglet.
+- **Authentification factice en démonstration.** À ne jamais déployer dans cet état — le
+  garde-fou de construction le refuse.
+- **La page de vente charge toute l'application.** Un visiteur de `/academie` télécharge
+  aussi les écrans d'administration. Un découpage par route (`React.lazy`) en retirerait
+  une part ; il n'a pas été fait pour ne pas toucher au routage à cette occasion.
 - **Les composants ne sont pas testés automatiquement.** Les enchaînements d'écrans ont
-  été éprouvés à la main, en mode démonstration, jusqu'à la délivrance d'une
-  certification complète — création du titulaire, attribution, vérification publique,
-  espace personnel. Ce n'est pas une suite de tests.
-- **Les onglets internes ne sont pas dans l'URL.** `/administration` et `/espace`
-  ouvrent toujours leur premier onglet ; un lien vers un sous-écran précis n'existe pas.
-- **Authentification factice sans clés.** En mode démonstration, aucun mot de passe
-  n'est vérifié et la volumétrie des vérifications est tirée au hasard. À ne jamais
-  déployer dans cet état.
-- **La page de vente n'a pas d'aperçu de partage propre.** Un lien vers `/academie`
-  partagé sur WhatsApp ou LinkedIn affiche la carte du registre : le titre et la
-  description sont posés en JavaScript, que les robots sociaux n'exécutent pas. Même
-  cause et même remède que pour les certificats — un rendu côté serveur.
-- **La page de vente charge toute l'application.** Le paquet unique fait 162 ko
-  compressés ; un visiteur de `/academie` télécharge donc aussi les écrans
-  d'administration et l'encodeur QR, dont il n'a que faire. Un découpage par route
-  (`React.lazy`) sur les espaces authentifiés en retirerait environ 13 ko compressés ;
-  il n'a pas été fait pour ne pas toucher au routage existant à cette occasion.
-- **Les e-mails de candidature dépendent de trois variables d'hébergeur.** Sans elles,
-  la candidature est enregistrée et visible dans l'administration, mais aucun message ne
-  part — et la page le dit au candidat plutôt que de le laisser croire le contraire.
-- **Les composants React ne sont pas testés.** `npm test` couvre les fonctions pures —
-  routage, règles métier, encodeur QR — et `npm run verifier` le contrat avec la base.
-  Entre les deux, le rendu et les enchaînements d'écrans ne sont vérifiés qu'à la main.
+  été éprouvés à la main, dans un navigateur, contre le vrai serveur et la vraie base —
+  invitation du premier administrateur, création d'une certifiée, attribution,
+  vérification publique, document A4. Ce n'est pas une suite de tests.

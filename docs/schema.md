@@ -1,252 +1,203 @@
-# Schéma Supabase — VIZDATA CERTIFY
+# Schéma de la base — VIZDATA CERTIFY
 
-> **La source de vérité est désormais le dépôt**, pas la base.
+La base est un fichier SQLite. Son schéma est `server/schema/001_socle.sql`, appliqué
+automatiquement à l'ouverture par `server/db.mjs`.
+
+> **La source de vérité est le dépôt**, pas la base.
 >
-> Ce fichier décrit ce que produisent les migrations de `supabase/migrations/`, rejouées
-> dans l'ordre des noms de fichiers. Jusqu'en novembre 2026, c'était l'inverse : le
-> schéma avait été écrit à la main dans la console SQL et ce document n'en était qu'un
-> relevé. Le jour où le projet Supabase a disparu, le schéma a disparu avec lui — et le
-> dépôt ne permettait plus de le reconstruire. `20260818_socle.sql` solde cette dette.
+> Ce fut l'inverse pendant un an : le schéma vivait dans la console SQL d'un projet
+> hébergé, et ce document n'en était qu'un relevé. Le jour où le projet a cessé
+> d'exister, le schéma a disparu avec lui. C'est la raison d'être de tout ce qui suit.
 
-## Les migrations, dans l'ordre
+## Pourquoi SQLite
 
-| Fichier | Effet |
+| | Ce que c'était | Ce que c'est |
+| --- | --- | --- |
+| Hébergement | projet chez un tiers | un fichier sur le serveur VIZDATA |
+| Disparition possible | oui — c'est arrivé | non, sauf à effacer le fichier |
+| Sauvegarde | formule payante | `npm run sauvegarde`, à chaud |
+| Démon à tenir | — | aucun |
+| Limite de connexions | oui | aucune |
+| Autorisation | RLS, dans la base | l'API, et elle est testée |
+
+Pour la charge d'un organisme de formation — quelques centaines de certificats par an,
+des vérifications en lecture — SQLite est très largement dimensionné. Le mode WAL permet
+aux lectures et aux écritures de ne pas s'attendre.
+
+**Ce que le passage fait perdre :** l'autorisation ne vit plus dans la base. Postgres la
+tenait par RLS, `security definer` et `has_perm()` ; elle remonte dans
+`server/autorisations.mjs`. C'est un recul en défense en profondeur, assumé — et un
+progrès en vérifiabilité : les politiques RLS n'ont jamais pu être éprouvées faute de
+projet vivant, alors que ce module est couvert par 31 tests, plus 35 tests d'intégration
+qui vérifient qu'il est bien câblé sur chaque route.
+
+**Ce que la base garde**, et qu'aucune application ne peut contourner : les clés
+étrangères, les contraintes d'unicité et les CHECK. Un statut hors liste, une référence
+en double, un certificat sans titulaire, une révocation sans motif : refusés par le
+moteur, quoi que fasse le code au-dessus.
+
+## Conventions de typage
+
+SQLite n'a ni uuid, ni booléen, ni date, ni énuméré, ni jsonb. On s'en passe sans rien
+perdre d'essentiel :
+
+| Besoin | Représentation |
 | --- | --- |
-| `20260818_socle.sql` | neuf tables, quatre énumérés, fonctions du chemin public, RLS |
-| `20260819_verification_details.sql` | projection étendue des fonctions de vérification |
-| `20260819_ecritures_manquantes.sql` | politique d'écriture du journal, `record_share` |
-| `20260819_durcissement.sql` | retire `next_reference` et `new_public_token` au rôle PUBLIC |
-| `20261106_academie.sql` | cohortes et candidatures de l'académie |
-| `20261114_refonte.sql` | domaines, programmes, rôles, modèles, notifications |
+| identifiant | `TEXT` portant un uuid v4 (`crypto.randomUUID`) |
+| booléen | `INTEGER` 0 / 1, borné par un CHECK |
+| horodatage | `TEXT` ISO-8601 UTC — se trie dans l'ordre chronologique |
+| date | `TEXT` `'AAAA-MM-JJ'`, validée par `date(x) is not null` |
+| énuméré | `TEXT` + `CHECK ... IN (...)` |
+| json | `TEXT` + `CHECK json_valid(x)` |
 
-Toutes sont **rejouables** : chaque objet est créé « si absent », chaque politique est
-supprimée avant d'être recréée, chaque fonction passe par `create or replace`. Elles
-s'appliquent donc à un projet vierge comme à un projet qui porte déjà une partie du
-schéma, sans rien détruire.
+## Les pragmas, qui ne sont pas des réglages d'optimisation
 
-`PROPOSITION_tracabilite_verifications.sql` n'est **pas** une migration : c'est une
-proposition, délibérément non appliquée, dont les raisons sont écrites dans le fichier.
+Posés à **chaque** ouverture par `server/db.mjs` — ils ne sont pas stockés dans le
+fichier :
+
+| Pragma | Ce qu'il change |
+| --- | --- |
+| `foreign_keys = ON` | **SQLite ignore les clés étrangères par défaut.** Sans lui, chaque `references` de ce schéma est un commentaire. |
+| `journal_mode = WAL` | les lectures ne bloquent plus les écritures |
+| `busy_timeout = 5000` | on patiente au lieu d'échouer sur « database is locked » |
+| `synchronous = NORMAL` | compromis recommandé avec WAL |
+
+Le premier est vérifié après coup, pas supposé : une base ouverte sans intégrité
+référentielle refuse de démarrer.
 
 ## Tables
 
-### Comptes et autorisations
+### Comptes
 
-**users** — profils, adossés à l'authentification
+**users** — une seule table là où il y en avait deux (`auth.users` pour l'identité,
+`public.users` pour le profil). La séparation imposait une fonction privilégiée pour
+créer le moindre titulaire ; ici, le mot de passe est une colonne.
+
 ```
-id uuid                → FK auth.users(id) ON DELETE CASCADE
-first_name, last_name, email, phone
-avatar_url, linkedin_url, username (unique)
-public_profile bool
-role user_role                      ADMIN | MANAGER | CERTIFIED
-account_status text                 ACTIVE | DISABLED
-must_change_password bool           vrai tant que le titulaire n'a pas choisi son mot de passe
-permissions jsonb                   autorisations nommées d'un gestionnaire
-invited_at, activated_at timestamptz
-created_by uuid                     → FK users(id) ON DELETE SET NULL
-created_at, updated_at timestamptz
+id                   text (uuid)
+email                text unique, collate nocase
+password_hash        text          scrypt$N$r$p$sel$empreinte — null tant qu'il n'est pas choisi
+first_name, last_name, phone, avatar_url, linkedin_url
+username             text unique, collate nocase
+public_profile       0 / 1
+role                 ADMIN | MANAGER | CERTIFIED
+account_status       ACTIVE | DISABLED
+must_change_password 0 / 1
+permissions          json — creer_titulaires, attribuer_certificats,
+                            revoquer_certificats, exporter_donnees
+invited_at, activated_at, last_login_at, created_by, created_at, updated_at
 ```
 
-L'identifiant est celui du compte d'authentification : **un titulaire ne peut pas
-exister sans compte**, et la suppression du compte emporte le profil. C'est ce qui
-impose de passer par une fonction Edge pour créer un titulaire — la clé publiable ne
-crée pas de compte, et ne doit pas le pouvoir.
+`password_hash` est nul tant que la personne n'a pas choisi son mot de passe : un compte
+invité existe avant d'en avoir un, et ne peut pas se connecter.
 
-`permissions` porte quatre clés booléennes : `creer_titulaires`,
-`attribuer_certificats`, `revoquer_certificats`, `exporter_donnees`. Un `ADMIN` les a
-toutes, implicitement — elles ne sont lues que pour un `MANAGER`.
+**sessions** — `token_hash`, `user_id`, `expires_at`, `user_agent`, `last_seen`.
+**jetons** — liens à usage unique : `token_hash`, `kind` (INVITATION | REINITIALISATION),
+`expires_at`, `used_at`.
+
+Dans les deux cas, **seule l'empreinte du secret est stockée**. Le fichier de base est
+copié pour les sauvegardes : s'il contenait des jetons utilisables, toute sauvegarde
+égarée donnerait accès aux comptes.
 
 ### Catalogue
 
-**certification_domains** — premier niveau
-```
-id uuid, code text (unique), name text, description text
-status text, sort_order int
-created_at, updated_at timestamptz
-```
+**certification_domains** — `code`, `name`, `description`, `status`, `sort_order`.
 
-**certificate_types** — les **programmes**, second niveau
-```
-id uuid, code text (unique), name text         name = intitulé exact imprimé
-description text
-domain_id uuid        → FK certification_domains(id)
-template_id uuid      → FK certificate_templates(id)
-default_duration int, sort_order int, status text
-validity_period int                             conservé, plus appliqué
-created_at, updated_at timestamptz
-```
+**certificate_types** — les **programmes**. `domain_id`, `template_id`, `code` (unique,
+entre dans la référence), `name` (l'intitulé exact imprimé), `description`,
+`default_duration`, `sort_order`, `status`.
 
-La table n'a pas été remplacée par une table « programmes » neuve : elle portait déjà
-code, intitulé, description, durée et statut, et les certificats délivrés gardent ainsi
-leur clé étrangère — donc restent vérifiables. Le domaine n'est qu'une colonne de plus.
+La table garde le nom qu'elle portait sous Postgres : c'est la même chose, et la
+continuité facilite la lecture des deux schémas côte à côte.
 
-**certificate_templates**
-```
-id uuid, code text (unique), name text, description text
-orientation text (landscape), layout jsonb, status text
-created_at, updated_at timestamptz
-```
+**certificate_templates** — `code`, `name`, `orientation`, `layout` (json libre : la mise
+en page vit dans l'application, la base n'a pas à connaître des millimètres).
 
-`layout` reste un jsonb libre : la mise en page vit dans l'application, et la base n'a
-pas à connaître des millimètres. Ce qu'elle doit savoir, c'est quel modèle a servi à
-quel certificat.
+**skills** — `name` unique.
 
 ### Certificats
 
-**certificates**
 ```
-id uuid, reference text (unique), public_token text (unique)
-user_id uuid              → FK users(id) ON DELETE RESTRICT
-certificate_type_id uuid  → FK certificate_types(id)
-issued_by uuid            → FK users(id) ON DELETE SET NULL
-template_id uuid          → FK certificate_templates(id)
-issue_date date
-status certificate_status
-duration int, trainer text, signatory text
-revoke_reason text
-pdf_url, qr_code_url text
-expiry_date date          conservée pour les certificats anciens — plus renseignée
-score int                 conservé pour les certificats anciens — plus affiché
-created_at, updated_at timestamptz
+id, reference (unique), public_token (unique)
+user_id              → users(id)              ON DELETE RESTRICT
+certificate_type_id  → certificate_types(id)  ON DELETE RESTRICT
+issued_by            → users(id)              ON DELETE SET NULL
+template_id          → certificate_templates(id)
+issue_date, status, duration, trainer, signatory, revoke_reason
+expiry_date, score   conservés pour une reprise de données — plus renseignés, plus exposés
 ```
 
-`user_id` est en **RESTRICT** : on ne supprime pas un titulaire qui porte des
-certificats délivrés, sinon le registre perdrait la trace de ce qu'il a certifié. C'est
-pourquoi l'application désactive un compte et ne le supprime jamais.
+Deux contraintes valent d'être connues :
 
-Aucune contrainte d'unicité sur `(user_id, certificate_type_id)` : un titulaire peut
-repasser un programme. Ce qui est unique, c'est la référence.
+- `user_id` est en **RESTRICT** : on ne supprime pas un titulaire qui porte des
+  certificats délivrés, sinon le registre perdrait la trace de ce qu'il a certifié.
+  C'est pourquoi l'application désactive un compte et ne le supprime jamais.
+- `certificats_revocation_motivee` : `status = 'REVOKED'` exige un motif non vide. Il
+  s'affiche sur la page publique ; une révocation muette laisserait le titulaire et son
+  employeur sans explication.
 
-**skills** — `id uuid, name text (unique), description text`
+Aucune unicité sur `(user_id, certificate_type_id)` : un titulaire peut repasser un
+programme. Ce qui est unique, c'est la référence.
 
-**certificate_skills** — jointure `(certificate_id, skill_id)`, cascade des deux côtés
+**certificate_skills** — jointure, cascade des deux côtés.
 
 ### Mesure et traces
 
-**verifications** — `certificate_id, verified_at, source, country, user_agent, ip_hash`
-**shares** — `certificate_id, platform, shared_at`
-**audit_logs** — `actor_id, action, entity_type, entity_id, metadata jsonb, created_at`
-**notifications** — `user_id, recipient, kind, channel, subject, payload, status, error, sent_at`
-**settings** — `key text, value jsonb, updated_at`
+**verifications** · **shares** · **audit_logs** · **notifications** · **settings**
 
-`notifications.status` vaut `SENT`, `PENDING` ou `FAILED`. Un envoi d'e-mail échoue
-silencieusement — quota, domaine non vérifié, fournisseur absent ; sans cette trace,
-VIZDATA croirait avoir prévenu quelqu'un qui n'a jamais rien reçu.
+`audit_logs` garde l'identifiant de l'auteur **et son nom au moment de l'acte**. Sous
+Postgres, seul l'identifiant était conservé : un compte supprimé laissait des lignes sans
+auteur lisible, et un journal qui perd le nom de qui a agi perd sa valeur de preuve.
 
-## Types énumérés
+`notifications.status` vaut `SENT`, `PENDING` ou `FAILED`. Un envoi d'e-mail échoue en
+silence — quota, domaine non vérifié, fournisseur absent ; sans cette trace, VIZDATA
+croirait avoir prévenu quelqu'un qui n'a jamais rien reçu.
 
-| Type | Valeurs |
-| --- | --- |
-| `certificate_status` | `ACTIVE`, `EXPIRED`, `REVOKED`, `CANCELLED` |
-| `user_role` | `ADMIN`, `MANAGER`, `CERTIFIED` |
-| `verification_source` | `qr`, `reference`, `lien` |
-| `share_platform` | `linkedin`, `whatsapp`, `email`, `copy_link` |
+### Académie
 
-`MANAGER` est ajouté **hors transaction** par `20261114_refonte.sql` : Postgres refuse
-d'utiliser une valeur d'énuméré ajoutée dans la transaction qui l'ajoute. Partout
-ailleurs, le rôle est comparé en texte (`role::text in ('ADMIN','MANAGER')`) pour que
-plus aucune expression ne dépende du moment où la valeur a été créée.
+**cohortes** et **candidatures**, dans la même base — une seconde base serait une
+seconde chose à sauvegarder, et à perdre.
 
-## Fonctions
+`candidatures_engagements` exige `disponible = 1 and consent_contact = 1` : un appel
+direct à l'API ne doit pas pouvoir enregistrer une candidature sans consentement au
+contact.
 
-| Fonction | Sécurité | Rôle |
-| --- | --- | --- |
-| `verify_certificate(p_token, p_source)` | definer | vérification par jeton — le cœur du produit |
-| `verify_by_reference(p_reference)` | definer | vérification par référence saisie |
-| `public_profile(p_username)` | definer | profil public d'un certifié |
-| `record_share(p_token, p_platform)` | definer | comptage d'un partage sans ouvrir la table |
-| `is_admin()` | definer | administrateur |
-| `is_staff()` | definer | administrateur **ou** gestionnaire actif |
-| `has_perm(p_perm)` | definer | une autorisation nommée |
-| `guard_user_privileges()` | definer | déclencheur : interdit l'élévation de privilèges |
-| `effective_status(c certificates)` | invoker | statut recalculé à la date |
-| `next_reference(p_code, p_year)` | invoker | numérotation `VIZ-{ANNÉE}-{CODE}-{NUMÉRO}` |
-| `new_public_token()` | invoker | jeton public aléatoire |
-| `verification_rate_ok(…)` | invoker | garde-fou anti-énumération — **inerte** |
-| `touch_updated_at()` | invoker | déclencheur `updated_at` |
+## La vue publique
 
-`is_admin()`, `is_staff()` et `has_perm()` sont `security definer` par nécessité : elles
-lisent `public.users`, et sous les politiques de cette même table la récursion serait
-immédiate.
+`v_certificats_publics` est la projection unique du chemin public. Elle ne contient ni
+adresse e-mail, ni téléphone, ni identifiant de compte, ni score, ni date d'expiration.
 
-### Projection publique
+Ce n'est pas une barrière — SQLite n'en offre pas — mais une **définition** : si une
+colonne privée devait apparaître sur la page de vérification, il faudrait l'ajouter ici,
+ce qui se voit en relecture et casse un test.
 
-`verify_certificate` et `verify_by_reference` renvoient quatorze colonnes :
+Le statut **effectif** n'y est pas calculé : il l'est en JavaScript, par
+`effectiveStatus()`. Sous Postgres la règle était dédoublée — une fois en SQL, une fois
+dans le navigateur — et les deux pouvaient diverger.
 
-```
-reference, holder_name, certification, domain, issuer, issue_date, status,
-revoke_reason, public_token, description, duration, trainer, signatory, skills
-```
+## Déclencheurs
 
-Ni adresse e-mail, ni téléphone, ni identifiant de compte. Ni **date d'expiration**, ni
-**score** : ces deux mentions ont quitté le produit en novembre 2026, et les fonctions
-ne les renvoient plus — la page publique ne pourrait donc pas les afficher, quand bien
-même elle le voudrait. Le motif de révocation n'est rendu que pour un certificat
-révoqué.
+Sept déclencheurs `after update` tiennent `updated_at`. SQLite n'a pas de `before
+update` : la garde `when new.updated_at = old.updated_at` évite la récursion — sans
+elle, la mise à jour déclenchée relancerait le déclencheur indéfiniment.
 
-`verify_by_reference` délègue à `verify_certificate` par un `select *` : **les deux
-signatures doivent changer ensemble.**
+## Migrations
 
-### Le déclencheur qui tient les rôles
+`server/schema/*.sql`, appliqués dans l'ordre des noms et enregistrés dans la table
+`migrations`. Chaque fichier est joué dans une transaction : s'il échoue à mi-parcours,
+la base reste dans l'état d'avant et n'est pas marquée comme migrée. **Une migration à
+moitié appliquée est la pire des situations** — elle ne se rejoue pas, et elle ne
+fonctionne pas.
 
-`guard_user_privileges` s'exécute avant toute mise à jour de `users`. Si l'auteur n'est
-pas administrateur, il refuse — code `42501` — toute modification du rôle, des
-autorisations, du statut du compte ou de l'adresse e-mail.
+Pour en ajouter une : créez `server/schema/002_quelque-chose.sql`. Elle sera appliquée au
+prochain démarrage du serveur.
 
-Ce n'est pas une redondance de l'interface. La politique `users_self_update` autorise un
-gestionnaire à écrire la ligne d'un titulaire ; sans ce déclencheur, il lui suffirait
-d'un appel REST sur sa **propre** ligne pour se promouvoir administrateur. L'écran ne
-protège rien ; la base, oui.
+## L'ancienne base
 
-## Sécurité au niveau des lignes
+`supabase/` est conservé tel quel : les six migrations Postgres, les deux fonctions Edge,
+et le socle reconstruit en novembre 2026. C'est l'histoire de la base précédente, pas une
+documentation de celle-ci. Rien dans le code ne les lit plus.
 
-RLS est active sur les **douze tables**. Ce que voit un visiteur sans session :
-
-| Table | Lecture anonyme |
-| --- | --- |
-| `certificate_types`, `certification_domains`, `skills` | **autorisée** — rien de personnel, et la page publique affiche le domaine |
-| toutes les autres | **fermée** |
-
-Ce verrouillage est voulu : la vérification publique ne passe pas par une lecture de
-table mais par des fonctions `security definer`. Ouvrir `certificates` et `users` en
-lecture anonyme exposerait toutes les adresses e-mail du registre, là où une fonction ne
-rend que la projection publique.
-
-### Les politiques, par table
-
-| Table | Politiques |
-| --- | --- |
-| `users` | `users_self_select` (soi ou `is_staff`), `users_self_update`, `users_admin_write` (`has_perm('creer_titulaires')`) |
-| `certificates` | `certificates_owner_select` (soi ou `is_staff`), `certificates_staff_insert` (`attribuer`), `certificates_staff_update` (`attribuer` ou `revoquer`), `certificates_admin_delete` (`is_admin`) |
-| `certificate_types` | `types_read` (public), `types_write` (`is_admin`) |
-| `certification_domains` | `domains_read` (public), `domains_write` (`is_admin`) |
-| `certificate_templates` | `templates_read` (`is_staff`), `templates_write` (`is_admin`) |
-| `skills` | `skills_read` (public), `skills_write` (`is_admin`) |
-| `certificate_skills` | `cs_read` (suit le droit de voir le certificat), `cs_write` (`attribuer`) |
-| `verifications`, `shares` | lecture `is_staff` ; écriture par fonction `security definer` uniquement |
-| `audit_logs` | lecture `is_staff` ; insertion `is_staff` **et** `actor_id = auth.uid()` |
-| `notifications` | lecture `is_staff` ou son propre destinataire |
-| `settings` | `is_admin` |
-
-L'écriture du journal exige que l'auteur déclaré soit le compte connecté : sans cette
-condition, une action pourrait être inscrite au nom d'un autre, et le journal perdrait
-sa valeur de preuve.
-
-`certificates` est passée d'une politique `ALL` unique à quatre politiques distinctes.
-Une seule n'aurait pas permis de distinguer « attribuer » de « révoquer », alors que ce
-sont deux autorisations différentes.
-
-### Le piège des révocations
-
-**`revoke ... from anon` seul ne sert à rien.** Le rôle `anon` hérite de `PUBLIC`, à qui
-Postgres accorde `EXECUTE` par défaut sur toute fonction créée. Il faut révoquer
-`PUBLIC`, puis ré-accorder explicitement à `authenticated`. C'est ce que fait
-`20260819_durcissement.sql` pour `next_reference()` et `new_public_token()` — la
-première laissait deviner le nombre de certificats émis pour un code et une année
-donnés.
-
-## Ce que le dépôt ne reconstruit pas
-
-Les migrations couvrent la **structure**. Elles ne contiennent aucune donnée délivrée :
-les certificats, leurs références et leurs jetons publics ne se reconstituent pas. Un
-registre de certifications est une pièce probante — prévoyez une sauvegarde régulière
-hors de l'hébergeur, et activez la restauration à un instant donné sur le projet.
+Si des certificats avaient été délivrés dans ce projet et qu'une sauvegarde en
+réapparaissait, la reprise se ferait par un script d'import vers les tables décrites
+ici : les deux schémas se correspondent table pour table, aux conventions de typage près.
