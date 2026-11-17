@@ -1,38 +1,41 @@
-/* La chaîne de réinitialisation du mot de passe, en deux écrans.
+/* La chaîne de mot de passe, en deux écrans.
  *
  * Ils vivent dans le même fichier parce qu'ils ne se comprennent qu'ensemble :
  * le premier envoie un lien, le second est l'endroit où ce lien atterrit.
  *
- * Ce qui était cassé
- * ------------------
- * L'e-mail partait, mais `redirectTo` visait la page d'accueil. Supabase y
- * ouvrait bien une session de récupération — et personne n'en faisait rien :
- * aucun formulaire n'attendait. Le mot de passe restait l'ancien, sans qu'aucun
- * message ne le dise. Le lien n'était pas en cause ; il n'y avait pas d'arrivée.
+ * Ce qui était cassé, et comment c'est réglé
+ * ------------------------------------------
+ * L'e-mail partait, mais l'adresse de retour visait la page d'accueil.
+ * Supabase y ouvrait une session de récupération dont personne ne faisait
+ * rien : aucun formulaire n'attendait, et le mot de passe restait l'ancien
+ * sans qu'aucun message ne le dise. Le lien n'était pas en cause ; il n'y
+ * avait pas d'arrivée.
  *
- * Les quatre états de l'arrivée, tous traités ici
- * ----------------------------------------------
- *   attente — le lien est reconnu, le SDK n'a pas encore ouvert la session.
- *   pret    — la session est ouverte, le formulaire peut écrire.
- *   refuse  — Supabase a refusé : lien expiré, déjà utilisé, altéré. On le dit,
- *             et on propose d'en redemander un ; c'est le seul cas où l'on
- *             reparle d'e-mail.
- *   fait    — le mot de passe est écrit. On le confirme, puis on emmène.
+ * Depuis le passage à notre propre registre, l'arrivée existe ET le mécanisme
+ * a maigri. Le lien porte un secret dans son adresse, l'écran l'envoie au
+ * serveur avec le nouveau mot de passe, et c'est le serveur qui tranche :
+ * valide, expiré, ou déjà utilisé. Il n'y a plus de session à attendre, plus
+ * de fragment à lire avant qu'un SDK ne l'efface, plus de quatre états dont
+ * trois venaient de l'URL.
+ *
+ * Le secret est retiré de la barre d'adresse dès qu'il est lu : sans cela, il
+ * resterait dans l'historique du navigateur, sur une capture d'écran, et dans
+ * l'en-tête Referer de la première requête vers un site tiers.
  */
 
 import { useState, useEffect } from "react";
 import {
   isAuthConfigured,
-  etatLienRecuperation,
-  onPasswordRecovery,
+  definirMotDePasse,
+  jetonDansAdresse,
   sendPasswordReset,
-  updatePassword,
   qualiteMotDePasse,
 } from "../../lib/auth.js";
+import { effacerJetonDeLAdresse } from "../../lib/mot-de-passe.js";
 import { Field } from "../../ui/primitives.jsx";
 import { PublicShell } from "./PublicShell.jsx";
 
-/* --- Carte d'authentification, commune aux deux écrans ------------------- */
+/* --- carte commune aux deux écrans --------------------------------------- */
 function Carte({ p, eyebrow, titre, children, pied }) {
   return (
     <PublicShell {...p}>
@@ -73,9 +76,10 @@ function ForgotPassword(p) {
     setBusy(false);
   };
 
-  /* Le message de confirmation ne dit jamais si l'adresse est connue : le
-     contraire permettrait de savoir qui est inscrit au registre en essayant
-     des adresses une à une. */
+  /* Le message ne dit jamais si l'adresse est connue : le contraire
+     permettrait de savoir qui est inscrit au registre en essayant des adresses
+     une à une. Le serveur applique la même règle, et répond pareil dans les
+     deux cas. */
   if (envoye) {
     return (
       <Carte p={p} eyebrow="Mot de passe" titre="Vérifiez votre messagerie">
@@ -128,43 +132,20 @@ function ForgotPassword(p) {
    ====================================================================== */
 
 function NewPassword(p) {
-  /* L'état du lien est lu une seule fois, au premier rendu, et avant tout
-     abonnement : le SDK Supabase efface le fragment de l'adresse dès qu'il l'a
-     consommé, donc un refus lu trop tard serait lu comme une absence. */
-  const [lien] = useState(() => etatLienRecuperation());
-  const [etat, setEtat] = useState(() => {
-    if (lien.etat === "refuse") return "refuse";
-    /* Déjà connecté : première connexion après invitation, ou changement
-       demandé. Le formulaire est utilisable tout de suite. */
-    if (p.session) return "pret";
-    return lien.etat === "accepte" ? "attente" : "attente";
-  });
+  /* Le secret est lu une seule fois, au premier rendu, puis retiré de
+     l'adresse. Le lire dans un effet laisserait une fenêtre pendant laquelle
+     il figure encore dans la barre du navigateur. */
+  const [jeton] = useState(() => jetonDansAdresse(window.location.href));
   const [mdp, setMdp] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [err, setErr] = useState("");
+  const [perime, setPerime] = useState("");
   const [busy, setBusy] = useState(false);
+  const [fait, setFait] = useState(false);
 
   useEffect(() => {
-    if (etat === "refuse" || etat === "pret") return;
-    const desabonner = onPasswordRecovery(() => setEtat("pret"));
-
-    /* Sans clés Supabase, aucune session ne s'ouvrira jamais : la maquette
-       doit tout de même montrer l'écran. */
-    if (!isAuthConfigured) {
-      setEtat("pret");
-      return desabonner;
-    }
-
-    /* Si rien n'arrive, c'est que l'adresse a été ouverte à la main, sans
-       lien. Le dire au bout de quelques secondes vaut mieux que de laisser
-       tourner un « veuillez patienter » indéfini. */
-    const minuteur = setTimeout(() => {
-      setEtat((actuel) => (actuel === "attente" ? "refuse" : actuel));
-    }, 6000);
-
-    return () => { clearTimeout(minuteur); desabonner(); };
-    /* eslint-disable-next-line react-hooks/exhaustive-deps */
-  }, []);
+    if (jeton) effacerJetonDeLAdresse();
+  }, [jeton]);
 
   const enregistrer = async () => {
     if (busy) return;
@@ -175,23 +156,44 @@ function NewPassword(p) {
     setBusy(true);
     setErr("");
     try {
-      await updatePassword(mdp);
-      /* Le compte n'est plus en attente de premier mot de passe. L'oubli de ce
-         geste renverrait le titulaire sur cet écran à chaque connexion. */
-      if (p.session) await p.motDePasseChange();
-      setEtat("fait");
+      const compte = await definirMotDePasse(jeton, mdp);
+      /* Le serveur ouvre la session dans la foulée : la personne vient de
+         prouver qu'elle a accès à sa messagerie et vient de choisir son mot de
+         passe. Lui redemander de se connecter serait une étape pour rien. */
+      if (compte && compte.id) p.setSession(compte);
+      setFait(true);
     } catch (e) {
-      setErr(e.message);
+      /* 410 : le lien a expiré ou a déjà servi. C'est le seul refus qui appelle
+         une action précise — en redemander un —, donc il a son propre écran. */
+      if (e.statut === 410) setPerime(e.message);
+      else setErr(e.message);
     }
     setBusy(false);
   };
 
-  if (etat === "refuse") {
+  if (!jeton) {
+    return (
+      <Carte p={p} eyebrow="Mot de passe" titre="Cette page s'ouvre depuis un lien">
+        <div className="vz-alert warn" style={{ marginTop: 16 }}>
+          Pour choisir un mot de passe, suivez le lien reçu par e-mail. Si vous n'en avez pas, ou s'il a expiré,
+          demandez-en un nouveau.
+        </div>
+        <div style={{ display: "flex", gap: 8, marginTop: 18, flexWrap: "wrap" }}>
+          <button className="vz-btn vz-btn-primary" onClick={() => p.go({ view: "forgotPassword" })}>Demander un lien</button>
+          <button className="vz-btn" onClick={() => p.go({ view: "login" })}>Connexion</button>
+        </div>
+      </Carte>
+    );
+  }
+
+  if (perime) {
     return (
       <Carte p={p} eyebrow="Mot de passe" titre="Ce lien n'est plus valable">
-        <div className="vz-alert warn" style={{ marginTop: 16 }}>
-          {lien.etat === "refuse" ? lien.message : "Cette page s'ouvre depuis un lien reçu par e-mail. Demandez-en un nouveau pour choisir votre mot de passe."}
-        </div>
+        <div className="vz-alert warn" style={{ marginTop: 16 }}>{perime}</div>
+        <p className="vz-small vz-muted" style={{ marginTop: 14, lineHeight: 1.7 }}>
+          Les liens ne servent qu'une fois, et ne restent valables qu'un temps : un lien qui traînerait dans une
+          boîte de réception resterait sinon une clé de votre compte.
+        </p>
         <div style={{ display: "flex", gap: 8, marginTop: 18, flexWrap: "wrap" }}>
           <button className="vz-btn vz-btn-primary" onClick={() => p.go({ view: "forgotPassword" })}>Demander un nouveau lien</button>
           <button className="vz-btn" onClick={() => p.go({ view: "login" })}>Connexion</button>
@@ -200,48 +202,43 @@ function NewPassword(p) {
     );
   }
 
-  if (etat === "attente") {
+  if (fait) {
+    const session = p.session;
     return (
-      <Carte p={p} eyebrow="Mot de passe" titre="Vérification du lien">
-        <p className="vz-small vz-muted" style={{ marginTop: 14 }}>Ouverture de votre session de récupération…</p>
-      </Carte>
-    );
-  }
-
-  if (etat === "fait") {
-    return (
-      <Carte p={p} eyebrow="Mot de passe" titre="Votre mot de passe est modifié">
+      <Carte p={p} eyebrow="Mot de passe" titre="Votre mot de passe est enregistré">
         <div className="vz-alert ok" style={{ marginTop: 16 }}>
-          Le nouveau mot de passe est enregistré. Il est actif dès maintenant.
+          Il est actif dès maintenant, et votre session est ouverte.
         </div>
         <div style={{ display: "flex", gap: 8, marginTop: 18 }}>
           <button
             className="vz-btn vz-btn-primary"
-            onClick={() => p.go(p.session ? { view: p.session.role === "CERTIFIED" ? "dashboard" : "admin", page: "dashboard" } : { view: "login" })}
+            onClick={() =>
+              p.go(
+                session && session.role !== "CERTIFIED"
+                  ? { view: "admin", page: "dashboard" }
+                  : session
+                    ? { view: "dashboard" }
+                    : { view: "login" }
+              )
+            }
           >
-            {p.session ? "Ouvrir mon espace" : "Se connecter"}
+            {session ? "Ouvrir mon espace" : "Se connecter"}
           </button>
         </div>
       </Carte>
     );
   }
 
-  const force = p.session?.must_change_password;
-
   return (
     <Carte
       p={p}
       eyebrow="Mot de passe"
-      titre={force ? "Choisissez votre mot de passe" : "Nouveau mot de passe"}
+      titre="Choisissez votre mot de passe"
       pied="Huit caractères au minimum, dont une lettre et un chiffre."
     >
-      {force && (
-        <div className="vz-alert info" style={{ margin: "14px 0 4px" }}>
-          Bienvenue{p.session?.first_name ? ` ${p.session.first_name}` : ""}. Définissez votre mot de passe pour accéder à votre espace.
-        </div>
-      )}
       <p className="vz-small vz-muted" style={{ margin: "14px 0 18px", lineHeight: 1.7 }}>
-        Choisissez un mot de passe que vous n'utilisez pas ailleurs.
+        Choisissez un mot de passe que vous n'utilisez pas ailleurs. Il sera le seul à ouvrir votre espace :
+        VIZDATA ne le connaîtra pas.
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <Field label="Nouveau mot de passe">
@@ -251,6 +248,7 @@ function NewPassword(p) {
             value={mdp}
             onChange={(e) => { setMdp(e.target.value); setErr(""); }}
             autoComplete="new-password"
+            autoFocus
           />
         </Field>
         <Field label="Confirmer le mot de passe">

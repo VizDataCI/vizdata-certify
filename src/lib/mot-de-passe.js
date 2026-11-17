@@ -1,23 +1,29 @@
-/* Règles du mot de passe et lecture des liens de récupération.
+/* Règles du mot de passe, et lecture du lien reçu par courrier.
  *
- * Isolées du module d'authentification pour une raison précise : `auth.js`
- * importe le client Supabase, qui lit `import.meta.env`. Ce module serait donc
- * inexécutable hors d'un navigateur, et ces deux règles — les seules de toute
- * la chaîne de réinitialisation qui ne dépendent d'aucun réseau — ne pourraient
- * pas être éprouvées autrement qu'à la main.
+ * Isolées du reste pour être éprouvables hors d'un navigateur : ce sont les
+ * seules règles de toute la chaîne de réinitialisation qui ne dépendent ni du
+ * réseau ni du DOM. Le serveur importe le même module, de sorte que l'écran et
+ * le registre exigent exactement la même chose d'un mot de passe — et qu'il
+ * est impossible qu'ils divergent.
  *
- * Or ce sont elles qui ont fait défaut : un lien expiré affichait « une erreur
- * est survenue », et rien ne disait qu'il fallait en redemander un.
+ * Depuis le passage à notre propre registre, le lien a une forme simple :
+ *
+ *     /nouveau-mot-de-passe?jeton=<secret>
+ *
+ * Supabase y mettait un fragment `#access_token=…&type=recovery`, consommé par
+ * son SDK, et signalait ses refus par `#error_code=otp_expired`. Il fallait
+ * lire tout cela avant que le SDK n'efface l'adresse, et distinguer quatre
+ * états dont trois venaient de l'URL. Ici, l'URL ne porte qu'un secret : le
+ * verdict appartient au serveur, qui est le seul à pouvoir le rendre.
  */
 
 /**
  * Message d'exigence si le mot de passe ne convient pas ; chaîne vide sinon.
  *
- * Huit caractères, une lettre, un chiffre. Volontairement modeste : Supabase
- * impose six caractères par défaut, et des règles plus sévères poussent les
- * gens à écrire leur mot de passe sur un papier. Ce qui protège vraiment, c'est
- * que le mot de passe soit choisi par le titulaire — jamais transmis par
- * courrier, jamais provisoire.
+ * Huit caractères, une lettre, un chiffre. Volontairement modeste : des règles
+ * plus sévères poussent les gens à écrire leur mot de passe sur un papier. Ce
+ * qui protège vraiment, c'est qu'il soit choisi par son titulaire — jamais
+ * transmis par courrier, jamais provisoire.
  */
 function qualiteMotDePasse(mdp) {
   const v = mdp || "";
@@ -28,44 +34,47 @@ function qualiteMotDePasse(mdp) {
 }
 
 /**
- * Ce que Supabase a laissé dans l'adresse en revenant d'un lien.
+ * Le secret porté par l'adresse, ou null.
  *
- *   succès : #access_token=…&type=recovery, consommé par le SDK lorsque
- *            detectSessionInUrl est actif ; ou ?code=… en flux PKCE.
- *   refus  : #error=access_denied&error_code=otp_expired&error_description=…
- *
- * Le refus doit être lu AVANT que le SDK n'efface le fragment, et il doit être
- * dit pour ce qu'il est : « demandez un nouveau lien », et non « une erreur est
- * survenue ». Les deux emplacements sont examinés — fragment et chaîne de
- * requête — parce que Supabase a utilisé l'un puis l'autre selon les versions
- * et le flux.
- *
- * @returns {{etat: "accepte"|"refuse"|"aucun", expire?: boolean, message?: string, type?: string}}
+ * Il est aussi cherché dans le fragment : certains clients de messagerie et
+ * certaines passerelles réécrivent les liens, et un fragment survit là où une
+ * chaîne de requête est parfois tronquée. Le lire aux deux endroits ne coûte
+ * rien et évite un « lien invalide » inexplicable.
  */
-function etatLienRecuperation(href) {
-  const url = new URL(href);
-  const fragment = new URLSearchParams(url.hash.replace(/^#/, ""));
-  const requete = url.searchParams;
-  const lire = (cle) => fragment.get(cle) || requete.get(cle);
-
-  const codeErreur = lire("error_code");
-  const erreur = lire("error");
-
-  if (codeErreur || erreur) {
-    const expire = /expired/i.test(codeErreur || "");
-    return {
-      etat: "refuse",
-      expire,
-      message: expire
-        ? "Ce lien a expiré. Les liens de réinitialisation ne sont valables qu'une heure, et une seule fois."
-        : (lire("error_description") || "Ce lien n'est pas valable.").replace(/\+/g, " "),
-    };
+function jetonDansAdresse(href) {
+  let url;
+  try {
+    url = new URL(href);
+  } catch {
+    return null;
   }
 
-  const jeton = lire("access_token") || requete.get("code");
-  if (jeton) return { etat: "accepte", type: lire("type") || "recovery" };
+  const requete = url.searchParams.get("jeton");
+  if (requete) return requete;
 
-  return { etat: "aucun" };
+  const fragment = new URLSearchParams(url.hash.replace(/^#/, ""));
+  return fragment.get("jeton") || null;
 }
 
-export { qualiteMotDePasse, etatLienRecuperation };
+/**
+ * Retire le secret de l'adresse affichée, sans recharger la page.
+ *
+ * Un jeton qui reste dans la barre d'adresse part dans l'historique du
+ * navigateur, dans le titre d'une capture d'écran, et dans l'en-tête
+ * `Referer` de la première requête vers un site tiers. Il n'a plus d'usage une
+ * fois lu : on l'efface.
+ */
+function effacerJetonDeLAdresse(historique = globalThis.history, emplacement = globalThis.location) {
+  if (!historique?.replaceState || !emplacement) return;
+  try {
+    const url = new URL(emplacement.href);
+    if (!url.searchParams.has("jeton") && !url.hash.includes("jeton")) return;
+    url.searchParams.delete("jeton");
+    url.hash = "";
+    historique.replaceState({}, "", url.pathname + url.search);
+  } catch {
+    /* Adresse illisible : rien à nettoyer. */
+  }
+}
+
+export { qualiteMotDePasse, jetonDansAdresse, effacerJetonDeLAdresse };

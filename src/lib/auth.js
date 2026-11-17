@@ -1,159 +1,129 @@
 /* Authentification.
  *
- * Deux régimes, décidés par la présence des clés Supabase :
+ * Deux régimes, décidés par le mode de construction :
  *
- * — configuré   : Supabase vérifie réellement le mot de passe, et le profil
- *                 (prénom, nom, rôle, autorisations) est lu dans la table
- *                 users. C'est la base qui porte le rôle, pas le navigateur.
- * — démonstration : aucun mot de passe n'est vérifié. C'est le comportement
- *                 historique de la maquette, conservé pour qu'elle tourne sans
- *                 compte Supabase.
+ * — registre      : le serveur VIZDATA vérifie le mot de passe et pose un
+ *                   cookie de session HttpOnly. Le navigateur ne détient
+ *                   aucun secret — il ne peut même pas lire ce cookie.
+ * — démonstration : aucun mot de passe n'est vérifié, le registre vit dans le
+ *                   navigateur. C'est `npm run demo`, et rien d'autre.
+ *
+ * Ce qui a changé en quittant Supabase
+ * ------------------------------------
+ * La session n'est plus un jeton conservé par le JavaScript, donc elle n'est
+ * plus à la portée d'une injection dans l'interface. Il n'y a plus de flux de
+ * rafraîchissement à écouter, donc plus d'événements de session : la session
+ * est lue une fois au démarrage, et le serveur tranche à chaque requête.
  */
 
-import { supabase, isAuthConfigured } from "./supabase.js";
-import { qualiteMotDePasse, etatLienRecuperation as lireLien } from "./mot-de-passe.js";
-import { toPath } from "./router.js";
+import { registreDistant, lire, poster, supprimer } from "./registre.js";
+import { qualiteMotDePasse, jetonDansAdresse } from "./mot-de-passe.js";
 
-/** Messages Supabase traduits pour l'utilisateur ; le reste est laissé tel quel. */
+/** Compatibilité de nom avec les écrans écrits du temps de Supabase. */
+const isAuthConfigured = registreDistant;
+
+/** Message affichable d'une erreur du registre. */
 function humanError(error) {
-  const m = (error?.message || "").toLowerCase();
-  if (m.includes("invalid login credentials")) return "Adresse e-mail ou mot de passe incorrect.";
-  if (m.includes("email not confirmed")) return "Cette adresse n'a pas encore été confirmée. Consultez votre messagerie.";
-  if (m.includes("too many requests") || m.includes("rate limit")) return "Trop de tentatives. Réessayez dans quelques minutes.";
-  if (m.includes("failed to fetch") || m.includes("network")) return "Serveur d'authentification injoignable. Vérifiez votre connexion.";
-  if (m.includes("same password")) return "Le nouveau mot de passe doit être différent de l'ancien.";
-  if (m.includes("password should be at least")) return "Le mot de passe est trop court : huit caractères au minimum.";
-  if (m.includes("auth session missing") || m.includes("session_not_found")) {
-    return "Votre lien n'est plus valable. Demandez-en un nouveau.";
-  }
-  if (m.includes("weak password")) return "Ce mot de passe est trop simple. Ajoutez des chiffres ou des majuscules.";
   return error?.message || "La connexion a échoué.";
 }
 
-/** Adresse de retour des liens envoyés par courrier. Absolue, comme Supabase l'exige. */
-function adresseRetour() {
-  return window.location.origin + toPath({ view: "newPassword" });
-}
+/**
+ * Connexion. Renvoie le profil complet — rôle et autorisations compris.
+ *
+ * Supabase rendait un compte d'authentification qu'il fallait ensuite
+ * rapprocher d'un profil, en un second aller-retour. Le registre les tient
+ * dans la même table : une requête suffit.
+ */
+async function signIn(email, motDePasse) {
+  const adresse = String(email || "").trim().toLowerCase();
 
-/** Connecte et renvoie le compte { id, email }. Lève une Error au message affichable. */
-async function signIn(email, password) {
-  const address = email.trim().toLowerCase();
-
-  if (!isAuthConfigured) {
-    if (!password) throw new Error("Entrez votre mot de passe.");
-    return { id: null, email: address };
+  if (!registreDistant) {
+    if (!motDePasse) throw new Error("Entrez votre mot de passe.");
+    return { id: null, email: adresse, demonstration: true };
   }
+  if (!adresse) throw new Error("Entrez votre adresse e-mail.");
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email: address, password });
-  if (error) throw new Error(humanError(error));
-  return { id: data.user.id, email: data.user.email.toLowerCase() };
+  return poster("/session", { email: adresse, motDePasse });
 }
 
 async function signOut() {
-  if (isAuthConfigured) await supabase.auth.signOut();
+  if (!registreDistant) return;
+  try {
+    await supprimer("/session");
+  } catch {
+    /* Le registre est injoignable : la session locale est quand même oubliée,
+       et le cookie expirera. Refuser de déconnecter parce que le serveur ne
+       répond pas serait le pire des deux mondes. */
+  }
 }
 
-/** Compte { id, email } de la session en cours, ou null. */
+/** Profil de la session en cours, ou null. */
 async function currentUser() {
-  if (!isAuthConfigured) return null;
-  const { data } = await supabase.auth.getSession();
-  const user = data.session?.user;
-  return user ? { id: user.id, email: user.email.toLowerCase() } : null;
+  if (!registreDistant) return null;
+  try {
+    return await lire("/session");
+  } catch {
+    return null;
+  }
 }
 
-/** S'abonne aux changements de session. Renvoie la fonction de désabonnement. */
-function onAuthChange(callback) {
-  if (!isAuthConfigured) return () => {};
-  const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-    const user = session?.user;
-    callback(user ? { id: user.id, email: user.email.toLowerCase() } : null);
-  });
-  return () => data.subscription.unsubscribe();
+/**
+ * Jadis l'abonnement aux événements de session de Supabase.
+ *
+ * Il n'a plus d'objet : la session est un cookie, le serveur la valide à
+ * chaque requête, et il n'y a pas de jeton à rafraîchir. La fonction est
+ * conservée pour ne pas réécrire les écrans qui l'appellent, et elle ne fait
+ * rien — ce qui est exactement ce qu'il faut qu'elle fasse.
+ */
+function onAuthChange() {
+  return () => {};
 }
 
-/* --- réinitialisation du mot de passe --------------------------------------
+/* --- mot de passe --------------------------------------------------------- */
 
-   Ce qui ne marchait pas
-   ----------------------
-   L'e-mail partait bien, mais `redirectTo` pointait vers `window.location.origin`
-   — la page d'accueil. Supabase y ouvrait une session de récupération, puis
-   plus rien : aucun formulaire n'attendait, donc aucun mot de passe ne pouvait
-   être écrit. Le lien fonctionnait ; c'est l'arrivée qui manquait.
-
-   Les trois pièces de la chaîne, désormais :
-     1. sendPasswordReset  — envoie le lien vers /nouveau-mot-de-passe.
-     2. etatLienRecuperation — lit ce que Supabase a mis dans l'adresse, y
-        compris un refus (lien expiré, déjà utilisé).
-     3. updatePassword     — écrit le nouveau mot de passe dans la session
-        ouverte par le lien.
-
-   L'adresse de retour doit être déclarée dans le projet Supabase
-   (Authentication → URL Configuration → Redirect URLs), sinon Supabase
-   substitue le Site URL et l'on retombe sur le problème d'origine. */
-
-/** Envoie un lien de réinitialisation. Silencieux sur l'existence du compte. */
+/** Demande un lien de réinitialisation. Silencieux sur l'existence du compte. */
 async function sendPasswordReset(email) {
-  const address = email.trim().toLowerCase();
-  if (!address) throw new Error("Entrez d'abord votre adresse e-mail.");
-  if (!isAuthConfigured) return;
-  const { error } = await supabase.auth.resetPasswordForEmail(address, { redirectTo: adresseRetour() });
-  if (error) throw new Error(humanError(error));
+  const adresse = String(email || "").trim().toLowerCase();
+  if (!adresse) throw new Error("Entrez d'abord votre adresse e-mail.");
+  if (!registreDistant) return;
+  await poster("/mot-de-passe/oubli", { email: adresse });
 }
 
-/** Ce que Supabase laisse dans l'adresse en revenant d'un lien.
- *  La lecture elle-même vit dans mot-de-passe.js, pour être éprouvable hors
- *  navigateur ; ici, on ne fait que lui donner l'adresse en cours. */
-function etatLienRecuperation(href = window.location.href) {
-  return lireLien(href);
+/**
+ * Écrit le mot de passe porté par un lien, et ouvre la session.
+ *
+ * La personne vient de prouver qu'elle a accès à sa messagerie et vient de
+ * choisir son mot de passe : lui redemander de se connecter serait une étape
+ * pour rien.
+ */
+async function definirMotDePasse(jeton, motDePasse) {
+  const souci = qualiteMotDePasse(motDePasse);
+  if (souci) throw new Error(souci);
+  if (!registreDistant) return { demonstration: true };
+  return poster("/mot-de-passe/definir", { jeton, motDePasse });
 }
 
-/** Attend que le SDK ait ouvert la session portée par le lien. */
-function onPasswordRecovery(callback) {
-  if (!isAuthConfigured) return () => {};
-  const { data } = supabase.auth.onAuthStateChange((event, session) => {
-    if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && session)) callback(session);
-  });
-  return () => data.subscription.unsubscribe();
-}
-
-/** Écrit un nouveau mot de passe dans la session en cours. */
-async function updatePassword(password) {
-  const faible = qualiteMotDePasse(password);
-  if (faible) throw new Error(faible);
-  if (!isAuthConfigured) return;
-  const { error } = await supabase.auth.updateUser({ password });
-  if (error) throw new Error(humanError(error));
-}
-
-/** Changement depuis l'espace personnel : l'ancien mot de passe est vérifié. */
-async function changePassword(email, ancien, nouveau) {
+/** Changement depuis l'espace personnel : l'ancien mot de passe est exigé. */
+async function changePassword(_email, ancien, nouveau) {
   if (!ancien) throw new Error("Entrez votre mot de passe actuel.");
-  const faible = qualiteMotDePasse(nouveau);
-  if (faible) throw new Error(faible);
+  const souci = qualiteMotDePasse(nouveau);
+  if (souci) throw new Error(souci);
   if (ancien === nouveau) throw new Error("Le nouveau mot de passe doit être différent de l'ancien.");
-  if (!isAuthConfigured) return;
-
-  /* Vérifier l'ancien mot de passe n'est pas une formalité : sans ce contrôle,
-     un poste laissé déverrouillé suffirait à prendre le compte. Supabase ne le
-     fait pas pour nous — updateUser écrit sans rien demander. */
-  const { error: refus } = await supabase.auth.signInWithPassword({ email, password: ancien });
-  if (refus) throw new Error("Votre mot de passe actuel est incorrect.");
-
-  const { error } = await supabase.auth.updateUser({ password: nouveau });
-  if (error) throw new Error(humanError(error));
+  if (!registreDistant) return;
+  await poster("/mot-de-passe/changer", { ancien, nouveau });
 }
 
 export {
   isAuthConfigured,
+  registreDistant,
   signIn,
   signOut,
   currentUser,
   onAuthChange,
   sendPasswordReset,
-  etatLienRecuperation,
-  onPasswordRecovery,
-  updatePassword,
+  definirMotDePasse,
   changePassword,
+  jetonDansAdresse,
   qualiteMotDePasse,
   humanError,
 };

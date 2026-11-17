@@ -1,21 +1,21 @@
-/* La chaîne de réinitialisation du mot de passe.
+/* La chaîne de mot de passe — ce qui en relève du navigateur.
  *
  * Ces tests existent à cause d'un défaut réel et durable : l'e-mail de
  * réinitialisation partait, le lien fonctionnait, et le mot de passe ne
  * changeait jamais. L'adresse de retour pointait vers l'accueil, où aucun
- * formulaire n'attendait. Pire, un lien expiré n'affichait rien
- * d'intelligible — l'utilisateur ne savait pas qu'il devait en redemander un.
+ * formulaire n'attendait.
  *
- * Les deux règles éprouvées ici sont les seules de toute la chaîne qui ne
- * dépendent ni du réseau ni du navigateur. Le reste — l'envoi, l'ouverture de
- * session, l'écriture — appartient à Supabase.
+ * Les règles éprouvées ici sont les seules de toute la chaîne qui ne
+ * dépendent ni du réseau ni du DOM. Le serveur importe le MÊME module : l'écran
+ * et le registre exigent donc exactement la même chose d'un mot de passe, et
+ * il est impossible qu'ils divergent.
  */
 
 import test from "node:test";
 import assert from "node:assert/strict";
-import { qualiteMotDePasse, etatLienRecuperation } from "../src/lib/mot-de-passe.js";
+import { qualiteMotDePasse, jetonDansAdresse, effacerJetonDeLAdresse } from "../src/lib/mot-de-passe.js";
 
-/* --- exigences du mot de passe ------------------------------------------ */
+/* --- exigences du mot de passe ------------------------------------------- */
 
 test("un mot de passe trop court est refusé", () => {
   assert.match(qualiteMotDePasse("Viz2026"), /huit caractères/);
@@ -36,59 +36,51 @@ test("un mot de passe conforme passe", () => {
   assert.equal(qualiteMotDePasse("a1234567"), "");
 });
 
-/* --- lecture du lien de retour ------------------------------------------
-   Les adresses sont celles que Supabase produit réellement. */
+/* --- lecture du lien reçu par courrier ----------------------------------- */
 
-test("un lien de récupération valide est reconnu", () => {
-  const r = etatLienRecuperation(
-    "https://certify.vizdata.ci/nouveau-mot-de-passe#access_token=eyJhbGciOi&expires_in=3600&refresh_token=abc&token_type=bearer&type=recovery"
+test("le secret est lu dans la chaîne de requête", () => {
+  assert.equal(
+    jetonDansAdresse("https://certify.vizdata.ci/nouveau-mot-de-passe?jeton=abc-123_XYZ"),
+    "abc-123_XYZ"
   );
-  assert.equal(r.etat, "accepte");
-  assert.equal(r.type, "recovery");
 });
 
-test("le flux PKCE place le code en chaîne de requête", () => {
-  const r = etatLienRecuperation("https://certify.vizdata.ci/nouveau-mot-de-passe?code=7f3a-91bd");
-  assert.equal(r.etat, "accepte");
+test("le secret est aussi lu dans le fragment", () => {
+  /* Certaines passerelles de messagerie réécrivent les liens : un fragment
+     survit parfois là où une chaîne de requête est tronquée. Le lire aux deux
+     endroits évite un « lien invalide » inexplicable. */
+  assert.equal(jetonDansAdresse("https://certify.vizdata.ci/nouveau-mot-de-passe#jeton=abc-123"), "abc-123");
 });
 
-test("une invitation est reconnue comme un lien valide", () => {
-  /* Un titulaire invité arrive par le même chemin, avec type=invite : il doit
-     pouvoir choisir son mot de passe, pas se voir refuser le lien. */
-  const r = etatLienRecuperation("https://certify.vizdata.ci/nouveau-mot-de-passe#access_token=eyJ&type=invite");
-  assert.equal(r.etat, "accepte");
-  assert.equal(r.type, "invite");
+test("une adresse ouverte à la main ne porte aucun secret", () => {
+  assert.equal(jetonDansAdresse("https://certify.vizdata.ci/nouveau-mot-de-passe"), null);
+  assert.equal(jetonDansAdresse("https://certify.vizdata.ci/nouveau-mot-de-passe?autre=1"), null);
 });
 
-test("un lien expiré le dit, et dit quoi faire", () => {
-  const r = etatLienRecuperation(
-    "https://certify.vizdata.ci/nouveau-mot-de-passe#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired"
+test("une adresse illisible ne fait pas tomber l'écran", () => {
+  assert.equal(jetonDansAdresse("pas une adresse"), null);
+  assert.equal(jetonDansAdresse(""), null);
+  assert.equal(jetonDansAdresse(undefined), null);
+});
+
+test("le secret est retiré de la barre d'adresse", () => {
+  /* Un jeton qui reste affiché part dans l'historique du navigateur, sur une
+     capture d'écran, et dans l'en-tête Referer de la première requête vers un
+     site tiers. */
+  let remplacee = null;
+  const historique = { replaceState: (_e, _t, url) => { remplacee = url; } };
+  const emplacement = { href: "https://certify.vizdata.ci/nouveau-mot-de-passe?jeton=secret&autre=1" };
+
+  effacerJetonDeLAdresse(historique, emplacement);
+  assert.equal(remplacee, "/nouveau-mot-de-passe?autre=1");
+  assert.ok(!remplacee.includes("secret"));
+});
+
+test("sans secret dans l'adresse, rien n'est réécrit", () => {
+  let appelee = false;
+  effacerJetonDeLAdresse(
+    { replaceState: () => { appelee = true; } },
+    { href: "https://certify.vizdata.ci/espace" }
   );
-  assert.equal(r.etat, "refuse");
-  assert.equal(r.expire, true);
-  assert.match(r.message, /expiré/);
-});
-
-test("un refus sans code d'expiration remonte la description de Supabase, lisible", () => {
-  const r = etatLienRecuperation(
-    "https://certify.vizdata.ci/nouveau-mot-de-passe#error=access_denied&error_description=Email+link+is+invalid"
-  );
-  assert.equal(r.etat, "refuse");
-  assert.equal(r.expire, false);
-  /* Les « + » de l'encodage ne doivent pas rester à l'écran. */
-  assert.ok(!r.message.includes("+"), `message non décodé : ${r.message}`);
-});
-
-test("une adresse ouverte à la main ne porte aucun lien", () => {
-  assert.equal(etatLienRecuperation("https://certify.vizdata.ci/nouveau-mot-de-passe").etat, "aucun");
-});
-
-test("un refus posé en chaîne de requête est lu comme un refus", () => {
-  /* Supabase a placé l'erreur tantôt dans le fragment, tantôt dans la requête,
-     selon les versions. Lire un seul des deux emplacements ferait passer un
-     lien refusé pour une arrivée normale — et le formulaire s'ouvrirait sur
-     une session inexistante. */
-  const r = etatLienRecuperation("https://certify.vizdata.ci/nouveau-mot-de-passe?error=access_denied&error_code=otp_expired");
-  assert.equal(r.etat, "refuse");
-  assert.equal(r.expire, true);
+  assert.equal(appelee, false);
 });

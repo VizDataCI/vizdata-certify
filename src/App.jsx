@@ -47,12 +47,16 @@ export default function App() {
 
   /* --- session --- */
 
-  /** Profil applicatif du compte authentifié.
-      Une fois Supabase configuré, il vient de la table users : le rôle et les
-      autorisations sont donc portés par la base, et non par le navigateur. */
+  /** Profil applicatif du compte connecté.
+   *
+   *  Le registre rend le profil complet — rôle et autorisations compris — dès
+   *  la connexion : il n'y a plus de compte d'authentification à rapprocher
+   *  d'un profil en un second aller-retour, comme du temps où les deux
+   *  vivaient dans des tables séparées. En démonstration, le profil se cherche
+   *  dans le registre local par correspondance d'adresse. */
   const profileFor = async (account) => {
     if (!account) return null;
-    if (isAuthConfigured) return api.fetchProfile(account.id);
+    if (isAuthConfigured) return account;
     return dbRef.current.users.find((u) => u.email.toLowerCase() === account.email) || null;
   };
 
@@ -104,19 +108,6 @@ export default function App() {
     await signOut();
     setSession(null);
     go({ view: "home" });
-  };
-
-  /** Le compte vient de choisir son mot de passe : il n'est plus en attente. */
-  const motDePasseChange = async () => {
-    if (!session) return;
-    if (isAuthConfigured) {
-      await api.markPasswordChanged(session.id);
-      setSession({ ...session, must_change_password: false });
-      return;
-    }
-    const maj = { ...session, must_change_password: false };
-    setDb((d) => ({ ...d, users: d.users.map((u) => (u.id === maj.id ? maj : u)) }));
-    setSession(maj);
   };
 
   const notify = (m) => { setToast(m); setTimeout(() => setToast(""), 2600); };
@@ -276,7 +267,7 @@ export default function App() {
 
   /* --- rendu --- */
   const shared = {
-    db, setDb, session, setSession, login, logout, motDePasseChange, route, go, notify,
+    db, setDb, session, setSession, login, logout, route, go, notify,
     userOf, typeOf, domainOf, certByToken, certByRef, verifyUrl, log,
     recordVerification, recordShare, recordPublicShare, toPublic,
     findByReference, findByToken, findProfile, myCertificates, saveProfile,

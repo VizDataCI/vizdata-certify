@@ -25,7 +25,7 @@
 
 import { backup, DatabaseSync } from "node:sqlite";
 import { mkdirSync, statSync, readdirSync, unlinkSync, existsSync } from "node:fs";
-import { dirname, join, resolve, basename } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { cheminBase } from "../server/db.mjs";
 
 /** Horodatage pour le nom du fichier : triable, lisible, sans caractère interdit. */

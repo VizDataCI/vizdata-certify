@@ -32,7 +32,7 @@ import { extname, join, normalize, resolve } from "node:path";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { ouvrirBase, json as parseJson } from "./db.mjs";
+import { ouvrirBase } from "./db.mjs";
 import {
   Refus,
   exigerSession,
@@ -61,6 +61,7 @@ import {
 import { qualiteMotDePasse } from "../src/lib/mot-de-passe.js";
 import { estAdmin } from "../src/lib/permissions.js";
 import * as R from "./registre.mjs";
+import * as A from "./academie.mjs";
 import { envoyer } from "./courrier.mjs";
 
 const ICI = dirname(fileURLToPath(import.meta.url));
@@ -534,6 +535,76 @@ route("POST", /^\/api\/programmes$/, async ({ req, acteur }) => {
 route("PATCH", /^\/api\/programmes\/([^/]+)$/, async ({ params, req, acteur }) => {
   if (!estAdmin(acteur)) throw new Refus(403, "Le catalogue relève de l'administrateur.");
   return R.majProgramme(db, acteur, params[0], await corpsJson(req));
+});
+
+/* --- académie : page publique --------------------------------------------- */
+
+route("GET", /^\/api\/academie\/cohorte$/, () => A.cohortePubliee(db), { publique: true });
+
+route(
+  "POST",
+  /^\/api\/academie\/candidature$/,
+  async ({ req }) => {
+    limiter("candidature:" + empreinteClient(req), { max: 8, fenetre: 60 * 60_000 });
+    const corps = await corpsJson(req);
+    try {
+      const reference = A.soumettreCandidature(db, corps, corps.source);
+      return { reference };
+    } catch (e) {
+      /* Les refus de validation sont des messages pour le candidat, pas des
+         incidents : on les rend tels quels plutôt qu'en « erreur interne ». */
+      throw new Refus(400, e.message);
+    }
+  },
+  { publique: true }
+);
+
+/* --- académie : administration -------------------------------------------- */
+
+route("GET", /^\/api\/academie\/candidatures$/, ({ acteur }) => {
+  exigerAdministration(acteur);
+  return A.listerCandidatures(db);
+});
+
+route("GET", /^\/api\/academie\/cohortes$/, ({ acteur }) => {
+  exigerAdministration(acteur);
+  return A.listerCohortes(db);
+});
+
+route("PATCH", /^\/api\/academie\/candidatures\/([^/]+)$/, async ({ params, req, acteur }) => {
+  exigerAdministration(acteur);
+  const maj = A.majCandidature(db, params[0], await corpsJson(req));
+  R.journaliser(db, acteur, "CANDIDATURE_UPDATED", { entite: "candidature", entiteId: params[0], valeur: maj?.reference ?? "" });
+  return maj;
+});
+
+route("POST", /^\/api\/academie\/cohortes$/, async ({ req, acteur }) => {
+  if (!estAdmin(acteur)) throw new Refus(403, "Les cohortes relèvent de l'administrateur.");
+  const cree = A.enregistrerCohorte(db, await corpsJson(req));
+  R.journaliser(db, acteur, "COHORTE_CREATED", { entite: "cohorte", entiteId: cree.id, valeur: cree.libelle });
+  return cree;
+});
+
+route("PATCH", /^\/api\/academie\/cohortes\/([^/]+)$/, async ({ params, req, acteur }) => {
+  if (!estAdmin(acteur)) throw new Refus(403, "Les cohortes relèvent de l'administrateur.");
+  const maj = A.enregistrerCohorte(db, { id: params[0], ...(await corpsJson(req)) });
+  R.journaliser(db, acteur, "COHORTE_UPDATED", { entite: "cohorte", entiteId: params[0], valeur: maj?.libelle ?? "" });
+  return maj;
+});
+
+route("POST", /^\/api\/academie\/cohortes\/([^/]+)\/publier$/, ({ params, acteur }) => {
+  if (!estAdmin(acteur)) throw new Refus(403, "Les cohortes relèvent de l'administrateur.");
+  const maj = A.publierCohorte(db, params[0]);
+  R.journaliser(db, acteur, "COHORTE_PUBLIEE", { entite: "cohorte", entiteId: params[0], valeur: maj?.libelle ?? "" });
+  return maj;
+});
+
+route("DELETE", /^\/api\/academie\/cohortes\/([^/]+)$/, ({ params, acteur }) => {
+  if (!estAdmin(acteur)) throw new Refus(403, "Les cohortes relèvent de l'administrateur.");
+  const efface = A.supprimerCohorte(db, params[0]);
+  if (!efface) throw new Refus(404, "Cohorte introuvable.");
+  R.journaliser(db, acteur, "COHORTE_SUPPRIMEE", { entite: "cohorte", entiteId: params[0] });
+  return { supprime: true };
 });
 
 /* ========================================================================
