@@ -31,6 +31,12 @@ export default function App() {
   const [db, setDb] = useState(loadDb);
   const [route, setRoute] = useState(currentRoute);
   const [session, setSession] = useState(null);
+  /* Tant que la session n'est pas connue, les écrans protégés doivent
+     patienter plutôt que de rediriger. Avec Supabase, la session était lue
+     dans le stockage du navigateur, donc connue dès le premier rendu ; elle
+     vient désormais du serveur, et un accès direct à /espace renvoyait vers
+     la connexion une personne parfaitement connectée. */
+  const [sessionConnue, setSessionConnue] = useState(!isAuthConfigured);
   const [toast, setToast] = useState("");
   const saveTimer = useRef(null);
   const dbRef = useRef(db);
@@ -64,8 +70,8 @@ export default function App() {
     let alive = true;
     currentUser()
       .then(profileFor)
-      .then((profile) => { if (alive) setSession(profile); })
-      .catch(() => { if (alive) setSession(null); });
+      .then((profile) => { if (alive) { setSession(profile); setSessionConnue(true); } })
+      .catch(() => { if (alive) { setSession(null); setSessionConnue(true); } });
     const unsubscribe = onAuthChange((account) => {
       profileFor(account).then((profile) => setSession(profile)).catch(() => setSession(null));
     });
@@ -267,7 +273,7 @@ export default function App() {
 
   /* --- rendu --- */
   const shared = {
-    db, setDb, session, setSession, login, logout, route, go, notify,
+    db, setDb, session, setSession, sessionConnue, login, logout, route, go, notify,
     userOf, typeOf, domainOf, certByToken, certByRef, verifyUrl, log,
     recordVerification, recordShare, recordPublicShare, toPublic,
     findByReference, findByToken, findProfile, myCertificates, saveProfile,

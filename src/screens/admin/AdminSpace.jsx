@@ -73,7 +73,21 @@ function AdminSpace(p) {
 
   /* Le garde vient après les hooks, jamais avant : un retour anticipé placé
      plus haut sauterait des appels de hooks d'un rendu au suivant, ce que React
-     interdit. */
+     interdit.
+     Et il n'agit qu'une fois la session CONNUE : rediriger avant mettrait
+     dehors un administrateur parfaitement connecté, simplement parce que la
+     réponse du serveur n'est pas encore arrivée. */
+  if (!p.sessionConnue) {
+    return (
+      <div className="vz-public">
+        <div className="vz-public-body">
+          <div className="vz-slip" style={{ maxWidth: 380 }}>
+            <div className="vz-empty">Ouverture de l'espace d'administration…</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (!p.session || !estAdministration(p.session)) { p.go({ view: "login" }); return null; }
 
   const admin = estAdmin(p.session);

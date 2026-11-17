@@ -51,6 +51,12 @@ function CertifiedSpace(p) {
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, [aSortir]);
 
+  /* On ne renvoie vers la connexion qu'une fois la session CONNUE. Rediriger
+     avant reviendrait à mettre dehors quelqu'un de parfaitement connecté,
+     simplement parce que la réponse du serveur n'est pas encore arrivée — ce
+     qui arrive à chaque fois qu'on ouvre directement l'adresse de son espace,
+     par exemple depuis le lien d'un courrier. */
+  if (!p.sessionConnue) return <Patienter texte="Ouverture de votre espace…" />;
   if (!p.session) { p.go({ view: "login" }); return null; }
 
   const sortir = (cert, mode) => {
@@ -209,6 +215,19 @@ function CertifiedSpace(p) {
       {modal?.type === "cert" && <CertificateModal cert={modal.c} {...p} onClose={() => setModal(null)} />}
       {modal?.type === "share" && <ShareModal cert={modal.c} {...p} onClose={() => setModal(null)} />}
     </AppShell>
+  );
+}
+
+/** Attente sobre, le temps que le registre dise qui est connecté. */
+function Patienter({ texte }) {
+  return (
+    <div className="vz-public">
+      <div className="vz-public-body">
+        <div className="vz-slip" style={{ maxWidth: 380 }}>
+          <div className="vz-empty">{texte}</div>
+        </div>
+      </div>
+    </div>
   );
 }
 
