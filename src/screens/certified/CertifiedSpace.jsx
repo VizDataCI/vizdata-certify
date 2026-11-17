@@ -283,9 +283,9 @@ function Securite({ p }) {
               Registre de démonstration : aucun mot de passe n'est réellement enregistré.
             </div>
           )}
-          {/* Le mot de passe actuel est exigé. Sans ce contrôle, un poste laissé
-              déverrouillé suffirait à prendre le compte — Supabase écrit le
-              nouveau mot de passe sans rien demander. */}
+          {/* Le mot de passe actuel est exigé, ici comme au serveur, qui le
+              revérifie : sans ce contrôle, un poste laissé déverrouillé une
+              minute suffirait à prendre le compte. */}
           <Field label="Mot de passe actuel">
             <input className="vz-input" type="password" value={ancien} onChange={(e) => { setAncien(e.target.value); setErr(""); setFait(false); }} autoComplete="current-password" />
           </Field>

@@ -15,7 +15,8 @@
     "lint": "oxlint",
     "test": "node --test \"tests/**/*.test.js\"",
     "restaurer": "node scripts/restaurer.mjs",
-    "paquet": "npm run build && node scripts/paquet.mjs"
+    "php": "node scripts/syntaxe-php.mjs",
+    "paquet": "npm run php && npm run build && node scripts/paquet.mjs"
   },
   "dependencies": {
     "qrcode": "^1.5.4",

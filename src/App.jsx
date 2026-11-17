@@ -89,7 +89,7 @@ export default function App() {
     return { view: "dashboard" };
   };
 
-  /** Connexion : Supabase valide l'identité, le registre fournit le profil. */
+  /** Connexion : le registre valide l'identité et fournit le profil. */
   const login = async (email, password) => {
     const account = await signIn(email, password);
     const profile = await profileFor(account);
@@ -165,13 +165,13 @@ export default function App() {
   useEffect(() => onNavigate(setRoute), []);
 
   /* --- registre public ---------------------------------------------------
-     Supabase quand il est configuré, registre local sinon. Les deux chemins
-     rendent la même forme d'objet ; les champs que les fonctions Supabase ne
-     renvoient pas restent simplement absents, et l'interface s'adapte. */
+     Le registre quand il est configuré, le jeu de démonstration sinon. Les deux
+     chemins rendent la même forme d'objet ; les champs que le registre ne
+     renvoie pas restent simplement absents, et l'interface s'adapte. */
 
-  /** Projection publique d'un certificat local, alignée sur les fonctions Supabase.
+  /** Projection publique d'un certificat local, alignée sur celle du registre.
    *  Ni la date d'expiration ni le score n'en font partie : ils ne sont plus
-   *  exposés, et les fonctions de la base ne les renvoient plus non plus. */
+   *  exposés, et la vue publique du registre ne les porte plus non plus. */
   const toPublic = (c) => {
     const u = userOf(c);
     const t = typeOf(c);

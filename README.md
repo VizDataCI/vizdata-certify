@@ -475,21 +475,26 @@ Il n'y a pas non plus de section « témoignages » : il n'y a pas de témoignag
    candidat sont exigés par la base autant que par le formulaire, et trois candidatures
    par adresse et par jour suffisent — au-delà, le formulaire public servirait à remplir
    la table.
-3. La confirmation s'affiche avec la référence.
-4. `api/notifier-candidature.mjs` envoie l'alerte à `contact@vizdata.ci` et l'accusé de
-   réception au candidat.
+3. Le même appel envoie **l'accusé de réception au candidat** et **l'alerte à VIZDATA**,
+   puis rend le verdict de l'accusé.
+4. La confirmation s'affiche avec la référence, et dit si l'accusé est parti.
 
-L'ordre compte. L'e-mail part **après** la confirmation, et son échec ne fait jamais
-échouer la candidature : l'administration la voit dans tous les cas. L'inverse ferait
-dépendre une inscription d'un service tiers.
+L'ordre compte. Les courriers partent **après** l'enregistrement, et leur échec ne fait
+jamais échouer la candidature : l'administration la voit dans tous les cas. L'inverse
+ferait dépendre une inscription d'un service d'envoi.
 
-### La fonction de notification ne croit pas ce qu'on lui envoie
+### Les courriers partent du serveur, et c'est tout l'intérêt
 
-Elle ne retient du corps de la requête que la référence, puis **relit la candidature
-dans la base** avec la clé de service. Sans cela, le destinataire et le contenu du
-message viendraient du client : n'importe qui pourrait faire envoyer, depuis le domaine
-de VIZDATA, le message de son choix à l'adresse de son choix. C'est l'erreur classique
-de ce genre d'endpoint, et elle est évitée ici par construction.
+Un envoi demande une clé d'API, et une clé d'API dans un paquet navigateur est une clé
+publique. Le registre compose donc les deux messages lui-même, dans la requête qui
+enregistre la candidature. Il y avait auparavant un appel séparé depuis le navigateur
+vers une fonction de notification : au-delà de la clé, cette séparation laissait un cas
+gênant — candidature enregistrée, second appel perdu, candidat sans accusé et VIZDATA
+sans alerte. Un seul aller-retour supprime ce cas.
+
+Seul le booléen « parti / pas parti » revient au navigateur. La raison d'un échec parle
+du fournisseur et de la configuration : elle reste dans la table `notifications`, que
+l'administration consulte.
 
 ### Mise en service
 

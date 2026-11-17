@@ -105,8 +105,23 @@ final class Base
         );
 
         $deja = $pdo->query('select nom from migrations')->fetchAll(PDO::FETCH_COLUMN);
-        $dossier = __DIR__ . '/../schema';
-        $fichiers = glob($dossier . '/*.sql') ?: [];
+
+        /* Le schéma n'existe qu'une fois dans le dépôt : server/schema/. Le
+           paquet de déploiement le recopie dans api/schema/. On regarde aux
+           deux endroits plutôt que d'entretenir deux fichiers qui finiraient
+           par diverger. */
+        $fichiers = [];
+        foreach ([__DIR__ . '/../schema', __DIR__ . '/../../server/schema'] as $dossier) {
+            if (is_dir($dossier)) {
+                $fichiers = glob($dossier . '/*.sql') ?: [];
+                if ($fichiers) {
+                    break;
+                }
+            }
+        }
+        if (!$fichiers) {
+            throw new RuntimeException("Aucun fichier de schéma trouvé : le déploiement est incomplet.");
+        }
         sort($fichiers);
 
         $appliquees = [];
@@ -129,6 +144,18 @@ final class Base
             }
         }
         return $appliquees;
+    }
+
+    /**
+     * Referme la connexion.
+     *
+     * Nécessaire avant de remplacer le fichier de base — une restauration —,
+     * sinon on écrirait sous les pieds de SQLite, qui tient le fichier ouvert
+     * et son journal avec.
+     */
+    public static function fermer(): void
+    {
+        self::$pdo = null;
     }
 
     /* --- confort de lecture ---------------------------------------------- */

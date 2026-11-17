@@ -37,7 +37,18 @@ async function cohortePubliee() {
 
 /**
  * Enregistre une candidature et rend sa référence (« CDA-2026-0001 »).
+ *
  * La candidature normalisée est attendue — voir normaliserCandidature().
+ *
+ * Les deux courriers — l'accusé au candidat, l'alerte à VIZDATA — partent du
+ * serveur, dans la même requête. Ils ne peuvent pas partir d'ici : un envoi
+ * demande une clé d'API, et une clé d'API dans un paquet navigateur est une
+ * clé publique. Il y avait auparavant un second appel du navigateur vers une
+ * fonction de notification ; le registre s'en charge désormais, ce qui ferme
+ * au passage le cas gênant où la candidature était enregistrée et l'appel
+ * suivant perdu — un candidat sans accusé, et VIZDATA sans alerte.
+ *
+ * @returns {Promise<{reference: string, courriel: {envoye: boolean}}>}
  */
 async function soumettreCandidature(c, source = "page-academie") {
   if (!estBranchee) {
@@ -45,35 +56,8 @@ async function soumettreCandidature(c, source = "page-academie") {
       "L'enregistrement des candidatures n'est pas configuré sur cet environnement. Écrivez-nous sur WhatsApp, votre place sera réservée de la même manière."
     );
   }
-  const { reference } = await poster("/academie/candidature", { ...c, source });
-  return reference;
-}
-
-/**
- * Notification par e-mail : l'alerte à VIZDATA et l'accusé au candidat.
- *
- * Volontairement « au mieux ». La candidature est déjà enregistrée quand cet
- * appel part : un e-mail perdu ne doit jamais faire croire au candidat que sa
- * candidature a échoué — l'administration la voit dans tous les cas.
- *
- * @returns {Promise<{envoye: boolean, raison?: string}>}
- */
-async function notifier(reference, c) {
-  try {
-    const reponse = await fetch("/api/notifier-candidature", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reference, ...c }),
-    });
-    if (!reponse.ok) {
-      const detail = await reponse.text().catch(() => "");
-      return { envoye: false, raison: `${reponse.status} ${detail.slice(0, 200)}` };
-    }
-    const corps = await reponse.json().catch(() => ({}));
-    return { envoye: corps.envoye !== false, raison: corps.raison };
-  } catch (e) {
-    return { envoye: false, raison: e.message };
-  }
+  const { reference, courriel } = await poster("/academie/candidature", { ...c, source });
+  return { reference, courriel: courriel || { envoye: false } };
 }
 
 /* --- administration ------------------------------------------------------- */
@@ -96,7 +80,6 @@ export {
   estBranchee,
   cohortePubliee,
   soumettreCandidature,
-  notifier,
   listerCandidatures,
   listerCohortes,
   majCandidature,

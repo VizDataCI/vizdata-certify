@@ -43,24 +43,24 @@ function AdminSettings(p) {
               <Ligne
                 quoi="Base de données"
                 etat={p.remote ? "ok" : "warn"}
-                valeur={p.remote ? "Registre Supabase connecté" : "Registre local du navigateur"}
+                valeur={p.remote ? "Registre SQLite du serveur" : "Registre local du navigateur"}
                 detail={p.remote
-                  ? "Les écritures sont réellement enregistrées et soumises aux politiques RLS."
+                  ? "Les écritures sont réellement enregistrées, et chaque droit est vérifié par le serveur avant la première ligne écrite."
                   : "Mode démonstration : les données vivent dans ce navigateur et ne sont partagées avec personne."}
               />
               <Ligne
                 quoi="Authentification"
                 etat={p.remote ? "ok" : "warn"}
-                valeur={p.remote ? "Supabase Auth" : "Simulée"}
+                valeur={p.remote ? "Registre VIZDATA" : "Simulée"}
                 detail={p.remote
-                  ? "Les mots de passe sont vérifiés par Supabase ; aucun n'est stocké par l'application."
-                  : "Aucun mot de passe n'est vérifié tant que les clés Supabase ne sont pas renseignées."}
+                  ? "Les mots de passe ne sont jamais stockés : seule leur empreinte l'est, et elle ne permet pas de les retrouver."
+                  : "Aucun mot de passe n'est vérifié tant que le registre du serveur n'est pas joignable."}
               />
               <Ligne
                 quoi="Envoi des notifications"
                 etat={!p.remote ? "warn" : envoisRates === 0 && notifications.length > 0 ? "ok" : "info"}
                 valeur={!p.remote ? "Simulé" : notifications.length === 0 ? "Aucun envoi encore effectué" : `${notifications.length} envoi${notifications.length > 1 ? "s" : ""}, ${envoisRates} en souffrance`}
-                detail="Les invitations et les réinitialisations partent par Supabase Auth. Les avis métier passent par la fonction Edge « notifier » et son fournisseur d'envoi."
+                detail="Tous les courriers partent du serveur — invitations, réinitialisations, attributions, candidatures. Ce qui n'est pas parti reste visible dans « Notifications » : un envoi perdu ne doit pas être un envoi oublié."
               />
               <Ligne
                 quoi="Modèles de certificat"

@@ -114,7 +114,7 @@ function AdminCandidatures(p) {
 
       {!academie.estBranchee && (
         <div className="vz-alert warn" style={{ marginBottom: 14 }}>
-          Les candidatures vivent dans Supabase : cet écran reste vide en mode démonstration.
+          Les candidatures vivent dans le registre du serveur : cet écran reste vide en mode démonstration.
         </div>
       )}
 

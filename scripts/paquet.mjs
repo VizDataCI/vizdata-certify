@@ -1,157 +1,315 @@
-/* Prépare un paquet prêt à téléverser.
+/* Prépare le paquet à téléverser sur l'hébergement.
  *
  *   npm run paquet
  *
- * Pour un hébergement où l'on n'a que le gestionnaire de fichiers du panneau —
- * pas de ligne de commande, pas de git, pas de npm. Le paquet contient tout ce
- * qu'il faut pour que le registre tourne, et rien d'autre.
+ * L'hébergement de VIZDATA est un mutualisé Plesk : PHP 8.4, pas de Node, pas
+ * d'accès SSH. Le déploiement se fait donc par le gestionnaire de fichiers du
+ * panneau — on dépose une archive, on la décompresse, et c'est tout.
  *
- * Ce qui rend la chose possible
- * -----------------------------
- * Le serveur n'a AUCUNE dépendance : il n'utilise que les modules livrés avec
- * Node. Il n'y a donc pas de `node_modules` à transporter, pas de `npm
- * install` à lancer sur l'hébergement, et le paquet pèse quelques centaines de
- * kilo-octets au lieu de plusieurs dizaines de méga-octets.
+ * Ce que contient le paquet
+ * -------------------------
+ * L'interface construite à la racine, et le registre PHP dans api/. Aucune
+ * dépendance à installer : ni composer, ni node_modules. Le registre n'utilise
+ * que PDO SQLite, OpenSSL et cURL, tous présents.
  *
- * C'est une conséquence directe du choix de SQLite et de `node:http`. Elle
- * n'était pas recherchée ; elle est précieuse.
+ * Ce qu'il ne contient pas, et pourquoi
+ * -------------------------------------
+ * Ni base, ni sauvegarde, ni configuration renseignée. Une archive se copie,
+ * se transfère, s'oublie dans un dossier de téléchargement : elle ne doit
+ * jamais porter de données personnelles ni de clé. `config.php` est écrit sur
+ * le serveur, et lui seul.
  *
- * Ce que le paquet NE contient pas, et pourquoi
- * ---------------------------------------------
- * Ni la base, ni les sauvegardes, ni la moindre clé. Un paquet se transporte,
- * se copie, s'oublie dans un dossier de téléchargement : il ne doit jamais
- * porter de données personnelles. La base est créée sur place, au premier
- * démarrage.
+ * Le schéma vient de server/schema/ — un seul fichier dans le dépôt, recopié
+ * ici. Les deux implémentations du registre partagent donc leur définition de
+ * la vérité.
  */
 
-import { cpSync, mkdirSync, rmSync, writeFileSync, existsSync, readFileSync, statSync, readdirSync } from "node:fs";
-import { execFileSync } from "node:child_process";
+import {
+  cpSync, mkdirSync, rmSync, writeFileSync, readFileSync, existsSync, statSync, readdirSync,
+} from "node:fs";
+import { deflateRawSync, gunzipSync } from "node:zlib";
 import { join, resolve } from "node:path";
 
 const RACINE = resolve(process.cwd());
 const SORTIE = join(RACINE, "paquet");
-const ETAPE = join(SORTIE, "vizdata-certify");
+const ETAPE = join(SORTIE, "contenu");
 
 /* Ce qui part, et seulement cela. La liste est explicite plutôt que déduite :
    un paquet qui embarquerait tout le dépôt emporterait un jour un fichier
    qu'on ne voulait pas voir sortir. */
 const CONTENU = [
-  ["dist", "dist"],
-  ["server", "server"],
-  ["scripts/base.mjs", "scripts/base.mjs"],
-  ["scripts/sauvegarde.mjs", "scripts/sauvegarde.mjs"],
-  ["scripts/restaurer.mjs", "scripts/restaurer.mjs"],
-  /* Les trois modules que le serveur partage avec l'interface. Les dupliquer
-     ici serait plus simple et garantirait qu'ils divergent un jour. */
-  ["src/lib/permissions.js", "src/lib/permissions.js"],
-  ["src/lib/mot-de-passe.js", "src/lib/mot-de-passe.js"],
-  ["src/lib/certificates.js", "src/lib/certificates.js"],
-  ["docs/deploiement.md", "docs/deploiement.md"],
+  /* L'interface construite se déverse à la RACINE du paquet : c'est elle que
+     le serveur web sert, et le .htaccess qu'elle contient doit s'y trouver. */
+  ["dist", "."],
+  /* Le registre PHP. */
+  ["api/index.php", "api/index.php"],
+  ["api/config.exemple.php", "api/config.exemple.php"],
+  ["api/lib", "api/lib"],
+  /* Le schéma, recopié depuis sa source unique. */
+  ["server/schema", "api/schema"],
 ];
-
-/* Point d'entrée pour les hébergements qui lancent l'application par Passenger
-   — c'est le cas de l'extension Node.js de Plesk. Passenger charge le fichier
-   de démarrage en CommonJS ; l'extension .cjs le lui dit, et l'import
-   dynamique à l'intérieur charge le serveur, qui est en modules ES. */
-const DEMARRAGE = `/* Point d'entrée pour Passenger (extension Node.js de Plesk).
- *
- * Passenger charge ce fichier en CommonJS — d'où l'extension .cjs — et
- * l'import dynamique charge le serveur, écrit en modules ES. Passenger fournit
- * le port dans process.env.PORT ; le serveur le lit déjà.
- *
- * En ligne de commande, ce fichier ne sert à rien : lancez directement
- *   node server/index.mjs
- */
-import("./server/index.mjs").catch((e) => {
-  console.error("Le registre n'a pas pu démarrer :", e);
-  process.exit(1);
-});
-`;
 
 const LISEZMOI = `# VIZDATA CERTIFY — paquet de déploiement
 
-Tout ce qu'il faut pour que le registre tourne. **Aucune dépendance à installer** :
-le serveur n'utilise que les modules livrés avec Node.
+Pour un hébergement mutualisé : PHP 8.4, SQLite, pas de ligne de commande.
+**Aucune dépendance à installer.**
 
-## Avant tout : la version de Node
+## 1. Déposer les fichiers
 
-    node --version
+Décompressez tout à la racine du site — là où se trouvent aujourd'hui
+\`index.html\` et \`assets/\`. Vous pouvez écraser l'ancienne version : elle est
+entièrement remplacée.
 
-Il faut **22 ou plus**. Le registre utilise \`node:sqlite\`, livré avec Node depuis cette
-version. C'est la seule exigence du projet, et elle n'est pas contournable.
+Après décompression, la racine contient :
 
-Sur un panneau Plesk, la version proposée par l'extension Node.js est celle qui compte si
-l'application est lancée par le panneau.
+    index.html  assets/  .htaccess  api/  favicon.svg  …
 
-## Ce que contient le paquet
+## 2. Créer le dossier de la base, HORS du dossier web
 
-    dist/              l'interface construite
-    server/            le registre — API, base, autorisations, courriers
-    scripts/           administration de la base et sauvegardes
-    src/lib/           trois modules partagés par le serveur et l'interface
-    app.cjs            point d'entrée pour Passenger (Plesk)
-    package.json
+Dans le gestionnaire de fichiers, remontez d'un niveau — au-dessus de
+\`certify.vizdata.ci\` — et créez un dossier \`certify-registre\`.
 
-Il ne contient **ni base, ni sauvegarde, ni clé**. La base est créée sur place.
+**C'est important.** La base contient les adresses, les téléphones et les
+empreintes des mots de passe. Un fichier servi par erreur livrerait tout le
+registre d'un coup.
 
-## Mise en route, par le panneau
+## 3. Écrire la configuration
 
-1. **Téléversez et décompressez** le contenu dans le dossier de l'application —
-   par exemple \`/httpdocs\` ou un dossier dédié.
+Copiez \`api/config.exemple.php\` en \`api/config.php\`, puis renseignez :
 
-2. **Activez Node.js** pour le domaine :
-   - version : **22 ou plus**
-   - racine de l'application : le dossier où vous venez de décompresser
-   - fichier de démarrage : \`app.cjs\`
-   - racine des documents : le sous-dossier \`dist\`
+- \`CHEMIN_BASE\` et \`DOSSIER_SAUVEGARDES\` : dans \`certify-registre\`
+- \`SAUVEGARDE_CLE\` : une longue phrase aléatoire — **conservez-en une copie
+  ailleurs que sur ce serveur**, sans elle les sauvegardes sont illisibles
+- \`JETON_INSTALLATION\` : une autre phrase aléatoire, le temps de l'étape 4
 
-3. **Variables d'environnement**, dans la même page :
+## 4. Créer le premier administrateur
 
-       NODE_ENV          production
-       VIZDATA_DB        /chemin/hors/web/certify.db
-       VIZDATA_SITE_URL  https://certify.vizdata.ci
+C'est le seul compte que l'application ne peut pas créer elle-même : il n'y a
+personne pour l'inviter.
 
-   Placez la base **hors du dossier web** : un fichier servi par erreur livrerait
-   tout le registre.
+    curl -X POST https://certify.vizdata.ci/api/installation \\
+      -H "Content-Type: application/json" \\
+      -d '{"jeton":"VOTRE_JETON","email":"direction@vizdata.ci","prenom":"Fabrice","nom":"BOH"}'
 
-4. **Démarrez l'application**, puis ouvrez \`https://votre-domaine/api/sante\`.
-   La réponse attendue est \`{"etat":"ok","registre":"sqlite"}\`.
+La réponse contient un lien : suivez-le pour choisir votre mot de passe. Aucun
+mot de passe n'est produit ni envoyé.
 
-5. **Créez le premier administrateur.** Il n'y a personne pour l'inviter : c'est le
-   seul compte qui demande une commande.
+**Videz ensuite \`JETON_INSTALLATION\` dans \`config.php\`.** Le point
+d'installation refuse de toute façon dès qu'un compte existe, mais une porte
+fermée vaut mieux qu'une porte qui se verrouille toute seule.
 
-       VIZDATA_DB=/chemin/certify.db VIZDATA_SITE_URL=https://certify.vizdata.ci \\
-         node scripts/base.mjs admin direction@vizdata.ci Fabrice BOH
+## 5. Vérifier
 
-   La commande imprime un lien. Suivez-le pour choisir votre mot de passe ;
-   aucun mot de passe n'est produit ni envoyé.
+    https://certify.vizdata.ci/api/sante
 
-   Si le panneau ne donne pas de ligne de commande, l'extension Node.js permet
-   généralement de lancer un script : utilisez-la pour cette seule commande.
+La réponse attendue : \`{"etat":"ok","registre":"sqlite","moteur":"php"}\`
 
-## Le réglage qu'on oublie
-
-Si le serveur web sert les fichiers statiques lui-même, il répondra **404 sur
-\`/verifier/{jeton}\`** — précisément l'adresse imprimée dans les QR codes. Les chemins
-inconnus doivent revenir à l'application, qui sait les traiter.
-
-Sur Plesk : **décochez « servir les fichiers statiques directement par nginx »**.
+Puis ouvrez le site, connectez-vous, et délivrez une certification d'essai.
 
 ## Les sauvegardes
 
-    VIZDATA_DB=/chemin/certify.db VIZDATA_SAUVEGARDE_CLE='une-phrase-longue' \\
-      node scripts/sauvegarde.mjs
+Un bouton dans **Administration → Paramètres**, ou une tâche planifiée du
+panneau qui appelle :
 
-Copie à chaud, vérifiée, chiffrée. **Conservez la clé hors du serveur** : sans elle, les
-sauvegardes sont des octets aléatoires.
+    https://certify.vizdata.ci/api/sauvegarde?jeton=VOTRE_JETON_SAUVEGARDE
 
-Pour restaurer : \`node scripts/restaurer.mjs <fichier>\` — sans \`--oui\`, elle ne touche
-à rien et montre ce qu'elle contient.
+La copie est faite à chaud, vérifiée, chiffrée, et déposée hors du dossier web.
+**Téléchargez-en une régulièrement** : une sauvegarde qui reste sur le serveur
+ne protège que des fausses manœuvres, pas d'une panne de disque.
 
-Le détail est dans \`docs/deploiement.md\`.
+## Si quelque chose ne répond pas
+
+- \`/api/sante\` renvoie du HTML → la règle \`/api\` du \`.htaccess\` n'est pas
+  appliquée ; vérifiez que \`mod_rewrite\` est actif pour ce domaine.
+- « Une erreur interne est survenue » → passez \`DEBOGUAGE\` à \`true\` dans
+  \`config.php\`, relancez l'appel, puis remettez-le à \`false\`.
+- Erreur sur la base → le dossier \`certify-registre\` n'existe pas, ou n'est
+  pas inscriptible.
 `;
 
+/* Ce qui doit être dans l'archive, sous peine de déploiement muet et cassé. */
+const INDISPENSABLES = ["index.html", ".htaccess", "api/index.php", "api/lib/Base.php"];
+
 const lisible = (o) => (o < 1024 * 1024 ? `${(o / 1024).toFixed(0)} ko` : `${(o / 1024 / 1024).toFixed(1)} Mo`);
+
+/* --- lire la liste des fichiers d'une archive ----------------------------
+   Pourquoi ce code existe : sur Windows, `tar -a -c -f x.zip` produit un zip
+   valide dont les noms portent des ANTISLASHES. Décompressé sur le serveur —
+   Linux —, on obtient des fichiers nommés « api\lib\Base.php » à la racine :
+   le site répond 404 partout, et rien n'indique pourquoi. L'archive avait
+   « réussi ». Compress-Archive, de son côté, a selon les versions l'habitude
+   d'ignorer les fichiers cachés — et `.htaccess` est un fichier caché.
+   Deux pannes silencieuses, un même remède : relire l'archive produite.
+   Aucune dépendance pour cela : les deux formats se lisent à la main. */
+
+/** Noms de fichiers d'un zip, par son répertoire central. `null` si illisible. */
+function entreesZip(chemin) {
+  const o = readFileSync(chemin);
+  /* La fin du répertoire central est en queue de fichier, après un commentaire
+     de longueur variable : on la cherche à reculons. */
+  const plancher = Math.max(0, o.length - 65557);
+  let fin = -1;
+  for (let i = o.length - 22; i >= plancher; i--) {
+    if (o.readUInt32LE(i) === 0x06054b50) { fin = i; break; }
+  }
+  if (fin < 0) return null;
+
+  let reste = o.readUInt16LE(fin + 10);
+  let p = o.readUInt32LE(fin + 16);
+  const noms = [];
+  while (reste-- > 0) {
+    if (p + 46 > o.length || o.readUInt32LE(p) !== 0x02014b50) return null;
+    const lNom = o.readUInt16LE(p + 28);
+    noms.push(o.toString("utf8", p + 46, p + 46 + lNom));
+    p += 46 + lNom + o.readUInt16LE(p + 30) + o.readUInt16LE(p + 32);
+  }
+  return noms;
+}
+
+/** Noms de fichiers d'un tar.gz, par ses en-têtes de 512 octets. */
+function entreesTarGz(chemin) {
+  const o = gunzipSync(readFileSync(chemin));
+  const noms = [];
+  for (let p = 0; p + 512 <= o.length; ) {
+    const nom = o.toString("utf8", p, p + 100).replace(/\0.*$/, "");
+    if (nom === "") break; /* bloc de fin */
+    const taille = parseInt(o.toString("ascii", p + 124, p + 136).replace(/\0| /g, ""), 8) || 0;
+    noms.push(nom);
+    p += 512 + Math.ceil(taille / 512) * 512;
+  }
+  return noms;
+}
+
+/* --- écrire le zip -------------------------------------------------------
+   Pourquoi ce code existe plutôt qu'un appel à un outil du système : aucun
+   des trois outils disponibles ici ne produit l'archive attendue.
+   `tar -a -c -f` de GNU tar ne sait pas faire de zip ; `Compress-Archive`
+   écrit des antislashes dans les noms ; `zip` d'Info-ZIP n'est pas installé
+   partout. Le format zip tient en trois structures, et zlib est dans Node :
+   autant l'écrire, et savoir exactement ce qui sort.
+
+   Ce qui est délibéré ici :
+   — les noms portent des barres obliques, parce que c'est ce que le format
+     demande et ce que les extracteurs des serveurs attendent ;
+   — aucune entrée de dossier : les extracteurs créent les dossiers manquants,
+     et une entrée de dossier mal nommée est une source de surprises ;
+   — les fichiers cachés sont inclus comme les autres. `.htaccess` est caché,
+     et c'est lui qui route tout le site. */
+
+const TABLE_CRC = (() => {
+  const t = new Int32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    t[n] = c;
+  }
+  return t;
+})();
+
+function crc32(o) {
+  let c = -1;
+  for (let i = 0; i < o.length; i++) c = TABLE_CRC[(c ^ o[i]) & 0xff] ^ (c >>> 8);
+  return (c ^ -1) >>> 0;
+}
+
+/** Tous les fichiers d'un dossier, en chemins relatifs à barres obliques. */
+function fichiersDe(racine, prefixe = "") {
+  const liste = [];
+  for (const entree of readdirSync(join(racine, prefixe), { withFileTypes: true })) {
+    const relatif = prefixe ? `${prefixe}/${entree.name}` : entree.name;
+    if (entree.isDirectory()) liste.push(...fichiersDe(racine, relatif));
+    else liste.push(relatif);
+  }
+  return liste;
+}
+
+function ecrireZip(dossier, destination) {
+  const morceaux = [];
+  const central = [];
+  let position = 0;
+
+  for (const nom of fichiersDe(dossier).sort()) {
+    const brut = readFileSync(join(dossier, nom));
+    const comprime = deflateRawSync(brut, { level: 9 });
+    /* Un fichier déjà compressé — une image, un .js minifié — grossit parfois
+       en passant par deflate : on le stocke tel quel dans ce cas. */
+    const gagne = comprime.length < brut.length;
+    const corps = gagne ? comprime : brut;
+    const methode = gagne ? 8 : 0;
+    const octetsNom = Buffer.from(nom, "utf8");
+    const somme = crc32(brut);
+
+    const local = Buffer.alloc(30);
+    local.writeUInt32LE(0x04034b50, 0);
+    local.writeUInt16LE(20, 4); /* version minimale */
+    local.writeUInt16LE(0x0800, 6); /* noms en UTF-8 */
+    local.writeUInt16LE(methode, 8);
+    local.writeUInt32LE(somme, 14);
+    local.writeUInt32LE(corps.length, 18);
+    local.writeUInt32LE(brut.length, 22);
+    local.writeUInt16LE(octetsNom.length, 26);
+
+    const entree = Buffer.alloc(46);
+    entree.writeUInt32LE(0x02014b50, 0);
+    entree.writeUInt16LE(20, 4);
+    entree.writeUInt16LE(20, 6);
+    entree.writeUInt16LE(0x0800, 8);
+    entree.writeUInt16LE(methode, 10);
+    entree.writeUInt32LE(somme, 16);
+    entree.writeUInt32LE(corps.length, 20);
+    entree.writeUInt32LE(brut.length, 24);
+    entree.writeUInt16LE(octetsNom.length, 28);
+    /* 0644 pour tout le monde : un fichier du site n'a pas à être exécutable. */
+    entree.writeUInt32LE((0o100644 << 16) >>> 0, 38);
+    entree.writeUInt32LE(position, 42);
+
+    morceaux.push(local, octetsNom, corps);
+    central.push(entree, octetsNom);
+    position += local.length + octetsNom.length + corps.length;
+  }
+
+  const taillecentral = central.reduce((t, b) => t + b.length, 0);
+  const fin = Buffer.alloc(22);
+  fin.writeUInt32LE(0x06054b50, 0);
+  fin.writeUInt16LE(central.length / 2, 8);
+  fin.writeUInt16LE(central.length / 2, 10);
+  fin.writeUInt32LE(taillecentral, 12);
+  fin.writeUInt32LE(position, 16);
+
+  writeFileSync(destination, Buffer.concat([...morceaux, ...central, fin]));
+}
+
+/**
+ * Relit l'archive produite. Rend `null` si elle est bonne, sinon la raison.
+ *
+ * On ne se contente pas d'un fichier non vide : une archive qui « existe »
+ * n'est pas une archive qui se décompressera correctement sur le serveur.
+ */
+function verifier(chemin) {
+  let noms;
+  try {
+    noms = chemin.endsWith(".zip") ? entreesZip(chemin) : entreesTarGz(chemin);
+  } catch (e) {
+    return `archive illisible (${e.message})`;
+  }
+  if (!noms || noms.length === 0) return "archive illisible ou vide";
+
+  const propres = noms.map((n) => n.replace(/^\.\//, "")).filter((n) => n !== "" && !n.endsWith("/"));
+
+  const antislash = propres.find((n) => n.includes("\\"));
+  if (antislash) return `noms de fichiers à l'antislash (« ${antislash} ») : illisible sur le serveur`;
+
+  const douteux = propres.find((n) => n.startsWith("/") || n.split("/").includes(".."));
+  if (douteux) return `chemin dangereux dans l'archive (« ${douteux} »)`;
+
+  const absents = INDISPENSABLES.filter((n) => !propres.includes(n));
+  if (absents.length) return `fichiers absents de l'archive : ${absents.join(", ")}`;
+
+  if (!propres.some((n) => n.startsWith("api/schema/") && n.endsWith(".sql"))) {
+    return "aucun fichier de schéma dans api/schema/ : la base ne pourrait pas être créée";
+  }
+  return null;
+}
 
 /** Poids total d'un dossier, pour dire ce qu'on s'apprête à téléverser. */
 function poids(chemin) {
@@ -165,6 +323,11 @@ function construire() {
     console.error("\n  L'interface n'est pas construite. Lancez « npm run build », puis relancez.\n");
     return 2;
   }
+  if (!existsSync(join(RACINE, "dist", ".htaccess"))) {
+    console.error("\n  dist/.htaccess est absent : sans lui, /api ne serait pas routé et");
+    console.error("  /verifier/{jeton} répondrait 404. Vérifiez public/.htaccess.\n");
+    return 1;
+  }
 
   rmSync(SORTIE, { recursive: true, force: true });
   mkdirSync(ETAPE, { recursive: true });
@@ -175,102 +338,29 @@ function construire() {
       console.error(`\n  Absent du dépôt : ${source}\n`);
       return 1;
     }
-    const cible = join(ETAPE, destination);
-    mkdirSync(join(cible, ".."), { recursive: true });
+    const cible = destination === "." ? ETAPE : join(ETAPE, destination);
+    mkdirSync(destination === "." ? cible : join(cible, ".."), { recursive: true });
     cpSync(origine, cible, { recursive: true });
   }
 
-  writeFileSync(join(ETAPE, "app.cjs"), DEMARRAGE);
-  writeFileSync(join(ETAPE, "LISEZ-MOI.md"), LISEZMOI);
+  writeFileSync(join(ETAPE, "LISEZ-MOI-DEPLOIEMENT.md"), LISEZMOI);
 
-  /* Un package.json réduit à ce qui sert à l'exécution. Les dépendances de
-     construction n'ont rien à faire sur l'hébergement, et les y laisser
-     inviterait à lancer un « npm install » qui n'a aucune raison d'être. */
-  const source = JSON.parse(readFileSync(join(RACINE, "package.json"), "utf8"));
-  writeFileSync(
-    join(ETAPE, "package.json"),
-    JSON.stringify(
-      {
-        name: source.name,
-        version: source.version,
-        private: true,
-        type: "module",
-        description: "VIZDATA CERTIFY — registre des certifications. Aucune dépendance d'exécution.",
-        main: "app.cjs",
-        scripts: {
-          start: "node server/index.mjs",
-          base: "node scripts/base.mjs",
-          sauvegarde: "node scripts/sauvegarde.mjs",
-          restaurer: "node scripts/restaurer.mjs",
-        },
-        engines: { node: ">=22" },
-      },
-      null,
-      2
-    ) + "\n"
-  );
+  const archive = join(SORTIE, "vizdata-certify.zip");
+  ecrireZip(ETAPE, archive);
 
-  /* --- archive ------------------------------------------------------------
-     Le zip est préféré : tous les gestionnaires de fichiers savent l'ouvrir,
-     y compris celui d'un panneau d'hébergement. Mais l'outil qui sait en
-     produire change d'une machine à l'autre — bsdtar sous Windows et macOS,
-     PowerShell sous Windows, `zip` sous Linux —, et GNU tar n'en fait pas du
-     tout. On essaie donc dans l'ordre, et l'on se rabat sur tar.gz, que Plesk
-     et cPanel décompressent aussi bien. */
-  const fabricants = [
-    {
-      nom: "bsdtar",
-      fichier: "vizdata-certify.zip",
-      faire: (sortie) => execFileSync("tar", ["-a", "-c", "-f", sortie, "-C", SORTIE, "vizdata-certify"], { stdio: "pipe" }),
-    },
-    {
-      nom: "PowerShell",
-      fichier: "vizdata-certify.zip",
-      faire: (sortie) =>
-        execFileSync(
-          "powershell",
-          ["-NoProfile", "-Command", `Compress-Archive -Path '${ETAPE}' -DestinationPath '${sortie}' -Force`],
-          { stdio: "pipe" }
-        ),
-    },
-    {
-      nom: "zip",
-      fichier: "vizdata-certify.zip",
-      faire: (sortie) => execFileSync("zip", ["-qr", sortie, "vizdata-certify"], { cwd: SORTIE, stdio: "pipe" }),
-    },
-    {
-      nom: "tar.gz",
-      fichier: "vizdata-certify.tar.gz",
-      faire: (sortie) => execFileSync("tar", ["-czf", sortie, "-C", SORTIE, "vizdata-certify"], { stdio: "pipe" }),
-    },
-  ];
-
-  let archive = null;
-  for (const fabricant of fabricants) {
-    const sortie = join(SORTIE, fabricant.fichier);
-    try {
-      fabricant.faire(sortie);
-      if (existsSync(sortie) && statSync(sortie).size > 0) {
-        archive = sortie;
-        break;
-      }
-    } catch {
-      /* Outil absent ou refusé : on passe au suivant. */
-    }
-  }
-
-  if (!archive) {
-    console.error("\n  Aucun outil d'archivage disponible sur cette machine.");
-    console.error(`  Le dossier prêt à téléverser reste là, compressez-le à la main :`);
+  const verdict = verifier(archive);
+  if (verdict !== null) {
+    console.error(`\n  L'archive produite n'est pas utilisable : ${verdict}`);
+    console.error(`\n  Le dossier prêt à téléverser reste là, à envoyer tel quel :`);
     console.error(`  ${ETAPE}\n`);
-    return 0;
+    return 1;
   }
 
   console.log(`\n  Paquet  : ${archive}`);
   console.log(`  Poids   : ${lisible(statSync(archive).size)} compressé, ${lisible(poids(ETAPE))} une fois ouvert`);
-  console.log(`  Contenu : interface construite, registre, administration, aucune dépendance`);
-  console.log(`\n  Il ne contient ni base, ni sauvegarde, ni clé : rien de personnel.`);
-  console.log(`  La marche à suivre est dans LISEZ-MOI.md, à la racine du paquet.\n`);
+  console.log(`  Contenu : interface construite + registre PHP, aucune dépendance`);
+  console.log(`\n  Ni base, ni sauvegarde, ni clé : rien de personnel n'en sort.`);
+  console.log(`  La marche à suivre est dans LISEZ-MOI-DEPLOIEMENT.md.\n`);
   return 0;
 }
 

@@ -96,7 +96,7 @@ function AdminCohortes(p) {
 
       {!academie.estBranchee ? (
         <div className="vz-alert warn">
-          Les cohortes vivent dans Supabase : cet écran reste vide en mode démonstration.
+          Les cohortes vivent dans le registre du serveur : cet écran reste vide en mode démonstration.
         </div>
       ) : (
         <div className="vz-alert info" style={{ marginBottom: 14 }}>

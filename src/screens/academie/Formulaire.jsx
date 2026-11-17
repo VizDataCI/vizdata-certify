@@ -85,8 +85,9 @@ function Formulaire({ cohorte, tarifs, formuleInitiale = "INTEGRAL", notify }) {
     setEnvoi(true);
     try {
       const propre = normaliserCandidature({ ...v, formule });
-      const reference = await academie.soumettreCandidature(propre);
-      const courriel = await academie.notifier(reference, propre);
+      /* Un seul appel : le registre enregistre la candidature, envoie l'accusé
+         au candidat, alerte VIZDATA, et rend le verdict de l'accusé. */
+      const { reference, courriel } = await academie.soumettreCandidature(propre);
       setRecu({ reference, prenom: propre.nom.split(" ")[0], courriel });
       if (notify) notify(`Candidature ${reference} enregistrée.`);
       window.scrollTo({ top: document.getElementById("candidature")?.offsetTop || 0, behavior: "smooth" });
