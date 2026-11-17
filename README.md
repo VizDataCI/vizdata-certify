@@ -5,12 +5,17 @@ publique** des certificats délivrés par VIZDATA.
 
 > **État : complet, et prêt à être déployé.**
 >
-> La base est un fichier SQLite sur le serveur VIZDATA, servi par un processus Node sans
-> aucune dépendance. Le registre précédent — un projet hébergé chez un tiers — a cessé
-> d'exister sans préavis, emportant un schéma qui n'était écrit nulle part ailleurs. Tout
-> ce qui suit découle de cette leçon : **la base doit appartenir à VIZDATA.**
+> La base est un fichier SQLite sur le serveur VIZDATA. Le registre précédent — un projet
+> hébergé chez un tiers — a cessé d'exister sans préavis, emportant un schéma qui n'était
+> écrit nulle part ailleurs. Tout ce qui suit découle de cette leçon : **la base doit
+> appartenir à VIZDATA.**
 >
-> Reste à faire côté serveur : suivre [docs/deploiement.md](docs/deploiement.md).
+> Le registre existe en **deux implémentations**, qui servent le même schéma et les mêmes
+> routes : **PHP** (`api/`) pour un hébergement mutualisé sans ligne de commande — c'est
+> celle de `certify.vizdata.ci` —, et **Node** (`server/`) pour un serveur dont on a la
+> main. L'interface ne sait pas laquelle elle a en face.
+>
+> Marche à suivre : [docs/deploiement.md](docs/deploiement.md).
 
 ## Démarrer
 
@@ -49,8 +54,10 @@ serveur.
 | `npm run sauvegarde` | copie la base **à chaud**, la vérifie, la chiffre, l'expédie |
 | `npm run restaurer -- <fichier>` | montre une sauvegarde ; `--oui` la restaure |
 | `npm run build` | construit l'interface dans `dist/` |
-| `npm test` | 203 tests, sans aucune dépendance de test |
+| `npm test` | 220 tests, sans aucune dépendance de test |
 | `npm run lint` | Oxlint |
+| `npm run php` | contrôle de surface des fichiers PHP — à défaut de `php -l` |
+| `npm run paquet` | l'archive à téléverser : interface construite + registre PHP |
 
 ### Comptes de démonstration
 
@@ -231,14 +238,31 @@ sorte que le titulaire enregistre `VIZ-2026-EXCEL-AVA-000125.pdf` et non le titr
 
 ## Architecture
 
-Trois dépendances en tout : React, React-DOM, et `qrcode`. Le serveur n'en a aucune —
-`node:http` et `node:sqlite` sont livrés avec Node.
+Trois dépendances en tout : React, React-DOM, et `qrcode`. Aucune des deux
+implémentations du registre n'en a : `node:http` et `node:sqlite` sont livrés avec Node,
+et la version PHP n'utilise que PDO SQLite, OpenSSL et cURL.
+
+Les deux lisent le **même** fichier de schéma. C'est délibéré : le langage au-dessus
+compte moins que la définition de la vérité, et deux copies d'un schéma finissent
+toujours par diverger.
 
 ```
-server/                     le registre
+api/                        le registre, en PHP — celui qui tourne en production
+  index.php                 routes, cookies, limitation, masquage des erreurs
+  config.exemple.php        le modèle de configuration ; config.php reste sur le serveur
+  lib/Base.php              ouverture SQLite, pragmas, migrations
+  lib/Comptes.php           mots de passe, sessions, liens à usage unique
+  lib/Autorisations.php     qui a le droit de quoi — le remplaçant de RLS
+  lib/Registre.php          les opérations du registre
+  lib/Academie.php          cohortes et candidatures
+  lib/Courrier.php          invitation, réinitialisation, avis, candidature
+  lib/Chiffrement.php       AES-256-GCM des sauvegardes
+  lib/Sauvegarde.php        copie à chaud, vérification, chiffrement, purge
+
+server/                     le registre, en Node — pour un serveur dont on a la main
   index.mjs                 serveur HTTP, routes, fichiers statiques
   db.mjs                    ouverture SQLite, pragmas, migrations
-  schema/001_socle.sql      le schéma
+  schema/001_socle.sql      le schéma — LA source, lue aussi par la version PHP
   comptes.mjs               mots de passe, sessions, liens à usage unique
   autorisations.mjs         qui a le droit de quoi — le remplaçant de RLS
   registre.mjs              les opérations du registre
@@ -580,7 +604,7 @@ navigateur.
 npm test
 ```
 
-**203 tests**, exécutés par le lanceur intégré de Node — aucune dépendance de test dans
+**220 tests**, exécutés par le lanceur intégré de Node — aucune dépendance de test dans
 le projet.
 
 | Ce qui est couvert | Pourquoi |
@@ -595,7 +619,16 @@ le projet.
 | **QR codes** | structure **et** décodage réel par jsQR |
 | **Académie** | validation, calcul des tarifs, export CSV |
 
-Deux remarques sur ce choix de couverture.
+Trois remarques sur ce choix de couverture.
+
+**Ces tests couvrent l'implémentation Node, pas la PHP.** Il n'y a pas d'interpréteur
+PHP sur la machine de développement : `npm run php` ne contrôle que la surface des
+fichiers — délimiteurs, chaînes, absence de `?>` final — et le dit. Ce qui tient les deux
+implémentations ensemble, c'est le **schéma partagé** : les tests de schéma (14) valent
+pour les deux, puisque c'est la base qui refuse. Le reste du registre PHP se vérifie sur
+le serveur, en traversant l'application : connexion, délivrance, vérification publique,
+sauvegarde, restauration. C'est une couverture plus faible, et il faut le savoir plutôt
+que de l'ignorer.
 
 **Les tests d'autorisation sont ce que la migration fait gagner.** Les politiques RLS de
 Postgres étaient plus sûres par construction — elles vivaient dans la base — mais elles
@@ -613,9 +646,13 @@ structure ne prouve pas la lisibilité.
 Tout est dans **[docs/deploiement.md](docs/deploiement.md)** : nginx, systemd,
 sauvegardes, mise à jour, et ce qui peut mal se passer.
 
-En résumé : un processus Node derrière nginx, et un fichier dans
-`/var/lib/vizdata-certify/`. Pas de base à administrer, pas de service tiers, pas de clé
-dans le paquet livré au navigateur.
+En résumé, sur `certify.vizdata.ci` : **PHP 8.4 et un fichier SQLite** au-dessus du
+dossier web. `npm run paquet` produit l'archive, le gestionnaire de fichiers du panneau la
+décompresse, et une tâche planifiée sauvegarde chaque nuit. Pas de base à administrer, pas
+de service tiers, pas de clé dans le paquet livré au navigateur.
+
+La voie Node — un service derrière nginx, un fichier dans `/var/lib/vizdata-certify/` —
+reste décrite dans le même document, pour un serveur dont on a la main.
 
 ### Sauvegardes
 

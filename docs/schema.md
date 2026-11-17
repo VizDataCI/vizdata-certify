@@ -1,7 +1,10 @@
 # Schéma de la base — VIZDATA CERTIFY
 
 La base est un fichier SQLite. Son schéma est `server/schema/001_socle.sql`, appliqué
-automatiquement à l'ouverture par `server/db.mjs`.
+automatiquement à l'ouverture — par `server/db.mjs` dans l'implémentation Node, par
+`api/lib/Base.php` dans celle en PHP. **Un seul fichier de schéma pour les deux** : du
+SQLite standard, sans rien de propre à un langage. Deux copies d'un schéma finissent
+toujours par diverger, et c'est la base qui fait autorité, pas le code au-dessus.
 
 > **La source de vérité est le dépôt**, pas la base.
 >
@@ -26,7 +29,8 @@ aux lectures et aux écritures de ne pas s'attendre.
 
 **Ce que le passage fait perdre :** l'autorisation ne vit plus dans la base. Postgres la
 tenait par RLS, `security definer` et `has_perm()` ; elle remonte dans
-`server/autorisations.mjs`. C'est un recul en défense en profondeur, assumé — et un
+`server/autorisations.mjs` et `api/lib/Autorisations.php`. C'est un recul en défense en
+profondeur, assumé — et un
 progrès en vérifiabilité : les politiques RLS n'ont jamais pu être éprouvées faute de
 projet vivant, alors que ce module est couvert par 31 tests, plus 35 tests d'intégration
 qui vérifient qu'il est bien câblé sur chaque route.
@@ -52,7 +56,8 @@ perdre d'essentiel :
 
 ## Les pragmas, qui ne sont pas des réglages d'optimisation
 
-Posés à **chaque** ouverture par `server/db.mjs` — ils ne sont pas stockés dans le
+Posés à **chaque** ouverture, par `server/db.mjs` comme par `api/lib/Base.php` — ils ne
+sont pas stockés dans le
 fichier :
 
 | Pragma | Ce qu'il change |
@@ -190,7 +195,8 @@ moitié appliquée est la pire des situations** — elle ne se rejoue pas, et el
 fonctionne pas.
 
 Pour en ajouter une : créez `server/schema/002_quelque-chose.sql`. Elle sera appliquée au
-prochain démarrage du serveur.
+prochain démarrage — et, en production, au premier appel suivant le téléversement du
+paquet, qui recopie `server/schema/` dans `api/schema/`.
 
 ## L'ancienne base
 
