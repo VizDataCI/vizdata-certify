@@ -13,7 +13,8 @@
     "base": "node scripts/base.mjs",
     "sauvegarde": "node scripts/sauvegarde.mjs",
     "lint": "oxlint",
-    "test": "node --test \"tests/**/*.test.js\""
+    "test": "node --test \"tests/**/*.test.js\"",
+    "restaurer": "node scripts/restaurer.mjs"
   },
   "dependencies": {
     "qrcode": "^1.5.4",

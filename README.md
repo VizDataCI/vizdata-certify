@@ -46,7 +46,8 @@ serveur.
 | `npm run base -- admin <email>` | ouvre ou promeut un administrateur |
 | `npm run base -- etat` | ce que contient la base |
 | `npm run base -- menage` | retire sessions et jetons périmés |
-| `npm run sauvegarde` | copie la base **à chaud**, base ouverte |
+| `npm run sauvegarde` | copie la base **à chaud**, la vérifie, la chiffre, l'expédie |
+| `npm run restaurer -- <fichier>` | montre une sauvegarde ; `--oui` la restaure |
 | `npm run build` | construit l'interface dans `dist/` |
 | `npm test` | 203 tests, sans aucune dépendance de test |
 | `npm run lint` | Oxlint |
@@ -620,14 +621,33 @@ précédent.**
 npm run sauvegarde
 ```
 
-La copie est faite **à chaud**, base ouverte, page par page. Un simple `cp certify.db`
-pendant une écriture produit un fichier incohérent — SQLite en mode WAL tient une partie
-des données dans un journal séparé —, et l'on s'en aperçoit le jour où l'on restaure,
-c'est-à-dire au pire moment.
+Quatre choses en une commande, et chacune répond à une façon précise de perdre le
+registre.
 
-Une sauvegarde qui reste sur la même machine ne protège que des erreurs humaines. Elle ne
-protège ni d'une panne de disque, ni de la perte du serveur. **Copiez-la ailleurs.** Un
-registre de certifications est une pièce probante ; sa perte ne se rattrape pas.
+| | Ce que ça évite |
+| --- | --- |
+| **À chaud** | `cp certify.db` pendant une écriture produit un fichier incohérent — SQLite tient une partie des données dans un journal séparé, et la copie peut attraper l'un sans l'autre. On s'en aperçoit le jour de la restauration. |
+| **Vérifiée** | une sauvegarde jamais relue est un espoir. Celle-ci est rouverte, contrôlée page par page, et l'on s'assure qu'elle contient bien les tables du registre. En cas de doute, **rien n'est laissé en place** : un fichier inexploitable rassure à tort. |
+| **Chiffrée** | elle contient noms, téléphones et empreintes de mots de passe. AES-256-GCM, clé dérivée par scrypt, paramètres inscrits dans le fichier pour qu'il reste lisible dans cinq ans. |
+| **Expédiée** | l'étape « pense à la copier ailleurs » ne se fait jamais. Elle est confiée à une commande que le script lance lui-même — scp, rclone, ou un `git push` vers un dépôt privé. |
+
+Le script **refuse d'expédier une sauvegarde non chiffrée** : régler un problème de
+disponibilité en créant une fuite serait un mauvais échange.
+
+Et l'autre moitié, celle que personne n'écrit :
+
+```bash
+npm run restaurer -- <fichier>
+```
+
+Sans `--oui`, elle ne touche à rien : elle déchiffre, vérifie, et affiche ce que contient
+la sauvegarde **en regard de ce que contient la base actuelle**. On voit ce qu'on
+s'apprête à remplacer. Avec `--oui`, la base en place est d'abord mise de côté — restaurer
+la mauvaise sauvegarde est une erreur banale, la rendre irréversible serait une faute.
+
+Tout cela est éprouvé par des tests qui détruisent réellement une base et la restaurent,
+puis vérifient qu'on peut encore s'y connecter. Voir
+[docs/deploiement.md](docs/deploiement.md) pour la mise en place.
 
 ### En-têtes de sécurité
 

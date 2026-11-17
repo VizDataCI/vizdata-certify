@@ -157,37 +157,123 @@ sudo nginx -t && sudo systemctl reload nginx
 précédent.**
 
 ```bash
-sudo -u vizdata env VIZDATA_DB=/var/lib/vizdata-certify/certify.db \
-  npm run sauvegarde
+npm run sauvegarde
 ```
 
-La copie est faite à chaud, base ouverte, page par page : `cp certify.db` pendant une
-écriture produit un fichier incohérent, et on s'en aperçoit le jour où l'on restaure.
+Quatre choses en une commande, et chacune répond à une façon précise de perdre le
+registre.
 
-Une fois par nuit, dans `/etc/cron.d/vizdata-certify` :
+| Étape | Ce qu'elle évite |
+| --- | --- |
+| **À chaud** | `cp certify.db` pendant une écriture produit un fichier incohérent — on s'en aperçoit le jour de la restauration |
+| **Vérifiée** | une sauvegarde jamais relue est un espoir ; celle-ci est rouverte et contrôlée page par page |
+| **Chiffrée** | elle contient noms, téléphones et empreintes de mots de passe, et elle doit quitter le serveur |
+| **Expédiée** | l'étape « pense à la copier ailleurs » ne se fait jamais |
+
+Si la vérification échoue, **rien n'est laissé en place** : un fichier inexploitable
+rassurerait à tort.
+
+### La clé de chiffrement
+
+```bash
+openssl rand -base64 32
+```
+
+Mettez-la dans `/etc/vizdata-certify.env`, lisible du seul utilisateur `vizdata` :
+
+```bash
+printf 'VIZDATA_SAUVEGARDE_CLE=%s\n' "$(openssl rand -base64 32)" | sudo tee /etc/vizdata-certify.env
+sudo chown vizdata:vizdata /etc/vizdata-certify.env
+sudo chmod 600 /etc/vizdata-certify.env
+```
+
+**Conservez-en une copie ailleurs que sur ce serveur, et ailleurs que dans ce dépôt.**
+Un gestionnaire de mots de passe, un coffre, une enveloppe. Sans elle, les sauvegardes
+sont des octets aléatoires — c'est exactement ce qu'on demande au chiffrement, et c'est
+sans appel.
+
+### L'expédition hors du serveur
+
+`VIZDATA_SAUVEGARDE_DISTANTE` reçoit une commande, où `{fichier}` est remplacé par le
+chemin de la sauvegarde. N'importe quel outil déjà présent fait l'affaire :
+
+```bash
+# vers un autre serveur
+VIZDATA_SAUVEGARDE_DISTANTE='scp {fichier} sauvegardes@autre-machine:/sauvegardes/vizdata/'
+
+# vers un espace de stockage compatible S3 (Scaleway, par exemple)
+VIZDATA_SAUVEGARDE_DISTANTE='rclone copy {fichier} scaleway:vizdata-sauvegardes/'
+```
+
+**Le script REFUSE d'expédier une sauvegarde non chiffrée.** Régler un problème de
+disponibilité en créant une fuite serait un mauvais échange.
+
+### Un dépôt GitHub privé comme destination
+
+C'est une destination légitime — gratuite, hors du serveur, versionnée — **à condition
+que les sauvegardes soient chiffrées**, ce dont le script se charge. Jamais dans le dépôt
+du code : un dépôt **privé et distinct**, qui ne contient que des fichiers chiffrés.
+
+```bash
+sudo -u vizdata git clone git@github.com:VizDataCI/vizdata-sauvegardes.git \
+  /var/lib/vizdata-certify/depot-sauvegardes
+```
+
+```bash
+VIZDATA_SAUVEGARDE_DISTANTE='cd /var/lib/vizdata-certify/depot-sauvegardes && cp {fichier} . && git add -A && git commit -q -m "sauvegarde $(date -I)" && git push -q'
+```
+
+Deux précautions : la clé SSH du serveur doit être une **clé de déploiement en écriture**
+sur ce dépôt et sur lui seul ; et le dépôt doit rester **privé**, même si les fichiers
+sont chiffrés — un chiffrement public est un chiffrement qu'on invite à casser.
+
+### Tous les soirs
+
+Dans `/etc/cron.d/vizdata-certify` :
 
 ```cron
-0 2 * * * vizdata cd /opt/vizdata-certify && VIZDATA_DB=/var/lib/vizdata-certify/certify.db /usr/bin/npm run sauvegarde >/dev/null
+0 2 * * * vizdata cd /opt/vizdata-certify && set -a && . /etc/vizdata-certify.env && set +a && VIZDATA_DB=/var/lib/vizdata-certify/certify.db /usr/bin/npm run sauvegarde
 ```
 
-Les trente dernières sont conservées, les plus anciennes sont retirées
-(`VIZDATA_SAUVEGARDES_GARDEES` pour changer ce nombre).
+Ne redirigez pas la sortie vers `/dev/null` : cron envoie la sortie par courrier à
+l'administrateur local, et c'est ainsi qu'on apprend qu'une sauvegarde a échoué. Une
+sauvegarde silencieusement en échec, c'est un serveur qu'on croit protégé et qui ne
+l'est pas.
 
-**Une sauvegarde qui reste sur la même machine ne protège que des erreurs humaines.**
-Elle ne protège ni d'une panne de disque, ni de la perte du serveur. Copiez-la ailleurs —
-un autre serveur, un espace de stockage distant, un disque chez VIZDATA. Un registre de
-certifications est une pièce probante ; sa perte ne se rattrape pas.
+Les trente dernières sont conservées sur place (`VIZDATA_SAUVEGARDES_GARDEES`).
 
-Restaurer : arrêter le service, remplacer le fichier, redémarrer.
+## 6. Restaurer
+
+Une sauvegarde qu'on ne sait pas restaurer n'est pas une sauvegarde. Essayez-le **une
+fois, maintenant**, pendant que rien ne presse — pas le jour où le registre est à
+l'arrêt.
+
+```bash
+npm run restaurer -- /var/lib/vizdata-certify/sauvegardes/certify-2026-11-17-0200.db.chiffre
+```
+
+Sans `--oui`, la commande ne touche à rien : elle déchiffre, vérifie, et affiche ce que
+contient la sauvegarde **en regard de ce que contient la base actuelle**. On voit ce
+qu'on s'apprête à remplacer.
 
 ```bash
 sudo systemctl stop vizdata-certify
-sudo -u vizdata cp /var/lib/vizdata-certify/sauvegardes/certify-2026-11-17-0200.db \
-                   /var/lib/vizdata-certify/certify.db
+npm run restaurer -- <fichier> --oui
 sudo systemctl start vizdata-certify
 ```
 
-## 6. Mettre à jour
+Arrêter le service d'abord : sinon il écrit dans la base qu'on remplace.
+
+Trois précautions sont prises pour vous :
+
+- la base actuelle est **mise de côté** avant d'être écrasée — restaurer la mauvaise
+  sauvegarde est une erreur banale, la rendre irréversible serait une faute ;
+- les fichiers `-wal` et `-shm` de l'ancienne base sont **supprimés** — les laisser
+  ferait rejouer par SQLite un journal étranger sur la base restaurée, et corromprait
+  précisément ce qu'on vient de récupérer ;
+- la base restaurée est **relue** et son contenu affiché.
+
+## 7. Mettre à jour
 
 ```bash
 cd /opt/vizdata-certify
