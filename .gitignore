@@ -49,3 +49,8 @@ data/
 
 # Paquet de deploiement, reconstructible a tout moment par « npm run paquet ».
 paquet/
+
+# La configuration du registre PHP vit sur le serveur, et nulle part ailleurs :
+# elle porte la cle de chiffrement des sauvegardes et le jeton d'installation.
+# Seul le modele, api/config.exemple.php, est dans le depot.
+api/config.php

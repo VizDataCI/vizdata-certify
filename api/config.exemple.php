@@ -11,16 +11,25 @@
 
 declare(strict_types=1);
 
+/* --- où vit la base ---------------------------------------------------------
+   HORS du dossier web, toujours. Un fichier servi par erreur livrerait tout le
+   registre d'un coup : adresses, téléphones, empreintes de mots de passe.
+
+   Le chemin est DÉDUIT plutôt qu'écrit en dur. Ce fichier est dans
+   `<dossier du site>/api/`, donc deux niveaux au-dessus se trouve la racine du
+   compte d'hébergement — un endroit inscriptible qu'aucun domaine ne sert.
+   Déduire évite la faute la plus coûteuse de ce déploiement : un chemin absolu
+   mal recopié, qui fait écrire la base là où un visiteur peut la télécharger.
+
+   Si votre hébergement est organisé autrement, remplacez cette ligne par un
+   chemin absolu — mais vérifiez d'abord, dans un navigateur, que le dossier
+   choisi n'est accessible par aucune adresse. */
+define('VZ_HORS_WEB', dirname(__DIR__, 2) . '/certify-registre');
+
 final class Config
 {
-    /* --- la base ------------------------------------------------------------
-       HORS du dossier web, toujours. Un fichier servi par erreur livrerait
-       tout le registre d'un coup : adresses, téléphones, empreintes de mots
-       de passe. Sur cet hébergement, le dossier web est
-       /var/www/vhosts/vizdata.ci/certify.vizdata.ci ; son parent est
-       inscriptible et n'est servi par personne. */
-    public const CHEMIN_BASE = '/var/www/vhosts/vizdata.ci/certify-registre/certify.db';
-    public const DOSSIER_SAUVEGARDES = '/var/www/vhosts/vizdata.ci/certify-registre/sauvegardes';
+    public const CHEMIN_BASE = VZ_HORS_WEB . '/certify.db';
+    public const DOSSIER_SAUVEGARDES = VZ_HORS_WEB . '/sauvegardes';
 
     /* --- adresses ------------------------------------------------------------
        Celle qui figure dans les liens envoyés par courrier, et sous les QR

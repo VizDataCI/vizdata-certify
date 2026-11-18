@@ -26,10 +26,26 @@ RewriteRule ^api/ api/index.php [L,QSA]
 # Placé APRÈS la règle /api : l'inverse enverrait les appels du registre vers
 # index.html, et l'application recevrait du HTML là où elle attend du JSON —
 # une panne déroutante, parce que tout « répond ».
+#
+# PAS de condition « !-d », et c'est important. Le site contient un dossier
+# « academie/ », où sont déposés les portraits des formateurs. Avec la
+# condition, l'adresse /academie désignait ce DOSSIER plutôt que la page de
+# l'académie : Apache y ajoutait une barre finale, n'y trouvait pas d'index,
+# et répondait 403 — la page de vente devenue inaccessible, sans que rien dans
+# l'application ne soit en cause. Le même piège attend toute adresse qui
+# porterait le nom d'un dossier réel.
+#
+# La condition « !-f » suffit : /academie/portrait.jpg est un fichier, il est
+# servi ; /academie n'en est pas un, il va à l'application.
 RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ index.html [L]
 </IfModule>
+
+# Pas de directive « Options » ici : elle demande AllowOverride Options, que
+# tous les hébergements n'accordent pas — et une directive refusée fait
+# répondre 500 au site ENTIER. Le listage de dossier n'est de toute façon plus
+# atteignable : le repli ci-dessus envoie /academie/ à l'application avant que
+# mod_autoindex ne soit consulté.
 
 # --- Ce qui ne doit jamais être servi ---------------------------------------
 # La base vit hors du dossier web ; ces règles sont une seconde barrière, pour
