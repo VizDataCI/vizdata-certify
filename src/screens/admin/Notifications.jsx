@@ -16,6 +16,8 @@
 
 import { useState } from "react";
 import { fmtShort } from "../../lib/dates.js";
+import { Stat, Vide } from "../../ui/primitives.jsx";
+import { IconeValider, IconeHeure, IconeErreur, IconeNotifications, IconeFiltrer } from "../../ui/icones.jsx";
 
 const GENRES = {
   INVITATION: "Invitation",
@@ -64,9 +66,9 @@ function AdminNotifications(p) {
       )}
 
       <div className="vz-grid vz-stats" style={{ marginBottom: 16 }}>
-        <div className="vz-stat"><div className="vz-eyebrow">Envoyées</div><div className="vz-stat-val" style={{ color: "var(--vert)" }}>{compte("SENT")}</div><div className="vz-stat-sub">Remises au fournisseur</div></div>
-        <div className="vz-stat"><div className="vz-eyebrow">En attente</div><div className="vz-stat-val" style={{ color: "var(--orange)" }}>{compte("PENDING")}</div><div className="vz-stat-sub">Aucun fournisseur configuré</div></div>
-        <div className="vz-stat"><div className="vz-eyebrow">Échecs</div><div className="vz-stat-val" style={{ color: "var(--rouge)" }}>{compte("FAILED")}</div><div className="vz-stat-sub">Refusées à l'envoi</div></div>
+        <Stat label="Envoyées" value={compte("SENT")} sub="Remises au fournisseur" icone={IconeValider} ton="vert" />
+        <Stat label="En attente" value={compte("PENDING")} sub="Aucun fournisseur configuré" icone={IconeHeure} ton="orange" />
+        <Stat label="Échecs" value={compte("FAILED")} sub="Refusées à l'envoi" icone={IconeErreur} ton="rouge" />
       </div>
 
       <div className="vz-card">
@@ -105,11 +107,16 @@ function AdminNotifications(p) {
           </table>
         </div>
         {lignes.length === 0 && (
-          <div className="vz-empty">
-            {toutes.length === 0
-              ? "Aucune notification n'a encore été envoyée."
-              : "Aucune notification ne correspond à ces filtres."}
-          </div>
+          toutes.length === 0 ? (
+            <Vide icone={IconeNotifications} titre="Aucun courrier envoyé">
+              Les invitations, réinitialisations et avis d'attribution apparaîtront ici, avec le
+              verdict de leur remise.
+            </Vide>
+          ) : (
+            <Vide icone={IconeFiltrer} titre="Aucune notification ne correspond">
+              Changez le type ou l'état recherché.
+            </Vide>
+          )
         )}
       </div>
     </>
