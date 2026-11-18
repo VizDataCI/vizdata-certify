@@ -85,6 +85,18 @@ Header always set Cache-Control "public, max-age=86400"
 </IfModule>
 </FilesMatch>
 
+# index.html n'est JAMAIS gardé en cache, et ce n'est pas un détail : c'est lui
+# qui nomme les fichiers d'interface, dont l'empreinte change à chaque mise à
+# jour. Gardé en cache, il continue de réclamer l'ancien paquet, et le site
+# reste à la version précédente alors que les fichiers neufs sont en place.
+# Constaté en ligne : après un déploiement vérifié, le navigateur servait
+# encore la page d'avant.
+<FilesMatch "^index.html$">
+<IfModule mod_headers.c>
+Header always set Cache-Control "no-cache, must-revalidate"
+</IfModule>
+</FilesMatch>
+
 # Fichiers de /assets/ : leur nom porte une empreinte, ils ne changent jamais.
 <IfModule mod_setenvif.c>
 SetEnvIf Request_URI "^/assets/" IS_VITE_ASSET
