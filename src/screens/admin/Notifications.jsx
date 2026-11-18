@@ -48,6 +48,7 @@ function AdminNotifications(p) {
         <div>
           <div className="vz-eyebrow">Courrier</div>
           <h1 style={{ marginTop: 8 }}>Notifications</h1>
+          <p>Tous les courriers partis du registre, et ceux qui n'ont pas pu partir.</p>
         </div>
       </div>
 

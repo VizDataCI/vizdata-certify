@@ -171,6 +171,7 @@ function AdminImport(p) {
         <div>
           <div className="vz-eyebrow">Délivrance en série</div>
           <h1 style={{ marginTop: 8 }}>Import</h1>
+          <p>Délivrer plusieurs certifications d'un coup, à partir d'un fichier.</p>
         </div>
       </div>
 

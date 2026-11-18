@@ -1,8 +1,14 @@
-/* Connexion. Réelle dès que Supabase est configuré, factice sinon. */
+/* Connexion.
+ *
+ * Réelle dès que le registre du serveur est joignable, factice en mode
+ * démonstration. L'écran ne change pas de forme entre les deux : ce qui se
+ * voit ici doit ressembler à ce qu'on verra en production.
+ */
 
 import { useState } from "react";
 import { isAuthConfigured } from "../../lib/auth.js";
 import { Field } from "../../ui/primitives.jsx";
+import { IconeVerrou, IconeCourriel, IconeErreur } from "../../ui/icones.jsx";
 import { PublicShell } from "./PublicShell.jsx";
 
 function Login(p) {
@@ -31,18 +37,21 @@ function Login(p) {
       <div className="vz-public-body">
         <div className="vz-slip" style={{ maxWidth: 420 }}>
           <div className="vz-card-body" style={{ padding: 26 }}>
-            <div className="vz-eyebrow">Accès</div>
-            <h2 style={{ fontSize: 19, margin: "10px 0 18px" }}>Se connecter</h2>
+            <div className="vz-connexion-sceau"><IconeVerrou size={21} /></div>
+            <h2 style={{ fontSize: 21, margin: "16px 0 6px" }}>Accéder à mon espace</h2>
+            <p className="vz-small vz-muted" style={{ marginBottom: 20, lineHeight: 1.6 }}>
+              Réservé aux certifiés VIZDATA et à l'équipe du registre.
+            </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
               <Field label="Adresse e-mail">
-                <input className="vz-input" value={email} onChange={(e) => { setEmail(e.target.value); setErr(""); }} onKeyDown={(e) => e.key === "Enter" && submit()} placeholder="vous@exemple.ci" autoComplete="username" />
+                <input className="vz-input" type="email" value={email} onChange={(e) => { setEmail(e.target.value); setErr(""); }} onKeyDown={(e) => e.key === "Enter" && submit()} placeholder="vous@exemple.ci" autoComplete="username" />
               </Field>
               <Field label="Mot de passe">
                 <input className="vz-input" type="password" value={pwd} onChange={(e) => { setPwd(e.target.value); setErr(""); }} onKeyDown={(e) => e.key === "Enter" && submit()} autoComplete="current-password" />
               </Field>
-              {err && <div className="vz-alert err">{err}</div>}
+              {err && <div className="vz-alert err"><IconeErreur size={17} /><span>{err}</span></div>}
               <button className="vz-btn vz-btn-primary vz-btn-lg" onClick={submit} disabled={busy}>
-                {busy ? "Connexion…" : "Se connecter"}
+                {busy ? "Connexion…" : <><IconeCourriel size={17} /> Se connecter</>}
               </button>
               {/* L'oubli du mot de passe a son propre écran : il doit pouvoir
                   dire ce qu'il a fait, et surtout accueillir le retour du lien.

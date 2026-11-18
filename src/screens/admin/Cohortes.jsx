@@ -14,6 +14,7 @@ import { useEffect, useMemo, useState } from "react";
 import * as academie from "../../academie/api.js";
 import { montant } from "../../academie/candidature.js";
 import { fmtShort } from "../../lib/dates.js";
+import { IconeCandidatures, IconePlus } from "../../ui/icones.jsx";
 import { Field, Modal } from "../../ui/primitives.jsx";
 
 const STATUTS_COHORTE = [
@@ -82,13 +83,18 @@ function AdminCohortes(p) {
     <>
       <div className="vz-page-head">
         <div>
-          <div className="vz-eyebrow">Académie — Citizen Data Analyst</div>
+          <div className="vz-eyebrow">Académie Citizen Data Analyst</div>
           <h1 style={{ marginTop: 8 }}>Cohortes</h1>
+          <p>Les sessions annoncées sur la page de l'académie : dates, places et tarifs.</p>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button className="vz-btn" onClick={() => p.setPage("candidatures")}>Candidatures</button>
-          <button className="vz-btn vz-btn-primary" disabled={!academie.estBranchee}
-                  onClick={() => setEdition({ ...NEUVE })}>+ Nouvelle cohorte</button>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button className="vz-btn" onClick={() => p.setPage("candidatures")}>
+            <IconeCandidatures size={16} /> Candidatures
+          </button>
+          <button className="vz-btn vz-btn-accent" disabled={!academie.estBranchee}
+                  onClick={() => setEdition({ ...NEUVE })}>
+            <IconePlus size={16} /> Nouvelle cohorte
+          </button>
         </div>
       </div>
 

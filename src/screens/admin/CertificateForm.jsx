@@ -296,9 +296,21 @@ function CertificateForm({ cert, titulaire: titulaireImpose, onClose, ...p }) {
                 {domaines.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
               </select>
             </Field>
-            <Field label="Programme" hint={programme ? `Code ${programme.code}` : "Aucun programme dans ce domaine."}>
+            {/* Trois messages distincts, parce que trois situations distinctes :
+                le programme est choisi, il reste a le choisir, ou le domaine
+                n'en contient aucun. Afficher « Aucun programme dans ce
+                domaine » tant que rien n'est choisi faisait croire a un
+                catalogue vide. */}
+            <Field
+              label="Programme"
+              hint={
+                programme ? `Code ${programme.code}`
+                  : programmesDuDomaine.length === 0 ? "Aucun programme dans ce domaine."
+                    : "Choisissez le programme exact : son intitulé sera imprimé sur le certificat."
+              }
+            >
               <select className="vz-select" value={programmeId ?? ""} onChange={(e) => choisirProgramme(e.target.value)}>
-                <option value="">— Choisir —</option>
+                <option value="">Choisir un programme</option>
                 {programmesDuDomaine.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
             </Field>

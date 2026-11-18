@@ -704,7 +704,21 @@
   .vz-searchbox{flex-direction:column}
   .vz-searchbox .vz-btn{width:100%}
   .vz-hero h1{font-size:27px}
+  /* La référence tenait sur deux lignes à 375 px, coupée au milieu d'un
+     groupe de chiffres. C'est le premier élément qu'on recopie ou qu'on lit
+     au téléphone : elle doit tenir d'un seul tenant. */
+  .vz-refblock .vz-bigref{font-size:18px;letter-spacing:.02em}
   .vz-stats{grid-template-columns:1fr 1fr}
   .vz-stat{padding:14px}
   .vz-stat-val{font-size:24px}
+}
+
+/* --- sceau de la page de connexion ------------------------------------------
+   Un rappel de ce qu'on ouvre. L'écran de connexion d'un registre officiel ne
+   doit ressembler à aucun formulaire d'inscription. */
+.vz-connexion-sceau{
+  width:46px;height:46px;border-radius:14px;
+  background:linear-gradient(140deg,var(--bleu-050),var(--violet-050));
+  border:1px solid var(--bleu-100);color:var(--bleu);
+  display:flex;align-items:center;justify-content:center;
 }

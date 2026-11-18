@@ -21,6 +21,7 @@
 
 import { useState } from "react";
 import { Field, Modal } from "../../ui/primitives.jsx";
+import { IconePlus } from "../../ui/icones.jsx";
 
 const vide = { code: "", name: "", description: "", default_duration: 20, status: "ACTIVE", sort_order: 100 };
 
@@ -49,13 +50,15 @@ function AdminCatalogue(p) {
           </p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button className="vz-btn" onClick={() => setModal({ type: "domaine", valeur: null })}>+ Domaine</button>
+          <button className="vz-btn" onClick={() => setModal({ type: "domaine", valeur: null })}>
+            <IconePlus size={16} /> Domaine
+          </button>
           <button
-            className="vz-btn vz-btn-primary"
+            className="vz-btn vz-btn-accent"
             onClick={() => setModal({ type: "programme", valeur: null })}
             disabled={domaines.length === 0}
           >
-            + Programme
+            <IconePlus size={16} /> Programme
           </button>
         </div>
       </div>
@@ -85,7 +88,9 @@ function AdminCatalogue(p) {
               </div>
               <div style={{ display: "flex", gap: 6 }}>
                 <button className="vz-linkbtn" onClick={() => setModal({ type: "domaine", valeur: d })}>Modifier</button>
-                <button className="vz-linkbtn" onClick={() => setModal({ type: "programme", valeur: null, domaine: d })}>+ Programme</button>
+                <button className="vz-linkbtn" style={{ display: "inline-flex", alignItems: "center", gap: 5 }} onClick={() => setModal({ type: "programme", valeur: null, domaine: d })}>
+                  <IconePlus size={14} /> Programme
+                </button>
               </div>
             </div>
 
