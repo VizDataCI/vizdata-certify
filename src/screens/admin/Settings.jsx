@@ -61,7 +61,7 @@ function AdminSettings(p) {
                 quoi="Envoi des notifications"
                 etat={!p.remote ? "warn" : envoisRates === 0 && notifications.length > 0 ? "ok" : "info"}
                 valeur={!p.remote ? "Simulé" : notifications.length === 0 ? "Aucun envoi encore effectué" : `${notifications.length} envoi${notifications.length > 1 ? "s" : ""}, ${envoisRates} en souffrance`}
-                detail="Tous les courriers partent du serveur — invitations, réinitialisations, attributions, candidatures. Ce qui n'est pas parti reste visible dans « Notifications » : un envoi perdu ne doit pas être un envoi oublié."
+                detail="Tous les courriers partent du serveur : invitations, réinitialisations, attributions, candidatures. Ce qui n'est pas parti reste visible dans « Notifications », car un envoi perdu ne doit pas être un envoi oublié."
               />
               <Ligne
                 quoi="Modèles de certificat"
@@ -105,7 +105,7 @@ function AdminSettings(p) {
           <div className="vz-card-body">
             <p className="vz-small vz-muted" style={{ margin: "0 0 12px", lineHeight: 1.7 }}>
               Le registre est conservé dans le stockage de ce navigateur. La réinitialisation efface les
-              modifications locales et restaure le jeu de démonstration — domaines, programmes, comptes et
+              modifications locales et restaure le jeu de démonstration : domaines, programmes, comptes et
               certificats d'exemple.
             </p>
             {confirmer ? (
@@ -177,7 +177,7 @@ function CarteSauvegardes({ notify }) {
       const faite = await poster("/sauvegarde");
       if (notify) {
         notify(
-          `Sauvegarde ${faite.nom} — ${poids(faite.taille)}, ` +
+          `Sauvegarde ${faite.nom}, ${poids(faite.taille)}, ` +
             `${faite.contenu.certificats} certificat${faite.contenu.certificats > 1 ? "s" : ""}, ` +
             `${faite.contenu.comptes} compte${faite.contenu.comptes > 1 ? "s" : ""}.`
         );
@@ -221,7 +221,7 @@ function CarteSauvegardes({ notify }) {
             {vieille && (
               <div className="vz-alert warn" style={{ marginBottom: 12 }}>
                 La dernière sauvegarde date du {quand(derniere.date)}. Soit le site n'a reçu aucune
-                visite depuis — c'est une visite qui déclenche l'entretien quotidien —, soit l'écriture
+                visite depuis, et c'est une visite qui déclenche l'entretien quotidien, soit l'écriture
                 échoue. Le bouton ci-dessous tranche la question en une seconde.
               </div>
             )}

@@ -105,8 +105,8 @@ test("les montants sont écrits en francs CFA, par milliers séparés", () => {
 });
 
 test("un montant absent ne produit pas « NaN FCFA »", () => {
-  assert.equal(montant(undefined), "—");
-  assert.equal(montant("abc"), "—");
+  assert.equal(montant(undefined), "Non chiffré");
+  assert.equal(montant("abc"), "Non chiffré");
 });
 
 test("l'économie du paiement intégral se calcule, elle n'est pas écrite en dur", () => {

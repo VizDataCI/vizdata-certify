@@ -1,12 +1,19 @@
-/* Composants d'interface partagés. */
+/* Composants d'interface partagés.
+ *
+ * Ce qui est ici est utilisé partout : un indicateur, un badge de statut, un
+ * champ, une modale, un graphique. Les écrans les assemblent sans redéfinir ni
+ * marges ni couleurs, ce qui est la seule façon de garder quinze écrans
+ * cohérents sans les relire tous à chaque retouche.
+ */
 
 import { useEffect } from "react";
 import { STATUS_META } from "../lib/certificates.js";
 import { VizdataMark } from "./VizdataLogo.jsx";
+import { IconeFermer } from "./icones.jsx";
 
 const Mark = ({ sub = "CERTIFY" }) => (
   <div className="vz-mark">
-    <VizdataMark size={22} />
+    <VizdataMark size={23} />
     <div className="vz-mark-word">vizdata</div>
     <div className="vz-mark-div" />
     <div className="vz-mark-text">{sub}</div>
@@ -16,7 +23,7 @@ const Mark = ({ sub = "CERTIFY" }) => (
 /* Un statut inconnu ne doit pas faire tomber l'écran : la base peut gagner une
    valeur d'énuméré avant que l'application ne la connaisse. */
 const Badge = ({ status }) => {
-  const m = STATUS_META[status] || { tone: "gris", label: status || "—" };
+  const m = STATUS_META[status] || { tone: "gris", label: status || "Inconnu" };
   return <span className={"vz-badge " + m.tone}>{m.label}</span>;
 };
 
@@ -28,11 +35,47 @@ const Field = ({ label, children, hint }) => (
   </div>
 );
 
-const Stat = ({ label, value, sub, accent }) => (
-  <div className="vz-stat">
-    <div className="vz-eyebrow">{label}</div>
-    <div className="vz-stat-val" style={accent ? { color: accent } : null}>{value}</div>
+/**
+ * Indicateur chiffré.
+ *
+ * L'icône n'est pas un ornement : sur une rangée de huit cartes qui se
+ * ressemblent, c'est elle qu'on retrouve d'un coup d'œil, pas le libellé.
+ * Sa teinte reprend celle du chiffre, pour que l'œil associe les deux.
+ *
+ * `ton` prend : bleu (défaut), violet, orange, vert, rouge, gris.
+ */
+const Stat = ({ label, value, sub, icone: Icone, ton = "bleu" }) => (
+  <div className="vz-stat vz-apparait">
+    <div className="vz-stat-tete">
+      <span className="vz-stat-label">{label}</span>
+      {Icone && <span className={"vz-stat-icone " + ton}><Icone size={17} /></span>}
+    </div>
+    <div className="vz-stat-val" style={{ color: COULEUR_TON[ton] }}>{value}</div>
     {sub && <div className="vz-stat-sub">{sub}</div>}
+  </div>
+);
+
+const COULEUR_TON = {
+  bleu: "var(--bleu)",
+  violet: "var(--violet)",
+  orange: "var(--orange)",
+  vert: "var(--vert)",
+  rouge: "var(--rouge)",
+  gris: "var(--encre)",
+};
+
+/**
+ * État vide.
+ *
+ * Un tableau sans ligne doit dire ce qui manque et ce qu'on peut faire. Un
+ * écran qui se contente de rester blanc laisse croire à une panne.
+ */
+const Vide = ({ icone: Icone, titre, children, action }) => (
+  <div className="vz-empty">
+    {Icone && <div className="vz-empty-icone"><Icone size={22} /></div>}
+    {titre && <h4>{titre}</h4>}
+    {children && <div style={{ maxWidth: 420, margin: "0 auto", lineHeight: 1.6 }}>{children}</div>}
+    {action && <div style={{ marginTop: 16 }}>{action}</div>}
   </div>
 );
 
@@ -40,7 +83,7 @@ const Stat = ({ label, value, sub, accent }) => (
    du certificat » est une décision de mise en page, pas un pixel. Le certificat
    demande 1123 px pour s'afficher sans réduction sur un grand écran ; au-dessous
    il est simplement mis à l'échelle. */
-const LARGEURS_MODALE = { normal: 660, large: 880, certificat: 1180 };
+const LARGEURS_MODALE = { normal: 660, large: 900, certificat: 1180 };
 
 function Modal({ title, onClose, children, foot, wide, taille }) {
   const largeur = LARGEURS_MODALE[taille] || (wide ? LARGEURS_MODALE.large : LARGEURS_MODALE.normal);
@@ -57,8 +100,10 @@ function Modal({ title, onClose, children, foot, wide, taille }) {
     <div className="vz-modal-bg" onClick={onClose}>
       <div className="vz-modal" style={{ maxWidth: largeur }} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
         <div className="vz-modal-head">
-          <h3 style={{ fontSize: 15 }}>{title}</h3>
-          <button className="vz-linkbtn" onClick={onClose} aria-label="Fermer">Fermer</button>
+          <h3>{title}</h3>
+          <button className="vz-btn vz-btn-ghost vz-btn-sm" onClick={onClose} aria-label="Fermer">
+            <IconeFermer size={16} />
+          </button>
         </div>
         <div className="vz-modal-body">{children}</div>
         {foot && <div className="vz-modal-foot">{foot}</div>}
@@ -67,13 +112,25 @@ function Modal({ title, onClose, children, foot, wide, taille }) {
   );
 }
 
+/**
+ * Histogramme.
+ *
+ * Les barres montent l'une après l'autre, très vite : le décalage rend la
+ * progression lisible sans retarder la lecture. Au-delà de douze barres il
+ * s'arrête, pour qu'une série longue n'étire pas l'animation.
+ */
 function BarChart({ data, alt }) {
   const max = Math.max(1, ...data.map((d) => d.v));
   return (
     <div>
       <div className="vz-bars">
         {data.map((d, i) => (
-          <div key={i} className={"vz-bar" + (alt ? " alt" : "")} style={{ height: `${(d.v / max) * 100}%` }} title={`${d.k} — ${d.v}`} />
+          <div
+            key={i}
+            className={"vz-bar" + (alt ? " alt" : "")}
+            style={{ height: `${(d.v / max) * 100}%`, animationDelay: `${Math.min(i, 12) * 28}ms` }}
+            title={`${d.k} : ${d.v}`}
+          />
         ))}
       </div>
       <div className="vz-barlab">
@@ -83,4 +140,4 @@ function BarChart({ data, alt }) {
   );
 }
 
-export { Mark, Badge, Field, Stat, Modal, BarChart };
+export { Mark, Badge, Field, Stat, Vide, Modal, BarChart };

@@ -1,6 +1,7 @@
 /* Journal des vérifications publiques. */
 
 import { fmtShort } from "../../lib/dates.js";
+import { IconeInfo } from "../../ui/icones.jsx";
 
 function AdminVerifications(p) {
   const rows = [...p.db.verifications].sort((a, b) => new Date(b.verified_at) - new Date(a.verified_at)).slice(0, 80);
@@ -10,11 +11,19 @@ function AdminVerifications(p) {
         <div>
           <div className="vz-eyebrow">Traçabilité</div>
           <h1 style={{ marginTop: 8 }}>Vérifications</h1>
+          <p>Chaque consultation publique d'un certificat laisse une trace, sans jamais identifier qui vérifie.</p>
         </div>
         <span className="vz-chip">{p.db.verifications.length} au total</span>
       </div>
       <div className="vz-alert info" style={{ marginBottom: 14 }}>
-        Le vérificateur n'est jamais identifié : ni nom, ni adresse e-mail, ni compte. Sont enregistrés la source, le pays, l'horodatage, le navigateur utilisé et une empreinte de l'adresse IP — cette dernière sert uniquement à limiter les tentatives d'énumération de jetons. Une empreinte d'adresse IP restant une donnée personnelle au sens du RGPD, elle doit figurer dans le registre des traitements et faire l'objet d'une durée de conservation définie.
+        <IconeInfo size={17} />
+        <span>
+          Le vérificateur n'est jamais identifié : ni nom, ni adresse e-mail, ni compte. Sont
+          enregistrés la source, le pays, l'horodatage, le navigateur et une empreinte de l'adresse IP.
+          Cette empreinte sert uniquement à limiter les tentatives d'énumération de jetons. Restant une
+          donnée personnelle au sens du RGPD, elle doit figurer au registre des traitements avec une
+          durée de conservation définie.
+        </span>
       </div>
       <div className="vz-card">
         <div className="vz-tablewrap">

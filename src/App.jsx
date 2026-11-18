@@ -134,11 +134,18 @@ export default function App() {
      /verifier/ — un certificat imprimé entre-temps aurait été invérifiable. */
   const verifyUrl = (c) => BASE_URL + toPath({ view: "verifyResult", token: c.public_token });
 
+  /* Le prochain identifiant est le PLUS GRAND plus un, jamais « celui du
+     dernier élément plus un » : le journal est rangé du plus récent au plus
+     ancien, si bien que le dernier élément est le plus VIEUX. La version
+     précédente repartait donc de 1 à chaque écriture et produisait des
+     identifiants en double, que React signalait comme clés dupliquées. */
+  const prochainId = (liste) => (liste.length ? Math.max(...liste.map((x) => Number(x.id) || 0)) : 0) + 1;
+
   const log = (action, entity_id, metadata) =>
     setDb((d) => ({
       ...d,
       audit_logs: [
-        { id: (d.audit_logs.at(-1)?.id || 0) + 1, actor: session ? `${session.first_name} ${session.last_name}` : "Public", action, entity_type: "certificate", entity_id, metadata, created_at: new Date().toISOString() },
+        { id: prochainId(d.audit_logs), actor: session ? `${session.first_name} ${session.last_name}` : "Public", action, entity_type: "certificate", entity_id, metadata, created_at: new Date().toISOString() },
         ...d.audit_logs,
       ],
     }));
@@ -146,7 +153,7 @@ export default function App() {
   const recordVerification = (certId, source) =>
     setDb((d) => ({
       ...d,
-      verifications: [...d.verifications, { id: (d.verifications.at(-1)?.id || 0) + 1, certificate_id: certId, verified_at: new Date().toISOString(), source, country: "CI" }],
+      verifications: [...d.verifications, { id: prochainId(d.verifications), certificate_id: certId, verified_at: new Date().toISOString(), source, country: "CI" }],
     }));
 
   const recordShare = (certId, platform) => {
@@ -179,8 +186,8 @@ export default function App() {
     return {
       id: c.id,
       reference: c.reference,
-      holder_name: u ? `${u.first_name} ${u.last_name}` : "—",
-      certification: t?.name || "—",
+      holder_name: u ? `${u.first_name} ${u.last_name}` : "Titulaire inconnu",
+      certification: t?.name || "Programme inconnu",
       domain: d?.name || "",
       program_code: t?.code || "",
       issuer: "VIZDATA",
@@ -262,7 +269,7 @@ export default function App() {
         const t = typeOf(c);
         return {
           holder_name: `${u.first_name} ${u.last_name}`,
-          certification: t?.name || "—",
+          certification: t?.name || "Programme inconnu",
           domain: domainOf(t)?.name || "",
           reference: c.reference,
           issue_date: c.issue_date,

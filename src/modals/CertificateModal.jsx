@@ -49,7 +49,7 @@ function CertificateModal({ cert, onClose, telechargeable = true, ...p }) {
 
   return (
     <Modal
-      title={telechargeable ? `Certificat — ${cert.reference}` : "Certificat — consultation"}
+      title={telechargeable ? `Certificat ${cert.reference}` : "Certificat, consultation"}
       onClose={onClose}
       taille="certificat"
       foot={

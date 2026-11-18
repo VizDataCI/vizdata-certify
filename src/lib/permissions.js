@@ -62,12 +62,12 @@ function peut(session, autorisation) {
 }
 
 /** Libellé lisible d'un rôle. */
-const libelleRole = (role) => ROLES[role]?.label || role || "—";
+const libelleRole = (role) => ROLES[role]?.label || role || "Rôle inconnu";
 
 /** Résumé des autorisations d'un compte, pour l'annuaire. */
 function resumeAutorisations(session) {
   if (session?.role === "ADMIN") return "Tous les droits";
-  if (session?.role !== "MANAGER") return "—";
+  if (session?.role !== "MANAGER") return "Sans objet";
   const accordees = AUTORISATIONS.filter((a) => session.permissions?.[a.cle]);
   if (accordees.length === 0) return "Aucune autorisation";
   if (accordees.length === AUTORISATIONS.length) return "Toutes les autorisations";

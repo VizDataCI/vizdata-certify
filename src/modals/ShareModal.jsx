@@ -36,7 +36,7 @@ function ShareModal({ cert, onClose, ...p }) {
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 14 }}>
         <button className="vz-btn" onClick={() => open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, "linkedin")}>LinkedIn</button>
         <button className="vz-btn" onClick={() => open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "whatsapp")}>WhatsApp</button>
-        <button className="vz-btn" onClick={() => open(`mailto:?subject=${encodeURIComponent("Ma certification VIZDATA — " + cert.certification)}&body=${encodeURIComponent(msg)}`, "email")}>E-mail</button>
+        <button className="vz-btn" onClick={() => open(`mailto:?subject=${encodeURIComponent("Ma certification VIZDATA : " + cert.certification)}&body=${encodeURIComponent(msg)}`, "email")}>E-mail</button>
         <button className="vz-btn" onClick={() => { countShare("copy_link"); copy(url, "Lien copié."); }}>Copier le lien</button>
       </div>
       <div style={{ marginTop: 20, display: "flex", gap: 16, alignItems: "center", borderTop: "1px solid var(--trait)", paddingTop: 16 }}>

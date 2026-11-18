@@ -44,7 +44,7 @@ const FORMULE_LABEL = Object.fromEntries(FORMULES.map((f) => [f.cle, f.label]));
 /** Montant en francs CFA, séparé par espaces insécables : « 500 000 FCFA ». */
 function montant(valeur) {
   const n = Number(valeur);
-  if (!Number.isFinite(n)) return "—";
+  if (!Number.isFinite(n)) return "Non chiffré";
   return `${Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} FCFA`;
 }
 

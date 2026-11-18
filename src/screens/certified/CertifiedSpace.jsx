@@ -16,7 +16,12 @@ import { CertificateModal } from "../../modals/CertificateModal.jsx";
 import { ShareModal } from "../../modals/ShareModal.jsx";
 import { AppShell } from "../../ui/AppShell.jsx";
 import { ZoneImpression, imprimerCertificat } from "../../ui/Certificat.jsx";
-import { Badge, Field } from "../../ui/primitives.jsx";
+import { Badge, Field, Stat, Vide } from "../../ui/primitives.jsx";
+import {
+  IconeCertificats, IconeAuthentique, IconeCatalogue, IconeDocument,
+  IconeTelecharger, IconeImprimer, IconePartager, IconeVerification,
+  IconeCertifies, IconeVerrou,
+} from "../../ui/icones.jsx";
 
 function CertifiedSpace(p) {
   const [page, setPage] = useState("certs");
@@ -85,9 +90,9 @@ function CertifiedSpace(p) {
 
   const nav = [
     { group: "Espace certifié" },
-    { key: "certs", label: "Mes certifications" },
-    { key: "profile", label: "Mon profil" },
-    { key: "settings", label: "Sécurité" },
+    { key: "certs", label: "Mes certifications", icone: IconeCertificats },
+    { key: "profile", label: "Mon profil", icone: IconeCertifies },
+    { key: "settings", label: "Sécurité", icone: IconeVerrou },
   ];
 
   const total = certs?.length ?? 0;
@@ -111,9 +116,9 @@ function CertifiedSpace(p) {
 
             {total > 0 && (
               <div className="vz-grid vz-stats" style={{ marginBottom: 22 }}>
-                <StatSobre label="Certifications" valeur={total} detail="Délivrées par VIZDATA" />
-                <StatSobre label="En vigueur" valeur={valides} detail="Vérifiables publiquement" accent="var(--vert)" />
-                <StatSobre label="Domaines" valeur={domaines} detail="Champs de compétence" accent="var(--violet)" />
+                <Stat label="Certifications" value={total} sub="Délivrées par VIZDATA" icone={IconeCertificats} ton="bleu" />
+                <Stat label="En vigueur" value={valides} sub="Vérifiables publiquement" icone={IconeAuthentique} ton="vert" />
+                <Stat label="Domaines" value={domaines} sub="Champs de compétence" icone={IconeCatalogue} ton="violet" />
               </div>
             )}
 
@@ -123,10 +128,10 @@ function CertifiedSpace(p) {
               <div className="vz-card"><div className="vz-empty">Chargement de vos certifications…</div></div>
             ) : certs.length === 0 ? (
               <div className="vz-card">
-                <div className="vz-empty">
-                  Aucune certification n'est encore rattachée à ce compte.<br />
-                  <span className="vz-small">Elles apparaîtront ici dès que VIZDATA vous en délivrera une.</span>
-                </div>
+                <Vide icone={IconeCertificats} titre="Aucune certification pour le moment">
+                  Vos certifications apparaîtront ici dès que VIZDATA vous en délivrera une. Vous
+                  pourrez alors les consulter, les télécharger et les partager.
+                </Vide>
               </div>
             ) : (
               <div className="vz-grid vz-cards">
@@ -148,15 +153,25 @@ function CertifiedSpace(p) {
                     )}
 
                     <div className="vz-certcard-actions">
-                      <button className="vz-btn vz-btn-sm vz-btn-primary" onClick={() => setModal({ type: "cert", c })}>Consulter</button>
-                      <button className="vz-btn vz-btn-sm" onClick={() => sortir(c, "pdf")}>Télécharger en PDF</button>
-                      <button className="vz-btn vz-btn-sm" onClick={() => sortir(c, "impression")}>Imprimer</button>
+                      <button className="vz-btn vz-btn-sm vz-btn-primary" onClick={() => setModal({ type: "cert", c })}>
+                        <IconeDocument size={15} /> Consulter
+                      </button>
+                      <button className="vz-btn vz-btn-sm" onClick={() => sortir(c, "pdf")}>
+                        <IconeTelecharger size={15} /> PDF
+                      </button>
+                      <button className="vz-btn vz-btn-sm" onClick={() => sortir(c, "impression")}>
+                        <IconeImprimer size={15} /> Imprimer
+                      </button>
                     </div>
                     <div className="vz-certcard-liens">
-                      <button className="vz-linkbtn" onClick={() => p.go({ view: "verifyResult", token: c.public_token, source: "lien" })}>
-                        Page de vérification
+                      <button className="vz-linkbtn" style={{ display: "inline-flex", alignItems: "center", gap: 5 }}
+                        onClick={() => p.go({ view: "verifyResult", token: c.public_token, source: "lien" })}>
+                        <IconeVerification size={14} /> Page de vérification
                       </button>
-                      <button className="vz-linkbtn" onClick={() => setModal({ type: "share", c })}>Partager</button>
+                      <button className="vz-linkbtn" style={{ display: "inline-flex", alignItems: "center", gap: 5 }}
+                        onClick={() => setModal({ type: "share", c })}>
+                        <IconePartager size={14} /> Partager
+                      </button>
                     </div>
                   </article>
                 ))}
@@ -189,7 +204,7 @@ function CertifiedSpace(p) {
                     <span>
                       <span className="vz-label">Afficher mon profil publiquement</span>
                       <span className="vz-small vz-muted" style={{ display: "block", marginTop: 3, lineHeight: 1.6 }}>
-                        Adresse publique : <span className="vz-mono">/u/{me.username}</span> — seules les certifications en vigueur y apparaissent.
+                        Adresse publique : <span className="vz-mono">/u/{me.username}</span>. Seules les certifications en vigueur y apparaissent.
                       </span>
                     </span>
                   </label>
@@ -227,17 +242,6 @@ function Patienter({ texte }) {
           <div className="vz-empty">{texte}</div>
         </div>
       </div>
-    </div>
-  );
-}
-
-/** Indicateur sobre : le chiffre, puis ce qu'il compte. */
-function StatSobre({ label, valeur, detail, accent }) {
-  return (
-    <div className="vz-stat">
-      <div className="vz-eyebrow">{label}</div>
-      <div className="vz-stat-val" style={accent ? { color: accent } : null}>{valeur}</div>
-      <div className="vz-stat-sub">{detail}</div>
     </div>
   );
 }

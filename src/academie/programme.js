@@ -47,7 +47,7 @@ const DIFFICULTES = [
   },
   {
     titre: "Des rapports refaits à la main chaque mois",
-    texte: "Les mêmes copier-coller, les mêmes mises en forme, le même temps perdu — pour un résultat qui périme en une semaine.",
+    texte: "Les mêmes copier-coller, les mêmes mises en forme, le même temps perdu, pour un résultat qui périme en une semaine.",
   },
   {
     titre: "Des erreurs dans les calculs et les consolidations",
@@ -55,7 +55,7 @@ const DIFFICULTES = [
   },
   {
     titre: "Des tableaux de bord hors d'atteinte",
-    texte: "La demande arrive — « un tableau de bord par agence, mis à jour automatiquement » — et les outils en place ne suivent pas.",
+    texte: "La demande arrive, « un tableau de bord par agence, mis à jour automatiquement », et les outils en place ne suivent pas.",
   },
   {
     titre: "Des données disponibles, mais peu exploitées",
@@ -146,7 +146,7 @@ const AVANTAGES = [
   { titre: "Formation complémentaire offerte", texte: "Un accès à une formation sur la structuration et l'analyse de données, en complément des 8 jours." },
   { titre: "Un mois de Power BI University", texte: "Accès gratuit pendant un mois, pour prolonger la pratique après la session." },
   { titre: "Un mois d'accompagnement", texte: "Vos questions sur vos propres fichiers, suivies pendant le mois qui suit la formation." },
-  { titre: "Deux certificats de formation", texte: "Un pour Excel, un pour Power BI — vérifiables en ligne sur le registre VIZDATA." },
+  { titre: "Deux certificats de formation", texte: "Un pour Excel, un pour Power BI, vérifiables en ligne sur le registre VIZDATA." },
   { titre: "Une communauté privée d'entraide", texte: "Les participants des cohortes précédentes, et les formateurs." },
 ];
 
@@ -202,7 +202,7 @@ const FORMATEURS = [
 const faqListe = ({ integral, echelonne }) => [
   {
     q: "Faut-il être informaticien pour participer ?",
-    r: "Non. La formation s'adresse à des professionnels qui manipulent des données dans leur métier — gestion, finance, RH, commerce, études. Aucune compétence en programmation n'est demandée.",
+    r: "Non. La formation s'adresse à des professionnels qui manipulent des données dans leur métier : gestion, finance, RH, commerce, études. Aucune compétence en programmation n'est demandée.",
   },
   {
     q: "Quel est le niveau Excel requis ?",

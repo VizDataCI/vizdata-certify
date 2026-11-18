@@ -59,7 +59,7 @@ function AdminCandidatures(p) {
 
   const libelleCohorte = useMemo(() => {
     const index = new Map(cohortes.map((c) => [c.id, c.libelle]));
-    return (id) => (id ? index.get(id) || "—" : "—");
+    return (id) => (id ? index.get(id) || "Cohorte inconnue" : "Aucune cohorte");
   }, [cohortes]);
 
   const filtrees = useMemo(() => {
@@ -101,7 +101,7 @@ function AdminCandidatures(p) {
     <>
       <div className="vz-page-head">
         <div>
-          <div className="vz-eyebrow">Académie — Citizen Data Analyst</div>
+          <div className="vz-eyebrow">Académie Citizen Data Analyst</div>
           <h1 style={{ marginTop: 8 }}>Candidatures</h1>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
@@ -248,7 +248,7 @@ function DetailCandidature({ c, cohorte, onFermer, onModifier }) {
         </Ligne>
         <Ligne cle="E-mail"><a href={`mailto:${c.email}`}>{c.email}</a></Ligne>
         <Ligne cle="Profession">{c.profession}</Ligne>
-        <Ligne cle="Entreprise">{c.entreprise || "—"}</Ligne>
+        <Ligne cle="Entreprise">{c.entreprise || "Non renseignée"}</Ligne>
         <Ligne cle="Niveau Excel">{NIVEAU_LABEL[c.niveau] || c.niveau}</Ligne>
         <Ligne cle="Formule retenue">{FORMULE_LABEL[c.formule] || c.formule}</Ligne>
         <Ligne cle="Origine">{c.source}</Ligne>
@@ -278,7 +278,7 @@ function DetailCandidature({ c, cohorte, onFermer, onModifier }) {
 
       <div className="vz-eyebrow" style={{ margin: "18px 0 7px" }}>Niveaux déclarés</div>
       <p className="vz-small vz-muted">
-        {NIVEAUX.find((n) => n.cle === c.niveau)?.aide || "—"}
+        {NIVEAUX.find((n) => n.cle === c.niveau)?.aide || "Niveau non précisé"}
       </p>
     </Modal>
   );

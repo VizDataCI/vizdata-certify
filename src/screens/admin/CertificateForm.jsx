@@ -122,7 +122,7 @@ function CertificateForm({ cert, titulaire: titulaireImpose, onClose, ...p }) {
           ? "Ce titulaire était déjà enregistré : son compte existant est réutilisé."
           : r.invitation_envoyee
           ? "Titulaire créé. Son invitation vient de partir."
-          : "Titulaire créé. L'invitation n'a pas pu être envoyée — il pourra passer par « mot de passe oublié »."
+          : "Titulaire créé. L'invitation n'a pas pu être envoyée, il pourra passer par « mot de passe oublié »."
       );
     } catch (e) {
       setErr(e.message);

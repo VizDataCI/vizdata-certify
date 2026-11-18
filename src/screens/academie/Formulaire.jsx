@@ -218,7 +218,7 @@ function Formulaire({ cohorte, tarifs, formuleInitiale = "INTEGRAL", notify }) {
                   <input type="radio" name="formule" value={f.cle}
                          checked={formule === f.cle} onChange={() => setFormuleChoisie(f.cle)} />
                   <span>
-                    <span className="ac-formule-nom">{montant(prix)} — {f.label}</span>
+                    <span className="ac-formule-nom">{montant(prix)} : {f.label}</span>
                     <span className="ac-formule-det">
                       {f.versements === 2
                         ? `Deux versements de ${montant(prix / 2)}. Échéances communiquées avant validation.`

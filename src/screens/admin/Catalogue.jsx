@@ -65,7 +65,7 @@ function AdminCatalogue(p) {
         <div className="vz-card">
           <div className="vz-empty">
             Aucun domaine n'est encore défini.<br />
-            <span className="vz-small">Commencez par créer un domaine — « Excel », « Power BI » — puis ajoutez-y des programmes.</span>
+            <span className="vz-small">Commencez par créer un domaine, « Excel » ou « Power BI » par exemple, puis ajoutez-y des programmes.</span>
           </div>
         </div>
       )}
@@ -199,7 +199,7 @@ function FormulaireDomaine({ domaine, onClose, ...p }) {
 
   return (
     <Modal
-      title={nouveau ? "Nouveau domaine" : `Domaine — ${domaine.name}`}
+      title={nouveau ? "Nouveau domaine" : `Domaine : ${domaine.name}`}
       onClose={onClose}
       foot={
         <>
@@ -299,7 +299,7 @@ function FormulaireProgramme({ programme, domaineParDefaut, onClose, ...p }) {
 
   return (
     <Modal
-      title={nouveau ? "Nouveau programme de certification" : `Programme — ${programme.name}`}
+      title={nouveau ? "Nouveau programme de certification" : `Programme : ${programme.name}`}
       onClose={onClose}
       wide
       foot={
@@ -321,7 +321,7 @@ function FormulaireProgramme({ programme, domaineParDefaut, onClose, ...p }) {
       <div className="vz-form-grid">
         <Field label="Domaine">
           <select className="vz-select" value={f.domain_id ?? ""} onChange={(e) => setF({ ...f, domain_id: domaines.find((d) => String(d.id) === e.target.value)?.id ?? null })}>
-            <option value="">— Choisir —</option>
+            <option value="">Choisir un domaine</option>
             {domaines.map((d) => <option key={d.id} value={d.id}>{d.name} ({d.code})</option>)}
           </select>
         </Field>
@@ -331,7 +331,7 @@ function FormulaireProgramme({ programme, domaineParDefaut, onClose, ...p }) {
       </div>
       <div style={{ marginTop: 14 }}>
         <Field label="Intitulé exact de la certification" hint="Tel qu'il sera imprimé sur le certificat.">
-          <input className="vz-input" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="Excel — Niveau avancé" />
+          <input className="vz-input" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="Excel : Niveau avancé" />
         </Field>
       </div>
       <div style={{ marginTop: 14 }}>

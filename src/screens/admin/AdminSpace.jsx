@@ -18,6 +18,11 @@ import { estAdmin, estAdministration, peut } from "../../lib/permissions.js";
 import { CertificateModal } from "../../modals/CertificateModal.jsx";
 import { ShareModal } from "../../modals/ShareModal.jsx";
 import { AppShell } from "../../ui/AppShell.jsx";
+import {
+  IconeTableau, IconeCertificats, IconeCertifies, IconeCatalogue, IconeImport,
+  IconeVerification, IconeNotifications, IconeStats, IconeUtilisateurs,
+  IconeParametres, IconeCandidatures, IconeCohortes,
+} from "../../ui/icones.jsx";
 import { creerActions } from "./actions.js";
 import { AdminCandidatures } from "./Candidatures.jsx";
 import { AdminCatalogue } from "./Catalogue.jsx";
@@ -27,6 +32,7 @@ import { AdminCertificates } from "./Certificates.jsx";
 import { AdminCohortes } from "./Cohortes.jsx";
 import { AdminCertified } from "./Certified.jsx";
 import { AdminDashboard } from "./Dashboard.jsx";
+import { HolderDetail } from "./HolderDetail.jsx";
 import { HolderForm } from "./HolderForm.jsx";
 import { AdminImport } from "./Import.jsx";
 import { AdminNotifications } from "./Notifications.jsx";
@@ -94,22 +100,22 @@ function AdminSpace(p) {
 
   const nav = [
     { group: "Pilotage" },
-    { key: "dashboard", label: "Tableau de bord" },
+    { key: "dashboard", label: "Tableau de bord", icone: IconeTableau },
     { group: "Certifications" },
-    { key: "certificates", label: "Certificats" },
-    { key: "certified", label: "Certifiés" },
-    admin && { key: "catalogue", label: "Domaines & programmes" },
-    peut(p.session, "attribuer_certificats") && { key: "import", label: "Import" },
+    { key: "certificates", label: "Certificats", icone: IconeCertificats },
+    { key: "certified", label: "Certifiés", icone: IconeCertifies },
+    admin && { key: "catalogue", label: "Domaines et programmes", icone: IconeCatalogue },
+    peut(p.session, "attribuer_certificats") && { key: "import", label: "Import", icone: IconeImport },
     { group: "Suivi" },
-    { key: "verifications", label: "Vérifications" },
-    { key: "notifications", label: "Notifications" },
-    { key: "stats", label: "Statistiques" },
+    { key: "verifications", label: "Vérifications", icone: IconeVerification },
+    { key: "notifications", label: "Notifications", icone: IconeNotifications },
+    { key: "stats", label: "Statistiques", icone: IconeStats },
     admin && { group: "Configuration" },
-    admin && { key: "users", label: "Utilisateurs & rôles" },
-    admin && { key: "settings", label: "Paramètres" },
+    admin && { key: "users", label: "Utilisateurs et rôles", icone: IconeUtilisateurs },
+    admin && { key: "settings", label: "Paramètres", icone: IconeParametres },
     { group: "Académie" },
-    { key: "candidatures", label: "Candidatures" },
-    { key: "cohortes", label: "Cohortes" },
+    { key: "candidatures", label: "Candidatures", icone: IconeCandidatures },
+    { key: "cohortes", label: "Cohortes", icone: IconeCohortes },
   ].filter(Boolean);
 
   /* Un gestionnaire qui atterrit sur un écran réservé — adresse recopiée,
@@ -123,8 +129,8 @@ function AdminSpace(p) {
     ? {
         ...p,
         db,
-        userOf: (c) => db.users.find((u) => u.id === c.user_id) || { first_name: "—", last_name: "", email: "" },
-        typeOf: (c) => db.types.find((t) => t.id === c.certificate_type_id) || { name: "—", code: "", description: "" },
+        userOf: (c) => db.users.find((u) => u.id === c.user_id) || { first_name: "Titulaire", last_name: "inconnu", email: "" },
+        typeOf: (c) => db.types.find((t) => t.id === c.certificate_type_id) || { name: "Programme inconnu", code: "", description: "" },
         domainOf: (t) => t?.certification_domains || (db.domains || []).find((d) => d.id === t?.domain_id) || null,
         remote: isAuthConfigured,
         actions,
@@ -142,7 +148,7 @@ function AdminSpace(p) {
       session={p.session}
       go={p.go}
       logout={p.logout}
-      title={admin ? "VIZDATA CERTIFY — Administration" : "VIZDATA CERTIFY — Gestion"}
+      title={admin ? "Administration du registre" : "Gestion du registre"}
       sub="CERTIFY"
     >
       <div className="vz-page">
@@ -167,6 +173,7 @@ function AdminSpace(p) {
       {shared && modal?.type === "share" && <ShareModal cert={p.toPublic(modal.c)} {...shared} onClose={() => setModal(null)} />}
       {shared && modal?.type === "form" && <CertificateForm cert={modal.c} titulaire={modal.titulaire} {...shared} onClose={() => setModal(null)} />}
       {shared && modal?.type === "holder" && <HolderForm titulaire={modal.c} {...shared} onClose={() => setModal(null)} />}
+      {shared && modal?.type === "titulaire" && <HolderDetail titulaire={modal.c} {...shared} setModal={setModal} onClose={() => setModal(null)} />}
       {shared && modal?.type === "revoke" && <RevokeModal cert={modal.c} {...shared} onClose={() => setModal(null)} />}
       {shared && modal?.type === "detail" && <CertificateDetail cert={modal.c} {...shared} setModal={setModal} onClose={() => setModal(null)} />}
     </AppShell>

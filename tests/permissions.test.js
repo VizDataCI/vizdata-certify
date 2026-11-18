@@ -84,7 +84,7 @@ test("les libellés de rôle sont lisibles, y compris pour un rôle inattendu", 
   assert.equal(libelleRole("MANAGER"), "Gestionnaire");
   assert.equal(libelleRole("CERTIFIED"), "Certifié");
   assert.equal(libelleRole("ROLE_INCONNU"), "ROLE_INCONNU");
-  assert.equal(libelleRole(null), "—");
+  assert.equal(libelleRole(null), "Rôle inconnu");
 });
 
 test("le résumé des autorisations distingue les trois cas", () => {
@@ -92,7 +92,7 @@ test("le résumé des autorisations distingue les trois cas", () => {
   assert.equal(resumeAutorisations(gestionnaireComplet), "Toutes les autorisations");
   assert.equal(resumeAutorisations(gestionnaireNu), "Aucune autorisation");
   assert.match(resumeAutorisations(gestionnaireLimite), /Attribuer/);
-  assert.equal(resumeAutorisations(certifie), "—");
+  assert.equal(resumeAutorisations(certifie), "Sans objet");
 });
 
 test("chaque autorisation porte un libellé et une explication", () => {

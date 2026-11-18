@@ -48,8 +48,8 @@ function RevokeModal({ cert, onClose, ...p }) {
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <Field label="Action">
           <select className="vz-select" value={action} onChange={(e) => setAction(e.target.value)}>
-            <option value="REVOKED">Révoquer — le certificat n'est plus reconnu</option>
-            <option value="CANCELLED">Annuler — le certificat n'aurait pas dû être émis</option>
+            <option value="REVOKED">Révoquer : le certificat n'est plus reconnu</option>
+            <option value="CANCELLED">Annuler : le certificat n'aurait pas dû être émis</option>
           </select>
         </Field>
         <Field label="Motif" hint="Affiché sur la page publique en cas de révocation.">

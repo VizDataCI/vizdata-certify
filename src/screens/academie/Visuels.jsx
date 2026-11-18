@@ -60,11 +60,11 @@ function BarresGroupees() {
           <g key={m.mois}>
             <rect x={centre - largeur - 1} y={y(m.realise)} width={largeur} height={HAUT + utile - y(m.realise)}
                   rx="4" fill={BLEU}>
-              <title>{`${m.mois} — réalisé ${m.realise}`}</title>
+              <title>{`${m.mois}, réalisé ${m.realise}`}</title>
             </rect>
             <rect x={centre + 1} y={y(m.objectif)} width={largeur} height={HAUT + utile - y(m.objectif)}
                   rx="4" fill={ORANGE}>
-              <title>{`${m.mois} — objectif ${m.objectif}`}</title>
+              <title>{`${m.mois}, objectif ${m.objectif}`}</title>
             </rect>
             <text x={centre} y={H - 5} textAnchor="middle" fontSize="8.5" fill={ENCRE_FAIBLE}
                   fontFamily="'IBM Plex Sans',sans-serif">{m.mois}</text>
@@ -116,7 +116,7 @@ function ApercuTableauBord() {
       <div className="ac-visuel-carte">
         <div className="ac-visuel-barre">
           <span className="ac-visuel-pt" /><span className="ac-visuel-pt" /><span className="ac-visuel-pt" />
-          <span className="ac-visuel-titre">Suivi commercial — Power BI</span>
+          <span className="ac-visuel-titre">Suivi commercial sous Power BI</span>
         </div>
         <div className="ac-visuel-corps">
           <div className="ac-visuel-kpis">

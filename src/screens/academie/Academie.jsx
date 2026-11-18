@@ -23,7 +23,7 @@ import { VizdataMark } from "../../ui/VizdataLogo.jsx";
 import { Formulaire } from "./Formulaire.jsx";
 import { ApercuTableauBord, Photo } from "./Visuels.jsx";
 
-const TITRE_PAGE = "Devenez un Citizen Data Analyst — Excel et Power BI | VIZDATA";
+const TITRE_PAGE = "Devenez un Citizen Data Analyst : Excel et Power BI | VIZDATA";
 const DESCRIPTION_PAGE =
   "8 jours de formation intensive en présentiel à Abidjan pour maîtriser Excel et Power BI : " +
   "préparation, analyse, automatisation et visualisation des données. Deux certificats VIZDATA, " +
@@ -79,7 +79,7 @@ function useReferencement(cohorte, tarifs) {
     const donnees = {
       "@context": "https://schema.org",
       "@type": "Course",
-      name: "CITIZEN DATA ANALYST — Excel et Power BI",
+      name: "CITIZEN DATA ANALYST : Excel et Power BI",
       description: DESCRIPTION_PAGE,
       inLanguage: "fr",
       provider: {
@@ -188,7 +188,7 @@ function BandeauCohorte({ cohorte, charge }) {
       {cohorte.statut === "COMPLETE" && (
         <>
           <span className="ac-cohorte-sep" />
-          <span><strong>Session complète</strong> — candidatures enregistrées pour la suivante</span>
+          <span><strong>Session complète.</strong> Les candidatures sont enregistrées pour la suivante</span>
         </>
       )}
       {cohorte.note_publique && (
@@ -284,7 +284,7 @@ function Academie(p) {
                 <a className="ac-btn ac-btn-ligne" href="#programme">Voir le programme</a>
               </div>
               <p className="ac-hero-rassure">
-                Candidature en 2 minutes. Aucun paiement à cette étape — l'équipe VIZDATA vous contacte avant toute validation.
+                Candidature en 2 minutes. Aucun paiement à cette étape : l'équipe VIZDATA vous contacte avant toute validation.
               </p>
             </div>
             <ApercuTableauBord />
@@ -353,7 +353,7 @@ function Academie(p) {
                   <h3>{m.titre}</h3>
                   <span className="ac-module-duree">{m.duree}</span>
                 </div>
-                <div className="ac-module-obj"><b>Objectif —</b> {m.objectif}</div>
+                <div className="ac-module-obj"><b>Objectif :</b> {m.objectif}</div>
                 <div className="ac-module-corps">
                   <div>Au programme</div>
                   <ul className="ac-prog">
@@ -450,7 +450,7 @@ function Academie(p) {
           <div className="ac-tarifs" data-reveal>
             <div className="ac-tarif phare">
               <div className="ac-tarif-ruban">Le plus avantageux</div>
-              <div className="ac-tarif-nom">Formule 1 — Paiement intégral</div>
+              <div className="ac-tarif-nom">Formule 1 : paiement intégral</div>
               <div className="ac-tarif-prix">{montant(tarifs.integral)}</div>
               <div className="ac-tarif-detail">Réglé en une fois, à l'inscription.</div>
               {gain > 0 && <div className="ac-tarif-eco">Économie de {montant(gain)}</div>}
@@ -463,7 +463,7 @@ function Academie(p) {
             </div>
 
             <div className="ac-tarif">
-              <div className="ac-tarif-nom">Formule 2 — Paiement échelonné</div>
+              <div className="ac-tarif-nom">Formule 2 : paiement échelonné</div>
               <div className="ac-tarif-prix">{montant(tarifs.echelonne)}</div>
               <div className="ac-tarif-detail">
                 Deux versements de {montant(tarifs.echelonne / 2)}.

@@ -66,11 +66,11 @@ function CertificateDetail({ cert, onClose, setModal, ...p }) {
             <Rang dt="Certifié" dd={`${u.first_name} ${u.last_name}`} />
             <Rang dt="Adresse e-mail" dd={u.email} petit />
             <Rang dt="Délivré le" dd={fmtLong(cert.issue_date)} />
-            <Rang dt="Durée" dd={cert.duration ? `${cert.duration} heures` : "—"} mono />
-            <Rang dt="Formateur" dd={cert.trainer || "—"} petit />
-            <Rang dt="Signataire" dd={cert.signatory || "—"} petit />
-            <Rang dt="Attribué par" dd={emetteur ? `${emetteur.first_name} ${emetteur.last_name}` : "—"} petit />
-            <Rang dt="Enregistré le" dd={cert.created_at ? fmtShort(cert.created_at) : "—"} mono dernier />
+            <Rang dt="Durée" dd={cert.duration ? `${cert.duration} heures` : "Non précisée"} mono />
+            <Rang dt="Formateur" dd={cert.trainer || "Non précisé"} petit />
+            <Rang dt="Signataire" dd={cert.signatory || "Non précisé"} petit />
+            <Rang dt="Attribué par" dd={emetteur ? `${emetteur.first_name} ${emetteur.last_name}` : "Inconnu"} petit />
+            <Rang dt="Enregistré le" dd={cert.created_at ? fmtShort(cert.created_at) : "Inconnue"} mono dernier />
           </dl>
 
           {st === "REVOKED" && cert.revoke_reason && (
@@ -83,7 +83,7 @@ function CertificateDetail({ cert, onClose, setModal, ...p }) {
             <div className="vz-alert warn" style={{ marginTop: 14 }}>
               <span>
                 <strong>Mentions d'archive.</strong> Ce certificat porte des informations que le registre
-                n'utilise plus et qui n'apparaissent nulle part — ni sur le document, ni dans l'espace du
+                n'utilise plus et qui n'apparaissent nulle part : ni sur le document, ni dans l'espace du
                 titulaire, ni publiquement :
                 {cert.expiry_date ? ` expiration au ${fmtShort(cert.expiry_date)}` : ""}
                 {cert.expiry_date && cert.score != null ? " ;" : ""}

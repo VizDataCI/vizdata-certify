@@ -21,7 +21,8 @@
 
 import { useState } from "react";
 import { AUTORISATIONS, ROLES, libelleRole, resumeAutorisations } from "../../lib/permissions.js";
-import { Field, Modal } from "../../ui/primitives.jsx";
+import { Field, Modal, Stat } from "../../ui/primitives.jsx";
+import { IconePlus, IconeVerrou, IconeUtilisateurs, IconeCertifies } from "../../ui/icones.jsx";
 
 function AdminUtilisateurs(p) {
   const [q, setQ] = useState("");
@@ -40,22 +41,25 @@ function AdminUtilisateurs(p) {
       <div className="vz-page-head">
         <div>
           <div className="vz-eyebrow">Accès</div>
-          <h1 style={{ marginTop: 8 }}>Utilisateurs & rôles</h1>
+          <h1 style={{ marginTop: 8 }}>Utilisateurs et rôles</h1>
+          <p>Qui accède au registre, et avec quels droits. Les permissions se règlent compte par compte.</p>
         </div>
-        <button className="vz-btn vz-btn-primary" onClick={() => setModal({ type: "nouveau" })}>+ Nouveau compte</button>
+        <button className="vz-btn vz-btn-accent" onClick={() => setModal({ type: "nouveau" })}>
+          <IconePlus size={16} /> Nouveau compte
+        </button>
       </div>
 
       {err && <div className="vz-alert err" style={{ marginBottom: 14 }}>{err}</div>}
 
       <div className="vz-grid vz-stats" style={{ marginBottom: 16 }}>
-        <div className="vz-stat"><div className="vz-eyebrow">Administrateurs</div><div className="vz-stat-val">{compte("ADMIN")}</div><div className="vz-stat-sub">Tous les droits</div></div>
-        <div className="vz-stat"><div className="vz-eyebrow">Gestionnaires</div><div className="vz-stat-val" style={{ color: "var(--violet)" }}>{compte("MANAGER")}</div><div className="vz-stat-sub">Droits accordés</div></div>
-        <div className="vz-stat"><div className="vz-eyebrow">Certifiés</div><div className="vz-stat-val" style={{ color: "var(--bleu)" }}>{compte("CERTIFIED")}</div><div className="vz-stat-sub">Espace personnel</div></div>
+        <Stat label="Administrateurs" value={compte("ADMIN")} sub="Tous les droits" icone={IconeVerrou} ton="gris" />
+        <Stat label="Gestionnaires" value={compte("MANAGER")} sub="Droits accordés un par un" icone={IconeUtilisateurs} ton="violet" />
+        <Stat label="Certifiés" value={compte("CERTIFIED")} sub="Espace personnel" icone={IconeCertifies} ton="bleu" />
       </div>
 
       <div className="vz-card">
         <div className="vz-card-head" style={{ gap: 8, flexWrap: "wrap" }}>
-          <input className="vz-input" style={{ maxWidth: 320 }} placeholder="Rechercher un compte" value={q} onChange={(e) => setQ(e.target.value)} />
+          <input className="vz-input vz-search" style={{ maxWidth: 320 }} placeholder="Rechercher un compte" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Rechercher un compte" />
           <select className="vz-select" style={{ width: "auto" }} value={role} onChange={(e) => setRole(e.target.value)}>
             <option value="">Tous les rôles</option>
             {Object.keys(ROLES).map((r) => <option key={r} value={r}>{ROLES[r].label}</option>)}
@@ -142,7 +146,7 @@ function FormulaireRole({ utilisateur, onClose, ...p }) {
 
   return (
     <Modal
-      title={`Rôle — ${utilisateur.first_name} ${utilisateur.last_name}`}
+      title={`Rôle de ${utilisateur.first_name} ${utilisateur.last_name}`}
       onClose={onClose}
       foot={
         <>
@@ -156,7 +160,7 @@ function FormulaireRole({ utilisateur, onClose, ...p }) {
       {err && <div className="vz-alert err" style={{ marginBottom: 14 }}>{err}</div>}
       {soiMeme && (
         <div className="vz-alert warn" style={{ marginBottom: 14 }}>
-          Vous ne pouvez pas modifier votre propre rôle. Un autre administrateur doit s'en charger —
+          Vous ne pouvez pas modifier votre propre rôle. Un autre administrateur doit s'en charger :
           sans cette règle, le dernier administrateur pourrait se retirer ses propres droits et verrouiller
           la plateforme.
         </div>
@@ -244,7 +248,7 @@ function ConfirmationStatut({ utilisateur, vers, onClose, ...p }) {
     >
       {err && <div className="vz-alert err" style={{ marginBottom: 14 }}>{err}</div>}
       <p style={{ lineHeight: 1.75 }}>
-        <strong>{utilisateur.first_name} {utilisateur.last_name}</strong> — {utilisateur.email}
+        <strong>{utilisateur.first_name} {utilisateur.last_name}</strong>, {utilisateur.email}
       </p>
       {desactiver ? (
         <div className="vz-alert warn" style={{ marginTop: 14 }}>

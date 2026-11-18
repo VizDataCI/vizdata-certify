@@ -42,22 +42,22 @@ const SEED_DOMAINS = [
    Second niveau. Le nom est l'intitulé exact imprimé sur le certificat ; le
    code est unique et entre dans la référence : VIZ-2026-EXCEL-AVA-000001. */
 const SEED_TYPES = [
-  { id: 1, domain_id: 1, code: "EXCEL-DEB", name: "Excel — Niveau débutant", description: "Prise en main du tableur, saisie, calculs et mise en forme.", default_duration: 20, validity_period: null, status: "ACTIVE", sort_order: 10 },
-  { id: 2, domain_id: 1, code: "EXCEL-INT", name: "Excel — Niveau intermédiaire", description: "Formules, fonctions de recherche, mise en forme conditionnelle, graphiques.", default_duration: 25, validity_period: null, status: "ACTIVE", sort_order: 20 },
-  { id: 3, domain_id: 1, code: "EXCEL-AVA", name: "Excel — Niveau avancé", description: "Fonctions imbriquées, bases de données, consolidation et automatisation.", default_duration: 30, validity_period: null, status: "ACTIVE", sort_order: 30 },
-  { id: 4, domain_id: 1, code: "EXCEL-EXP", name: "Excel — Expert", description: "Maîtrise experte du tableur : modélisation, Power Query, outils d'analyse.", default_duration: 40, validity_period: null, status: "ACTIVE", sort_order: 40 },
-  { id: 5, domain_id: 1, code: "EXCEL-TCD", name: "Excel — Tableaux croisés dynamiques", description: "Conception et exploitation des tableaux croisés dynamiques.", default_duration: 15, validity_period: null, status: "ACTIVE", sort_order: 50 },
-  { id: 6, domain_id: 1, code: "EXCEL-STR", name: "Excel — Structuration et analyse des données", description: "Structuration des données, nettoyage, analyse et restitution.", default_duration: 25, validity_period: null, status: "ACTIVE", sort_order: 60 },
-  { id: 7, domain_id: 2, code: "PBI-INI", name: "Power BI — Initiation", description: "Découverte de Power BI Desktop, premiers rapports.", default_duration: 20, validity_period: null, status: "ACTIVE", sort_order: 10 },
-  { id: 8, domain_id: 2, code: "PBI-ANA", name: "Power BI — Analyse et visualisation", description: "Visuels, interactions, mise en récit des données.", default_duration: 25, validity_period: null, status: "ACTIVE", sort_order: 20 },
-  { id: 9, domain_id: 2, code: "PBI-MOD", name: "Power BI — Modélisation des données", description: "Modèle en étoile, relations, mesures DAX.", default_duration: 30, validity_period: null, status: "ACTIVE", sort_order: 30 },
-  { id: 10, domain_id: 2, code: "PBI-AVA", name: "Power BI — Niveau avancé", description: "DAX avancé, performance, sécurité au niveau des lignes, publication.", default_duration: 35, validity_period: null, status: "ACTIVE", sort_order: 40 },
-  { id: 11, domain_id: 3, code: "DATA-ANA", name: "Data Analyst — Parcours complet", description: "Parcours complet d'analyse de données, de la collecte à la restitution.", default_duration: 80, validity_period: null, status: "ACTIVE", sort_order: 10 },
+  { id: 1, domain_id: 1, code: "EXCEL-DEB", name: "Excel : Niveau débutant", description: "Prise en main du tableur, saisie, calculs et mise en forme.", default_duration: 20, validity_period: null, status: "ACTIVE", sort_order: 10 },
+  { id: 2, domain_id: 1, code: "EXCEL-INT", name: "Excel : Niveau intermédiaire", description: "Formules, fonctions de recherche, mise en forme conditionnelle, graphiques.", default_duration: 25, validity_period: null, status: "ACTIVE", sort_order: 20 },
+  { id: 3, domain_id: 1, code: "EXCEL-AVA", name: "Excel : Niveau avancé", description: "Fonctions imbriquées, bases de données, consolidation et automatisation.", default_duration: 30, validity_period: null, status: "ACTIVE", sort_order: 30 },
+  { id: 4, domain_id: 1, code: "EXCEL-EXP", name: "Excel : Expert", description: "Maîtrise experte du tableur : modélisation, Power Query, outils d'analyse.", default_duration: 40, validity_period: null, status: "ACTIVE", sort_order: 40 },
+  { id: 5, domain_id: 1, code: "EXCEL-TCD", name: "Excel : Tableaux croisés dynamiques", description: "Conception et exploitation des tableaux croisés dynamiques.", default_duration: 15, validity_period: null, status: "ACTIVE", sort_order: 50 },
+  { id: 6, domain_id: 1, code: "EXCEL-STR", name: "Excel : Structuration et analyse des données", description: "Structuration des données, nettoyage, analyse et restitution.", default_duration: 25, validity_period: null, status: "ACTIVE", sort_order: 60 },
+  { id: 7, domain_id: 2, code: "PBI-INI", name: "Power BI : Initiation", description: "Découverte de Power BI Desktop, premiers rapports.", default_duration: 20, validity_period: null, status: "ACTIVE", sort_order: 10 },
+  { id: 8, domain_id: 2, code: "PBI-ANA", name: "Power BI : Analyse et visualisation", description: "Visuels, interactions, mise en récit des données.", default_duration: 25, validity_period: null, status: "ACTIVE", sort_order: 20 },
+  { id: 9, domain_id: 2, code: "PBI-MOD", name: "Power BI : Modélisation des données", description: "Modèle en étoile, relations, mesures DAX.", default_duration: 30, validity_period: null, status: "ACTIVE", sort_order: 30 },
+  { id: 10, domain_id: 2, code: "PBI-AVA", name: "Power BI : Niveau avancé", description: "DAX avancé, performance, sécurité au niveau des lignes, publication.", default_duration: 35, validity_period: null, status: "ACTIVE", sort_order: 40 },
+  { id: 11, domain_id: 3, code: "DATA-ANA", name: "Data Analyst : Parcours complet", description: "Parcours complet d'analyse de données, de la collecte à la restitution.", default_duration: 80, validity_period: null, status: "ACTIVE", sort_order: 10 },
   { id: 12, domain_id: 3, code: "DATA-VIZ", name: "Data Visualization", description: "Conception de visualisations et de tableaux de bord.", default_duration: 25, validity_period: null, status: "ACTIVE", sort_order: 20 },
 ];
 
 const SEED_TEMPLATES = [
-  { id: 1, code: "VIZDATA-PAYSAGE-2026", name: "VIZDATA — A4 paysage", description: "Modèle institutionnel officiel.", orientation: "landscape", status: "ACTIVE" },
+  { id: 1, code: "VIZDATA-PAYSAGE-2026", name: "VIZDATA : A4 paysage", description: "Modèle institutionnel officiel.", orientation: "landscape", status: "ACTIVE" },
 ];
 
 /* --- comptes -------------------------------------------------------------

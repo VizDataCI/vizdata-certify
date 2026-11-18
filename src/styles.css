@@ -1,269 +1,642 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
+/* ===========================================================================
+   VIZDATA CERTIFY : le système d'interface
+   ===========================================================================
+
+   Ce fichier est la seule source des couleurs, des graisses, des espacements
+   et des arrondis. Les écrans n'écrivent pas de valeurs en dur : ils posent
+   des classes. C'est ce qui fait qu'une page ouverte un an plus tard ressemble
+   encore aux autres.
+
+   Trois règles tiennent l'ensemble :
+
+   1. Le bleu domine. L'orange ne sert qu'à ce qui appelle une décision, le
+      violet qu'à identifier un domaine de certification. Une couleur qui sert
+      à tout ne signale plus rien.
+   2. L'espacement suit une échelle de 4 px. Aucune valeur intermédiaire : ce
+      sont les décalages d'un pixel qui donnent aux interfaces leur air bâclé.
+   3. Le mouvement est court et discret. Il confirme une action, il ne la met
+      pas en scène.
+
+   La typographie suit les interfaces d'Apple : la police du système d'abord,
+   Inter ensuite pour tous les autres. Inter partage les proportions de SF Pro,
+   ce qui donne le même rendu d'un appareil à l'autre sans acheter de licence.
+   ========================================================================= */
+
+/* Inter porte l'interface. IBM Plex Sans et Poppins restent chargées pour une
+   raison précise : le CERTIFICAT et la page de l'académie s'en servent, et le
+   document imprimé ne doit pas bouger d'un millimètre. Retirer ces deux
+   familles aurait changé le dessin du certificat sans que rien ne le demande. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Poppins:wght@400;500;600;700&display=swap');
 
 .vz {
-  --encre:#101A2B; --bleu:#12688F; --bleu-vif:#1578A6; --violet:#4B2962; --orange:#B35C0F; --marque:#F58020;
-  --vert:#10794F; --rouge:#C0342A; --gris:#667085; --trait:#E3E6EC;
-  --surface:#F6F7F9; --blanc:#FFFFFF;
-  --sans:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  /* --- bleu : la couleur de l'interface ---------------------------------- */
+  --bleu-050:#EDF6FA;
+  --bleu-100:#D6EAF3;
+  --bleu-200:#A9D2E5;
+  --bleu-400:#2E8FBB;
+  --bleu:#12688F;
+  --bleu-600:#0F5A7C;
+  --bleu-700:#0C4A67;
+  --bleu-900:#07293A;
+
+  /* --- orange : ce qui appelle une décision ------------------------------ */
+  --orange-050:#FEF5EC;
+  --orange-100:#FCE6CF;
+  --orange-300:#F9B978;
+  --marque:#F58020;
+  --orange:#B35C0F;
+  --orange-700:#8A4609;
+
+  /* --- violet : la marque, et les domaines ------------------------------- */
+  --violet-050:#F6F2F9;
+  --violet-100:#EAE1F1;
+  --violet-300:#B493CC;
+  --violet:#4B2962;
+  --violet-600:#3C2050;
+
+  /* --- verdicts ----------------------------------------------------------- */
+  --vert-050:#EFF8F3; --vert-100:#CDE9DA; --vert:#0E7A50; --vert-700:#0A5C3C;
+  --rouge-050:#FDF3F2; --rouge-100:#F6D5D2; --rouge:#C0342A; --rouge-700:#942119;
+
+  /* --- neutres ------------------------------------------------------------ */
+  --encre:#0C1726;
+  --encre-700:#344256;
+  --gris:#667085;
+  --gris-400:#98A2B3;
+  --gris-300:#CDD4E0;
+  --trait:#E5E9F0;
+  --trait-fort:#D3DAE5;
+  --surface:#F6F8FA;
+  --surface-2:#EFF2F6;
+  --blanc:#FFFFFF;
+
+  /* --- typographie -------------------------------------------------------- */
+  --sans:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display','Inter',
+         'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
   --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,monospace;
-  font-family:var(--sans); color:var(--encre); background:var(--blanc);
-  -webkit-font-smoothing:antialiased; line-height:1.5; font-size:14px;
-  min-height:100vh;
+
+  /* --- espacement : une seule échelle ------------------------------------- */
+  --e1:4px; --e2:8px; --e3:12px; --e4:16px; --e5:20px; --e6:24px; --e8:32px; --e10:40px;
+
+  /* --- arrondis ----------------------------------------------------------- */
+  --r-s:8px; --r-m:10px; --r-l:14px; --r-xl:18px;
+
+  /* --- ombres : trois niveaux, pas plus ----------------------------------- */
+  --ombre-1:0 1px 2px rgba(12,23,38,.05);
+  --ombre-2:0 4px 16px -4px rgba(12,23,38,.09), 0 1px 3px rgba(12,23,38,.05);
+  --ombre-3:0 20px 48px -12px rgba(12,23,38,.20), 0 4px 12px rgba(12,23,38,.07);
+
+  /* --- mouvement ---------------------------------------------------------- */
+  --vite:120ms cubic-bezier(.2,.7,.4,1);
+  --normal:200ms cubic-bezier(.2,.7,.4,1);
+
+  font-family:var(--sans); color:var(--encre); background:var(--surface);
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  line-height:1.5; font-size:14px; min-height:100vh;
+  font-feature-settings:'cv11','ss01';
 }
+
 .vz *,.vz *::before,.vz *::after{box-sizing:border-box}
-.vz button{font-family:inherit;font-size:inherit;cursor:pointer;border:0;background:none;color:inherit}
-.vz input,.vz select,.vz textarea{font-family:inherit;font-size:inherit;color:inherit}
-.vz a{color:var(--bleu);text-decoration:none}
-.vz h1,.vz h2,.vz h3,.vz h4{margin:0;font-weight:600;letter-spacing:-0.02em}
-.vz p{margin:0}
-.vz :focus-visible{outline:2px solid var(--bleu);outline-offset:2px;border-radius:2px}
 
-/* --- typographie utilitaire --- */
-.vz-eyebrow{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--gris)}
+/* `:where()` n'ajoute aucune spécificité : ces remises à zéro valent donc
+   autant qu'une simple classe, et la moindre classe posée ensuite les emporte.
+   Sans cela, `.vz button{background:none}` battait `.vz-btn-accent` (un
+   sélecteur d'élément pèse plus qu'une classe seule) et le bouton d'action
+   restait transparent, quelle que soit la couleur demandée. */
+.vz :where(button){font-family:inherit;font-size:inherit;cursor:pointer;border:0;background:none;color:inherit}
+.vz :where(input,select,textarea){font-family:inherit;font-size:inherit;color:inherit}
+.vz :where(a){color:var(--bleu);text-decoration:none}
+.vz :where(a):hover{color:var(--bleu-600)}
+.vz :where(h1,h2,h3,h4){margin:0;font-weight:600;letter-spacing:-.021em;color:var(--encre)}
+.vz :where(h1){font-size:25px;line-height:1.22}
+.vz :where(h2){font-size:19px;line-height:1.3}
+.vz :where(h3){font-size:15px;line-height:1.35}
+.vz :where(p){margin:0}
+
+/* Un anneau de focus net, et seulement au clavier : visible pour qui en a
+   besoin, invisible pour qui clique. */
+.vz :focus-visible{outline:2px solid var(--bleu-400);outline-offset:2px;border-radius:4px}
+
+/* --- typographie utilitaire ---------------------------------------------- */
+.vz-eyebrow{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--gris)}
 .vz-mono{font-family:var(--mono)}
-.vz-ref{font-family:var(--mono);font-weight:500;letter-spacing:.04em}
+/* Les références de certificat : le chiffre zéro doit se distinguer de la
+   lettre O, sans quoi une référence recopiée à la main tombe à côté. */
+.vz-ref{font-family:var(--mono);font-weight:500;letter-spacing:.02em}
 .vz-muted{color:var(--gris)}
-.vz-small{font-size:12px}
+.vz-small{font-size:12.5px}
+/* Chiffres de même largeur : une colonne de nombres qui ne tremble pas quand
+   la valeur change. */
+.vz-nums{font-variant-numeric:tabular-nums}
 
-/* --- marque --- */
+/* --- marque --------------------------------------------------------------- */
 .vz-mark{display:flex;align-items:center;gap:10px}
-.vz-mark-word{font-family:'Poppins',var(--sans);font-weight:600;font-size:15px;color:#4A2A63;letter-spacing:-.01em;line-height:1}
-.vz-mark-div{width:1px;height:22px;background:var(--trait);flex:0 0 1px}
-.vz-mark-text{font-weight:600;font-size:10.5px;letter-spacing:.19em;text-transform:uppercase;color:var(--gris)}
+.vz-mark-word{font-weight:600;font-size:16px;color:var(--violet);letter-spacing:-.02em;line-height:1}
+.vz-mark-div{width:1px;height:20px;background:var(--trait);flex:0 0 1px}
+.vz-mark-text{font-weight:600;font-size:10px;letter-spacing:.17em;text-transform:uppercase;color:var(--gris)}
 
-/* --- boutons --- */
-.vz-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:36px;padding:0 14px;border-radius:6px;font-weight:500;font-size:13px;border:1px solid var(--trait);background:var(--blanc);transition:background .12s,border-color .12s}
-.vz-btn:hover{background:var(--surface)}
-.vz-btn-primary{background:var(--bleu);border-color:var(--bleu);color:#fff}
-.vz-btn-primary:hover{background:#0F5675;border-color:#0F5675}
-.vz-btn-danger{color:var(--rouge);border-color:#EBC7C4}
-.vz-btn-danger:hover{background:#FDF4F3}
-.vz-btn-lg{height:44px;padding:0 20px;font-size:14px}
-.vz-btn-sm{height:29px;padding:0 10px;font-size:12px}
-.vz-btn[disabled]{opacity:.45;pointer-events:none}
+/* --- boutons -------------------------------------------------------------- */
+.vz-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  height:38px;padding:0 15px;border-radius:var(--r-s);
+  font-weight:500;font-size:13.5px;letter-spacing:-.005em;white-space:nowrap;
+  border:1px solid var(--trait-fort);background:var(--blanc);color:var(--encre-700);
+  box-shadow:var(--ombre-1);
+  transition:background var(--vite),border-color var(--vite),color var(--vite),box-shadow var(--vite),transform var(--vite);
+}
+.vz-btn:hover{background:var(--surface);border-color:var(--gris-300);color:var(--encre)}
+.vz-btn:active{transform:translateY(1px)}
+.vz-btn svg{flex:0 0 auto}
 
-/* --- champs --- */
+.vz-btn-primary{background:var(--bleu);border-color:var(--bleu);color:#fff;box-shadow:0 1px 2px rgba(12,23,38,.12)}
+.vz-btn-primary:hover{background:var(--bleu-600);border-color:var(--bleu-600);color:#fff}
+
+/* L'orange ne porte qu'une action par écran : celle qu'on vient faire. */
+.vz-btn-accent{background:var(--marque);border-color:var(--marque);color:#fff}
+.vz-btn-accent:hover{background:#DE6F13;border-color:#DE6F13;color:#fff}
+
+.vz-btn-ghost{background:transparent;border-color:transparent;box-shadow:none;color:var(--gris)}
+.vz-btn-ghost:hover{background:var(--surface-2);color:var(--encre)}
+
+.vz-btn-danger{color:var(--rouge);border-color:var(--rouge-100);background:var(--blanc)}
+.vz-btn-danger:hover{background:var(--rouge-050);border-color:#EDBDB8;color:var(--rouge-700)}
+
+.vz-btn-lg{height:46px;padding:0 22px;font-size:15px;border-radius:var(--r-m)}
+.vz-btn-sm{height:32px;padding:0 11px;font-size:12.5px;border-radius:7px}
+.vz-btn[disabled]{opacity:.5;pointer-events:none;box-shadow:none}
+
+/* --- champs --------------------------------------------------------------- */
 .vz-field{display:flex;flex-direction:column;gap:6px}
-.vz-label{font-size:12px;font-weight:500;color:var(--encre)}
-.vz-input,.vz-select,.vz-textarea{height:36px;padding:0 11px;border:1px solid var(--trait);border-radius:6px;background:var(--blanc);width:100%}
-.vz-textarea{height:auto;padding:9px 11px;min-height:110px;font-family:var(--mono);font-size:12px;line-height:1.6}
-.vz-input:focus,.vz-select:focus,.vz-textarea:focus{outline:none;border-color:var(--bleu);box-shadow:0 0 0 3px rgba(21,120,166,.14)}
+.vz-label{font-size:12.5px;font-weight:500;color:var(--encre-700)}
+.vz-input,.vz-select,.vz-textarea{
+  height:38px;padding:0 12px;border:1px solid var(--trait-fort);border-radius:var(--r-s);
+  background:var(--blanc);width:100%;color:var(--encre);
+  transition:border-color var(--vite),box-shadow var(--vite),background var(--vite);
+}
+.vz-input::placeholder,.vz-textarea::placeholder{color:var(--gris-400)}
+.vz-textarea{height:auto;padding:10px 12px;min-height:110px;line-height:1.6;font-size:13px}
+.vz-select{appearance:none;padding-right:34px;cursor:pointer;
+  background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23667085' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 11px center;
+}
+.vz-input:hover,.vz-select:hover,.vz-textarea:hover{border-color:var(--gris-300)}
+.vz-input:focus,.vz-select:focus,.vz-textarea:focus{
+  outline:none;border-color:var(--bleu-400);box-shadow:0 0 0 3.5px var(--bleu-050);
+}
+/* Champ de recherche : l'icône est posée en fond, ce qui évite un conteneur
+   supplémentaire autour de chaque champ. */
+.vz-search{
+  padding-left:36px;
+  background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2398A2B3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:left 12px center;
+}
 
-/* --- badges de statut --- */
-.vz-badge{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;border-radius:11px;font-size:11.5px;font-weight:500;border:1px solid}
-.vz-badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
-.vz-badge.vert{color:var(--vert);border-color:#BFE0D1;background:#F1F8F4}
-.vz-badge.orange{color:var(--orange);border-color:#F2DBBC;background:#FDF7F0}
-.vz-badge.rouge{color:var(--rouge);border-color:#EBC7C4;background:#FDF4F3}
+/* --- badges de statut ------------------------------------------------------ */
+.vz-badge{
+  display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;
+  border-radius:999px;font-size:12px;font-weight:500;border:1px solid;white-space:nowrap;
+}
+.vz-badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex:0 0 6px}
+.vz-badge.vert{color:var(--vert);border-color:var(--vert-100);background:var(--vert-050)}
+.vz-badge.orange{color:var(--orange);border-color:var(--orange-100);background:var(--orange-050)}
+.vz-badge.rouge{color:var(--rouge);border-color:var(--rouge-100);background:var(--rouge-050)}
 .vz-badge.gris{color:var(--gris);border-color:var(--trait);background:var(--surface)}
+.vz-badge.bleu{color:var(--bleu);border-color:var(--bleu-100);background:var(--bleu-050)}
 
-/* --- structure application --- */
-.vz-app{display:flex;min-height:100vh}
-.vz-side{width:232px;flex:0 0 232px;border-right:1px solid var(--trait);padding:18px 14px;display:flex;flex-direction:column;gap:22px;background:var(--blanc);position:sticky;top:0;height:100vh}
-.vz-nav{display:flex;flex-direction:column;gap:1px}
-.vz-nav-group{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gris);padding:12px 10px 6px}
-.vz-nav button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:8px 10px;border-radius:6px;font-size:13px;color:var(--gris);font-weight:500}
-.vz-nav button:hover{background:var(--surface);color:var(--encre)}
-.vz-nav button.on{background:var(--surface);color:var(--encre)}
-.vz-nav button.on .vz-dot{background:var(--bleu)}
-.vz-dot{width:5px;height:5px;border-radius:50%;background:var(--trait);flex:0 0 5px}
-.vz-main{flex:1;min-width:0;background:var(--surface)}
-.vz-topbar{height:56px;border-bottom:1px solid var(--trait);background:var(--blanc);display:flex;align-items:center;justify-content:space-between;padding:0 22px;gap:14px;position:sticky;top:0;z-index:5}
-.vz-page{padding:26px 22px 60px;max-width:1180px}
+/* ===========================================================================
+   STRUCTURE
+   ========================================================================= */
+
+.vz-app{display:flex;min-height:100vh;background:var(--surface)}
+
+/* --- barre latérale -------------------------------------------------------- */
+.vz-side{
+  width:248px;flex:0 0 248px;background:var(--blanc);border-right:1px solid var(--trait);
+  padding:18px 14px 14px;display:flex;flex-direction:column;
+  position:sticky;top:0;height:100vh;
+}
+.vz-side-mark{padding:2px 8px 18px}
+.vz-nav{display:flex;flex-direction:column;gap:2px;overflow-y:auto;flex:1;margin:0 -4px;padding:0 4px}
+.vz-nav-group{
+  font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--gris-400);padding:16px 10px 7px;
+}
+.vz-nav-group:first-child{padding-top:2px}
+.vz-nav button{
+  display:flex;align-items:center;gap:11px;width:100%;text-align:left;
+  padding:9px 10px;border-radius:var(--r-s);font-size:13.5px;font-weight:500;
+  color:var(--encre-700);position:relative;
+  transition:background var(--vite),color var(--vite);
+}
+.vz-nav button svg{color:var(--gris);flex:0 0 auto;transition:color var(--vite)}
+.vz-nav button:hover{background:var(--surface)}
+.vz-nav button:hover svg{color:var(--encre-700)}
+.vz-nav button.on{background:var(--bleu-050);color:var(--bleu-700);font-weight:600}
+.vz-nav button.on svg{color:var(--bleu)}
+/* Le repère de la page active : un trait court à gauche, qui se lit même en
+   vision périphérique, là où une simple nuance de fond passe inaperçue. */
+.vz-nav button.on::before{
+  content:"";position:absolute;left:-4px;top:50%;transform:translateY(-50%);
+  width:3px;height:18px;border-radius:0 3px 3px 0;background:var(--bleu);
+}
+.vz-nav-compte{
+  margin-top:10px;padding:12px 10px 2px;border-top:1px solid var(--trait);
+  display:flex;align-items:center;gap:10px;
+}
+.vz-avatar{
+  width:34px;height:34px;flex:0 0 34px;border-radius:50%;
+  background:var(--bleu-050);color:var(--bleu);border:1px solid var(--bleu-100);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:600;letter-spacing:.02em;
+}
+.vz-avatar.violet{background:var(--violet-050);color:var(--violet);border-color:var(--violet-100)}
+
+/* --- zone principale -------------------------------------------------------- */
+.vz-main{flex:1;min-width:0;display:flex;flex-direction:column}
+.vz-topbar{
+  height:60px;border-bottom:1px solid var(--trait);background:rgba(255,255,255,.86);
+  backdrop-filter:saturate(180%) blur(12px);-webkit-backdrop-filter:saturate(180%) blur(12px);
+  display:flex;align-items:center;justify-content:space-between;padding:0 24px;gap:14px;
+  position:sticky;top:0;z-index:20;
+}
+.vz-page{padding:26px 24px 72px;max-width:1280px;width:100%}
 .vz-page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap}
-.vz-page-head h1{font-size:22px}
+.vz-page-head h1{font-size:25px}
+.vz-page-head p{color:var(--gris);font-size:13.5px;margin-top:6px;max-width:560px}
 
-/* --- cartes --- */
-.vz-card{background:var(--blanc);border:1px solid var(--trait);border-radius:8px}
-.vz-card-head{padding:14px 16px;border-bottom:1px solid var(--trait);display:flex;align-items:center;justify-content:space-between;gap:12px}
-.vz-card-body{padding:16px}
-.vz-grid{display:grid;gap:14px}
-.vz-stats{grid-template-columns:repeat(auto-fit,minmax(158px,1fr))}
-.vz-stat{background:var(--blanc);border:1px solid var(--trait);border-radius:8px;padding:14px 15px}
-.vz-stat-val{font-family:var(--mono);font-size:26px;font-weight:600;letter-spacing:-0.03em;margin-top:8px;line-height:1}
-.vz-stat-sub{font-size:11.5px;color:var(--gris);margin-top:7px}
+/* ===========================================================================
+   CARTES, INDICATEURS, TABLEAUX
+   ========================================================================= */
 
-/* --- tableaux --- */
+.vz-card{
+  background:var(--blanc);border:1px solid var(--trait);border-radius:var(--r-l);
+  box-shadow:var(--ombre-1);
+  transition:box-shadow var(--normal),border-color var(--normal);
+}
+.vz-card-head{
+  padding:15px 18px;border-bottom:1px solid var(--trait);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+}
+.vz-card-head h3{font-size:14.5px}
+.vz-card-body{padding:18px}
+.vz-grid{display:grid;gap:16px}
+.vz-stats{grid-template-columns:repeat(auto-fit,minmax(196px,1fr))}
+
+/* --- indicateur ------------------------------------------------------------- */
+.vz-stat{
+  background:var(--blanc);border:1px solid var(--trait);border-radius:var(--r-l);
+  padding:16px 17px;box-shadow:var(--ombre-1);
+  transition:box-shadow var(--normal),transform var(--normal),border-color var(--normal);
+}
+.vz-stat:hover{box-shadow:var(--ombre-2);border-color:var(--trait-fort);transform:translateY(-1px)}
+.vz-stat-tete{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.vz-stat-label{font-size:12.5px;font-weight:500;color:var(--gris)}
+.vz-stat-icone{
+  width:32px;height:32px;flex:0 0 32px;border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bleu-050);color:var(--bleu);
+}
+.vz-stat-icone.violet{background:var(--violet-050);color:var(--violet)}
+.vz-stat-icone.orange{background:var(--orange-050);color:var(--orange)}
+.vz-stat-icone.vert{background:var(--vert-050);color:var(--vert)}
+.vz-stat-icone.rouge{background:var(--rouge-050);color:var(--rouge)}
+.vz-stat-icone.gris{background:var(--surface-2);color:var(--gris)}
+.vz-stat-val{
+  font-size:30px;font-weight:600;letter-spacing:-.035em;line-height:1;
+  font-variant-numeric:tabular-nums;
+}
+.vz-stat-sub{font-size:12px;color:var(--gris);margin-top:8px;line-height:1.45}
+
+/* --- tableaux ---------------------------------------------------------------- */
 .vz-tablewrap{overflow-x:auto}
-.vz-table{width:100%;border-collapse:collapse;font-size:13px}
-.vz-table th{text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gris);font-weight:500;padding:10px 14px;border-bottom:1px solid var(--trait);white-space:nowrap;background:var(--blanc)}
-.vz-table td{padding:12px 14px;border-bottom:1px solid var(--trait);vertical-align:middle}
+.vz-table{width:100%;border-collapse:collapse;font-size:13.5px}
+.vz-table th{
+  text-align:left;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--gris);font-weight:600;padding:11px 18px;
+  border-bottom:1px solid var(--trait);white-space:nowrap;background:var(--surface);
+}
+.vz-table td{padding:14px 18px;border-bottom:1px solid var(--trait);vertical-align:middle}
 .vz-table tr:last-child td{border-bottom:0}
-.vz-table tbody tr:hover{background:#FBFCFD}
-.vz-rowactions{display:flex;gap:5px;justify-content:flex-end}
-.vz-linkbtn{font-size:12px;color:var(--bleu);font-weight:500;padding:3px 6px;border-radius:4px}
-.vz-linkbtn:hover{background:#EAF4F9}
+.vz-table tbody tr{transition:background var(--vite)}
+.vz-table tbody tr:hover{background:var(--surface)}
+/* Un entête de colonne qui trie doit se signaler avant d'être cliqué. */
+.vz-th-tri{cursor:pointer;user-select:none}
+.vz-th-tri:hover{color:var(--encre)}
+.vz-th-tri span{display:inline-flex;align-items:center;gap:5px}
+.vz-rowactions{display:flex;gap:6px;justify-content:flex-end}
+.vz-linkbtn{
+  font-size:12.5px;color:var(--bleu);font-weight:500;padding:4px 7px;border-radius:6px;
+  transition:background var(--vite),color var(--vite);
+}
+.vz-linkbtn:hover{background:var(--bleu-050)}
 .vz-linkbtn.danger{color:var(--rouge)}
-.vz-linkbtn.danger:hover{background:#FDF4F3}
+.vz-linkbtn.danger:hover{background:var(--rouge-050)}
 
-/* --- vérification publique (élément signature) --- */
+/* --- pagination ---------------------------------------------------------------- */
+.vz-pagination{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:13px 18px;border-top:1px solid var(--trait);
+}
+
+
+/* --- trois points sous la recherche -----------------------------------------
+   Ils décrivent le service, ils ne le vantent pas. La grille se replie en une
+   colonne sur téléphone plutôt que de rétrécir trois colonnes illisibles. */
+.vz-points{
+  max-width:1000px;margin:0 auto;padding:0 20px 80px;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:18px;
+}
+.vz-point{
+  background:var(--blanc);border:1px solid var(--trait);border-radius:var(--r-l);
+  padding:20px 21px;box-shadow:var(--ombre-1);
+  transition:box-shadow var(--normal),transform var(--normal),border-color var(--normal);
+}
+.vz-point:hover{box-shadow:var(--ombre-2);transform:translateY(-2px);border-color:var(--trait-fort)}
+.vz-point-icone{
+  width:38px;height:38px;border-radius:11px;margin-bottom:13px;
+  background:var(--bleu-050);color:var(--bleu);
+  display:flex;align-items:center;justify-content:center;
+}
+.vz-point h3{font-size:15px;margin-bottom:7px}
+.vz-point p{font-size:13.5px;color:var(--gris);line-height:1.6}
+@media (max-width:860px){
+  .vz-points{grid-template-columns:1fr;padding-bottom:56px;gap:12px}
+  .vz-point:hover{transform:none}
+}
+/* ===========================================================================
+   VÉRIFICATION PUBLIQUE
+
+   C'est la page que voit un employeur. Elle n'a qu'une chose à faire : établir
+   la confiance en trois secondes. Tout y est plus grand et plus calme
+   qu'ailleurs dans l'application.
+   ========================================================================= */
+
 .vz-public{min-height:100vh;background:var(--surface);display:flex;flex-direction:column}
-.vz-public-bar{height:58px;background:var(--blanc);border-bottom:1px solid var(--trait);display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.vz-public-bar{
+  height:62px;background:rgba(255,255,255,.88);border-bottom:1px solid var(--trait);
+  backdrop-filter:saturate(180%) blur(12px);-webkit-backdrop-filter:saturate(180%) blur(12px);
+  display:flex;align-items:center;justify-content:space-between;padding:0 22px;
+  position:sticky;top:0;z-index:20;
+}
 /* `align-items:flex-start` : sans cela, le conteneur étire son contenu sur
    toute la hauteur disponible, et une carte de vérification courte s'affichait
    comme un panneau vide de huit cents pixels. */
-.vz-public-body{flex:1;display:flex;justify-content:center;align-items:flex-start;padding:34px 18px 60px}
-.vz-slip{width:100%;max-width:560px;background:var(--blanc);border:1px solid var(--trait);border-radius:10px;overflow:hidden;animation:vzrise .34s ease both}
-@keyframes vzrise{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){.vz-slip{animation:none}}
-.vz-verdict{padding:24px 24px 20px;border-bottom:1px solid var(--trait);display:flex;gap:15px;align-items:flex-start}
-.vz-verdict-icon{width:40px;height:40px;flex:0 0 40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;color:#fff}
-.vz-verdict h2{font-size:19px;margin-bottom:4px}
-.vz-verdict p{font-size:13px;color:var(--gris)}
-.vz-refblock{padding:22px 24px;border-bottom:1px solid var(--trait);background:var(--surface)}
-.vz-refblock .vz-bigref{font-family:var(--mono);font-size:21px;font-weight:600;letter-spacing:.05em;color:var(--bleu);margin-top:9px;word-break:break-all;line-height:1.3}
+.vz-public-body{flex:1;display:flex;justify-content:center;align-items:flex-start;padding:38px 18px 72px}
+.vz-slip{
+  width:100%;max-width:600px;background:var(--blanc);border:1px solid var(--trait);
+  border-radius:var(--r-xl);overflow:hidden;box-shadow:var(--ombre-2);
+  animation:vzrise .4s cubic-bezier(.2,.7,.4,1) both;
+}
+@keyframes vzrise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* Le verdict : un bandeau teinté selon la réponse, lisible avant toute
+   lecture. Le dégradé reste très pâle, il porte l'information sans crier. */
+.vz-verdict{padding:26px 26px 22px;display:flex;gap:16px;align-items:flex-start;border-bottom:1px solid var(--trait)}
+.vz-verdict.ok{background:linear-gradient(180deg,var(--vert-050),var(--blanc))}
+.vz-verdict.ko{background:linear-gradient(180deg,var(--rouge-050),var(--blanc))}
+.vz-verdict.attente{background:linear-gradient(180deg,var(--orange-050),var(--blanc))}
+.vz-verdict-icon{
+  width:46px;height:46px;flex:0 0 46px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;color:#fff;
+  box-shadow:0 4px 12px -2px rgba(12,23,38,.22);
+}
+.vz-verdict h2{font-size:20px;margin-bottom:5px}
+.vz-verdict p{font-size:13.5px;color:var(--encre-700);line-height:1.55}
+.vz-refblock{padding:22px 26px;border-bottom:1px solid var(--trait);background:var(--surface)}
+.vz-refblock .vz-bigref{
+  font-family:var(--mono);font-size:22px;font-weight:600;letter-spacing:.04em;
+  color:var(--bleu);margin-top:10px;word-break:break-all;line-height:1.3;
+}
 .vz-dl{display:flex;flex-direction:column}
-.vz-dl-row{display:flex;gap:16px;padding:13px 24px;border-bottom:1px solid var(--trait)}
-.vz-dl-row dt{flex:0 0 42%;font-size:12.5px;color:var(--gris)}
+.vz-dl-row{display:flex;gap:16px;padding:14px 26px;border-bottom:1px solid var(--trait)}
+.vz-dl-row dt{flex:0 0 42%;font-size:13px;color:var(--gris)}
 .vz-dl-row dd{margin:0;font-size:13.5px;font-weight:500;text-align:right;flex:1}
-.vz-slip-actions{padding:18px 24px;display:flex;gap:9px;flex-wrap:wrap}
-.vz-slip-foot{padding:16px 24px 22px;border-top:1px solid var(--trait);font-size:12px;color:var(--gris);line-height:1.6}
+.vz-slip-actions{padding:20px 26px;display:flex;gap:10px;flex-wrap:wrap}
+.vz-slip-foot{padding:18px 26px 24px;border-top:1px solid var(--trait);font-size:12.5px;color:var(--gris);line-height:1.6}
 
-/* --- accueil public --- */
-.vz-hero{max-width:620px;margin:0 auto;padding:82px 20px 40px;text-align:center}
-.vz-hero h1{font-size:34px;letter-spacing:-0.035em;margin-bottom:14px}
-.vz-hero p{color:var(--gris);font-size:15px;max-width:430px;margin:0 auto 28px}
+/* --- ce que la certification atteste ------------------------------------------ */
+.vz-valeur{padding:22px 26px;border-bottom:1px solid var(--trait)}
+.vz-valeur h3{font-size:14.5px;margin-bottom:10px}
+.vz-valeur p{font-size:13.5px;line-height:1.7;color:var(--encre-700)}
+.vz-valeur p + p{margin-top:10px}
+.vz-acquis{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:9px}
+.vz-acquis li{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;line-height:1.55;color:var(--encre-700)}
+.vz-acquis li svg{flex:0 0 auto;color:var(--vert);margin-top:1px}
+
+/* ===========================================================================
+   ACCUEIL PUBLIC
+   ========================================================================= */
+
+.vz-hero{max-width:660px;margin:0 auto;padding:88px 20px 44px;text-align:center}
+.vz-hero h1{font-size:40px;letter-spacing:-.038em;line-height:1.1;margin-bottom:16px}
+.vz-hero p{color:var(--gris);font-size:16px;max-width:460px;margin:0 auto 30px;line-height:1.6}
 .vz-hero-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.vz-searchbox{display:flex;gap:8px;margin-top:26px}
-.vz-searchbox .vz-input{height:44px;font-family:var(--mono);letter-spacing:.04em}
+.vz-searchbox{display:flex;gap:9px;margin-top:28px}
+.vz-searchbox .vz-input{height:48px;font-family:var(--mono);letter-spacing:.03em;font-size:14px;border-radius:var(--r-m)}
+.vz-searchbox .vz-btn{height:48px}
 
-/* --- divers --- */
-.vz-chip{display:inline-block;padding:3px 9px;border:1px solid var(--trait);border-radius:12px;font-size:11.5px;color:var(--gris);background:var(--blanc)}
-.vz-empty{padding:52px 20px;text-align:center;color:var(--gris);font-size:13.5px}
-.vz-toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--encre);color:#fff;padding:11px 17px;border-radius:7px;font-size:13px;z-index:200;box-shadow:0 6px 22px rgba(12,21,38,.22)}
-.vz-modal-bg{position:fixed;inset:0;background:rgba(12,21,38,.42);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding:34px 16px;overflow-y:auto}
-.vz-modal{background:var(--blanc);border-radius:10px;width:100%;max-width:660px;border:1px solid var(--trait)}
-.vz-modal-head{padding:16px 20px;border-bottom:1px solid var(--trait);display:flex;align-items:center;justify-content:space-between}
-.vz-modal-body{padding:20px}
-.vz-modal-foot{padding:14px 20px;border-top:1px solid var(--trait);display:flex;justify-content:flex-end;gap:9px}
-.vz-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.vz-bars{display:flex;align-items:flex-end;gap:5px;height:132px}
-.vz-bar{flex:1;background:var(--bleu);border-radius:2px 2px 0 0;min-height:2px;position:relative}
-.vz-bar.alt{background:var(--violet)}
-.vz-barlab{display:flex;gap:5px;margin-top:7px}
-.vz-barlab span{flex:1;text-align:center;font-family:var(--mono);font-size:9.5px;color:var(--gris)}
-.vz-alert{padding:12px 14px;border-radius:7px;font-size:13px;border:1px solid;display:flex;gap:9px;align-items:flex-start}
-.vz-alert.info{background:#EAF4F9;border-color:#B7DAE9;color:#0F5675}
-.vz-alert.warn{background:#FDF7F0;border-color:#F2DBBC;color:#8A4B0B}
-.vz-alert.err{background:#FDF4F3;border-color:#EBC7C4;color:#8E2620}
-.vz-alert.ok{background:#F1F8F4;border-color:#BFE0D1;color:#0B5C3C}
+/* ===========================================================================
+   DIVERS
+   ========================================================================= */
+
+.vz-chip{
+  display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--trait);
+  border-radius:999px;font-size:12px;color:var(--encre-700);background:var(--blanc);
+}
+.vz-empty{padding:56px 20px;text-align:center;color:var(--gris);font-size:13.5px}
+.vz-empty-icone{
+  width:48px;height:48px;margin:0 auto 14px;border-radius:14px;
+  background:var(--surface-2);color:var(--gris-400);
+  display:flex;align-items:center;justify-content:center;
+}
+.vz-empty h4{font-size:14.5px;color:var(--encre);margin-bottom:6px}
+
+.vz-toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:var(--encre);color:#fff;padding:12px 18px;border-radius:var(--r-m);
+  font-size:13.5px;z-index:200;box-shadow:var(--ombre-3);
+  display:flex;align-items:center;gap:10px;max-width:calc(100vw - 32px);
+  animation:vztoast .22s cubic-bezier(.2,.7,.4,1) both;
+}
+@keyframes vztoast{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+
+.vz-modal-bg{
+  position:fixed;inset:0;background:rgba(12,23,38,.44);z-index:100;
+  display:flex;align-items:flex-start;justify-content:center;padding:38px 16px;overflow-y:auto;
+  backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+  animation:vzfade .16s ease both;
+}
+@keyframes vzfade{from{opacity:0}to{opacity:1}}
+.vz-modal{
+  background:var(--blanc);border-radius:var(--r-xl);width:100%;max-width:660px;
+  border:1px solid var(--trait);box-shadow:var(--ombre-3);
+  animation:vzmodal .22s cubic-bezier(.2,.7,.4,1) both;
+}
+@keyframes vzmodal{from{opacity:0;transform:translateY(-8px) scale(.99)}to{opacity:1;transform:none}}
+.vz-modal-head{padding:17px 22px;border-bottom:1px solid var(--trait);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.vz-modal-body{padding:22px}
+.vz-modal-foot{padding:15px 22px;border-top:1px solid var(--trait);display:flex;justify-content:flex-end;gap:10px;background:var(--surface);border-radius:0 0 var(--r-xl) var(--r-xl)}
+.vz-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+
+/* --- graphiques --------------------------------------------------------------- */
+.vz-bars{display:flex;align-items:flex-end;gap:6px;height:150px}
+.vz-bar{
+  flex:1;border-radius:4px 4px 2px 2px;min-height:3px;position:relative;
+  background:linear-gradient(180deg,var(--bleu-400),var(--bleu));
+  transition:opacity var(--vite);animation:vzbar .5s cubic-bezier(.2,.7,.4,1) both;
+  transform-origin:bottom;
+}
+.vz-bar:hover{opacity:.82}
+.vz-bar.alt{background:linear-gradient(180deg,var(--violet-300),var(--violet))}
+@keyframes vzbar{from{transform:scaleY(.02);opacity:0}to{transform:scaleY(1);opacity:1}}
+.vz-barlab{display:flex;gap:6px;margin-top:9px}
+.vz-barlab span{flex:1;text-align:center;font-size:10.5px;color:var(--gris);font-variant-numeric:tabular-nums}
+
+.vz-jauge{height:7px;background:var(--surface-2);border-radius:4px;overflow:hidden}
+.vz-jauge>div{height:100%;border-radius:4px;transition:width .5s cubic-bezier(.2,.7,.4,1)}
+
+/* --- alertes -------------------------------------------------------------------- */
+.vz-alert{
+  padding:13px 15px;border-radius:var(--r-m);font-size:13.5px;border:1px solid;
+  display:flex;gap:11px;align-items:flex-start;line-height:1.55;
+}
+.vz-alert svg{flex:0 0 auto;margin-top:1px}
+.vz-alert.info{background:var(--bleu-050);border-color:var(--bleu-100);color:var(--bleu-700)}
+.vz-alert.warn{background:var(--orange-050);border-color:var(--orange-100);color:var(--orange-700)}
+.vz-alert.err{background:var(--rouge-050);border-color:var(--rouge-100);color:var(--rouge-700)}
+.vz-alert.ok{background:var(--vert-050);border-color:var(--vert-100);color:var(--vert-700)}
 
 /* ===========================================================================
    LE CERTIFICAT
 
    Le document et ses règles d'impression vivent dans certificat.css : il a son
-   propre système de mesures — un gabarit en pixels fixes, calé sur une feuille
-   A4 — qui n'a rien à voir avec celui de l'interface. Les mélanger avait une
+   propre système de mesures, un gabarit en pixels fixes calé sur une feuille
+   A4, qui n'a rien à voir avec celui de l'interface. Les mélanger avait une
    conséquence fâcheuse : une retouche de l'interface déplaçait le document
    imprimé.
    ========================================================================= */
 
 /* ===========================================================================
-   ÉCRANS DE LA REFONTE
+   ESPACE DU CERTIFIÉ
    ========================================================================= */
 
-/* --- accueil de l'espace personnel --- */
-.vz-welcome{padding:6px 0 26px}
-.vz-welcome h1{font-size:30px;letter-spacing:-0.035em;margin-top:9px}
-.vz-welcome p{color:var(--gris);font-size:14.5px;margin-top:10px;max-width:520px;line-height:1.65}
+.vz-welcome{padding:4px 0 26px}
+.vz-welcome h1{font-size:32px;letter-spacing:-.038em;margin-top:10px;line-height:1.15}
+.vz-welcome p{color:var(--gris);font-size:15px;margin-top:12px;max-width:540px;line-height:1.65}
 
-/* --- cartes de certification --- */
-.vz-cards{grid-template-columns:repeat(auto-fill,minmax(316px,1fr))}
+.vz-cards{grid-template-columns:repeat(auto-fill,minmax(324px,1fr))}
 .vz-certcard{
-  background:var(--blanc);border:1px solid var(--trait);border-radius:10px;padding:19px 20px 16px;
-  display:flex;flex-direction:column;
-  transition:border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+  background:var(--blanc);border:1px solid var(--trait);border-radius:var(--r-l);
+  padding:20px 21px 17px;display:flex;flex-direction:column;box-shadow:var(--ombre-1);
+  transition:border-color var(--normal),box-shadow var(--normal),transform var(--normal);
 }
-.vz-certcard:hover{border-color:#CFD6E0;box-shadow:0 6px 20px rgba(16,26,43,.07);transform:translateY(-1px)}
-@media (prefers-reduced-motion:reduce){.vz-certcard{transition:none}.vz-certcard:hover{transform:none}}
-.vz-certcard-haut{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:13px}
+.vz-certcard:hover{border-color:var(--trait-fort);box-shadow:var(--ombre-2);transform:translateY(-2px)}
+.vz-certcard-haut{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
 .vz-certcard-domaine{
-  font-family:var(--mono);font-size:9.5px;font-weight:500;letter-spacing:.13em;text-transform:uppercase;
-  color:var(--violet);background:#FBFAFC;border:1px solid #EAE4EF;border-radius:11px;padding:3px 9px;
+  font-size:10.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--violet);background:var(--violet-050);border:1px solid var(--violet-100);
+  border-radius:999px;padding:4px 10px;
 }
-.vz-certcard h3{font-size:16px;line-height:1.32;letter-spacing:-0.015em}
-.vz-certcard-ref{font-family:var(--mono);font-size:12.5px;font-weight:500;letter-spacing:.04em;color:var(--bleu);margin-top:11px}
+.vz-certcard h3{font-size:16.5px;line-height:1.32}
+.vz-certcard-ref{font-family:var(--mono);font-size:12.5px;font-weight:500;color:var(--bleu);margin-top:12px}
 .vz-certcard-date{font-size:12.5px;color:var(--gris);margin-top:5px}
-.vz-certcard-skills{display:flex;gap:5px;flex-wrap:wrap;margin-top:13px}
-.vz-certcard-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:17px;padding-top:15px;border-top:1px solid var(--trait)}
-.vz-certcard-liens{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
-.vz-certcard-liens .vz-linkbtn{padding:2px 0;font-size:11.5px}
+.vz-certcard-skills{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
+.vz-certcard-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid var(--trait)}
+.vz-certcard-liens{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
+.vz-certcard-liens .vz-linkbtn{padding:2px 0;font-size:12px}
 
-/* --- formulaire par étapes --- */
-.vz-etape{padding:0 0 22px;margin-bottom:22px;border-bottom:1px solid var(--trait)}
-.vz-etape:last-of-type{border-bottom:0;margin-bottom:0;padding-bottom:0}
-.vz-etape-tete{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px}
-.vz-etape-num{
-  flex:0 0 23px;width:23px;height:23px;border-radius:50%;background:var(--surface);border:1px solid var(--trait);
+/* --- fiche d'un certifié ------------------------------------------------------ */
+.vz-fiche-tete{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.vz-fiche-infos{
+  display:grid;grid-template-columns:1fr 1fr;gap:14px;
+  padding:16px;background:var(--surface);border-radius:var(--r-m);border:1px solid var(--trait);
+}
+.vz-info{display:flex;gap:11px;align-items:flex-start;font-size:13.5px}
+.vz-info-icone{
+  width:30px;height:30px;flex:0 0 30px;border-radius:8px;
+  background:var(--blanc);border:1px solid var(--trait);color:var(--gris);
   display:flex;align-items:center;justify-content:center;
-  font-family:var(--mono);font-size:11px;font-weight:600;color:var(--bleu);
+}
+@media (max-width:860px){
+  .vz-fiche-infos{grid-template-columns:1fr}
+  .vz-fiche-tete > div:last-child{margin-left:0!important;width:100%}
 }
 
-/* --- choix d'un titulaire --- */
+/* ===========================================================================
+   FORMULAIRES PAR ÉTAPES
+   ========================================================================= */
+
+.vz-etape{padding:0 0 24px;margin-bottom:24px;border-bottom:1px solid var(--trait)}
+.vz-etape:last-of-type{border-bottom:0;margin-bottom:0;padding-bottom:0}
+.vz-etape-tete{display:flex;gap:13px;align-items:flex-start;margin-bottom:16px}
+.vz-etape-num{
+  flex:0 0 26px;width:26px;height:26px;border-radius:50%;
+  background:var(--bleu-050);border:1px solid var(--bleu-100);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:600;color:var(--bleu);
+}
 .vz-choix{
   display:flex;align-items:center;justify-content:space-between;gap:14px;
-  padding:13px 15px;border:1px solid #B7DAE9;background:#F6FBFD;border-radius:8px;
+  padding:14px 16px;border:1px solid var(--bleu-200);background:var(--bleu-050);border-radius:var(--r-m);
 }
-.vz-resultats{border:1px solid var(--trait);border-radius:8px;margin-top:8px;overflow:hidden;background:var(--blanc)}
+.vz-resultats{border:1px solid var(--trait);border-radius:var(--r-m);margin-top:8px;overflow:hidden;background:var(--blanc);box-shadow:var(--ombre-1)}
 .vz-resultat{
   display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;
-  padding:10px 14px;border-bottom:1px solid var(--trait);transition:background .12s;
+  padding:11px 15px;border-bottom:1px solid var(--trait);transition:background var(--vite);
 }
 .vz-resultat:last-child{border-bottom:0}
 .vz-resultat:hover{background:var(--surface)}
 
-/* --- étiquette à bascule --- */
-.vz-chip-bascule{cursor:pointer;transition:background .12s,border-color .12s,color .12s}
-.vz-chip-bascule:hover{border-color:#CFD6E0}
-.vz-chip-bascule.on{background:#EAF4F9;border-color:#B7DAE9;color:var(--bleu);font-weight:500}
+.vz-chip-bascule{cursor:pointer;transition:background var(--vite),border-color var(--vite),color var(--vite)}
+.vz-chip-bascule:hover{border-color:var(--gris-300);background:var(--surface)}
+.vz-chip-bascule.on{background:var(--bleu-050);border-color:var(--bleu-200);color:var(--bleu-700);font-weight:500}
 
-/* --- barre de filtres --- */
-.vz-filtres{gap:8px;flex-wrap:wrap;align-items:center}
-.vz-filtre-date{display:flex;align-items:center;gap:6px}
+/* --- barre de filtres ------------------------------------------------------------ */
+.vz-filtres{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+/* Posée sur un entête de carte, la barre de filtres doit se serrer à gauche :
+   l'entête répartit ses enfants aux deux bords, ce qui envoyait le dernier
+   filtre à l'autre bout de la carte. */
+.vz-card-head.vz-filtres{justify-content:flex-start}
+.vz-filtre-date{display:flex;align-items:center;gap:7px}
 .vz-filtre-date .vz-input{width:auto}
 
-/* --- pagination --- */
-.vz-pagination{
-  display:flex;align-items:center;justify-content:center;gap:14px;
-  padding:14px 16px;border-top:1px solid var(--trait);
-}
-
-/* --- jauge horizontale --- */
-.vz-jauge{height:6px;background:var(--surface);border-radius:3px;overflow:hidden}
-.vz-jauge>div{height:100%;border-radius:3px;transition:width .3s ease}
-@media (prefers-reduced-motion:reduce){.vz-jauge>div{transition:none}}
-
-/* --- grille à deux colonnes, qui se replie --- */
 .vz-deux{grid-template-columns:1fr 1fr}
-
-/* --- navigation de téléphone : masquée là où la barre latérale existe --- */
 .vz-topbar-mark{display:none}
 .vz-tabbar{display:none}
 
 /* ===========================================================================
-   FINITION
+   ENTRÉES EN SCÈNE
 
-   Peu de choses, mais partout : une transition qui ne saute pas, une ombre qui
-   détache sans peser, un anneau de focus visible au clavier. L'interface d'un
-   registre de certification doit inspirer la même confiance qu'un document
-   officiel — ce qui veut dire sobre, pas spectaculaire.
+   Une apparition courte, décalée carte par carte. Au-delà de la quatrième, le
+   décalage s'arrête : une grille de vingt éléments qui se remplit goutte à
+   goutte donne l'impression d'une page lente.
    ========================================================================= */
 
-.vz-card{transition:box-shadow .16s ease}
-.vz-modal{box-shadow:0 18px 60px rgba(16,26,43,.16);animation:vzmodal .2s ease both}
-@keyframes vzmodal{from{opacity:0;transform:translateY(-7px) scale(.995)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){.vz-modal{animation:none}}
-.vz-btn{transition:background .14s ease,border-color .14s ease,color .14s ease,box-shadow .14s ease}
-.vz-btn-primary:active{transform:translateY(.5px)}
-.vz-input,.vz-select,.vz-textarea{transition:border-color .14s ease,box-shadow .14s ease}
+.vz-apparait{animation:vzrise .34s cubic-bezier(.2,.7,.4,1) both}
+.vz-apparait:nth-child(2){animation-delay:.05s}
+.vz-apparait:nth-child(3){animation-delay:.1s}
+.vz-apparait:nth-child(4){animation-delay:.15s}
+
+/* Le réglage du système prime sur toute intention de mise en scène. */
+@media (prefers-reduced-motion:reduce){
+  .vz *,.vz *::before,.vz *::after{
+    animation-duration:.001ms!important;animation-iteration-count:1!important;
+    transition-duration:.001ms!important;scroll-behavior:auto!important;
+  }
+  .vz-certcard:hover,.vz-stat:hover{transform:none}
+}
 
 /* ===========================================================================
-   TÉLÉPHONE
+   TABLETTE ET TÉLÉPHONE
 
-   Le registre est consulté au téléphone — un employeur qui scanne un QR code
+   Le registre est consulté au téléphone : un employeur qui scanne un QR code
    n'est pas devant un ordinateur. Rien ne doit déborder, et rien d'important ne
    doit se trouver derrière un défilement horizontal.
    ========================================================================= */
+
+@media (max-width:1100px){
+  .vz-side{width:220px;flex:0 0 220px}
+}
 
 @media (max-width:980px){
   .vz-deux{grid-template-columns:1fr}
@@ -280,29 +653,34 @@
   .vz-tabbar{
     display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;
     background:var(--blanc);border-bottom:1px solid var(--trait);
-    padding:7px 10px;position:sticky;top:56px;z-index:4;
+    padding:8px 10px;position:sticky;top:60px;z-index:19;
   }
   .vz-tabbar::-webkit-scrollbar{display:none}
   .vz-tabbar button{
-    flex:0 0 auto;padding:7px 13px;border-radius:7px;font-size:13px;font-weight:500;
-    color:var(--gris);white-space:nowrap;
+    flex:0 0 auto;display:flex;align-items:center;gap:7px;
+    padding:8px 13px;border-radius:9px;font-size:13px;font-weight:500;
+    color:var(--gris);white-space:nowrap;transition:background var(--vite),color var(--vite);
   }
-  .vz-tabbar button.on{background:var(--surface);color:var(--encre)}
+  .vz-tabbar button svg{color:currentColor}
+  .vz-tabbar button.on{background:var(--bleu-050);color:var(--bleu-700)}
 
   .vz-form-grid{grid-template-columns:1fr}
-  .vz-page{padding:18px 14px 60px}
-  .vz-hero{padding:52px 16px 30px}
-  .vz-hero h1{font-size:27px}
-  .vz-welcome h1{font-size:24px}
-  .vz-dl-row{flex-direction:column;gap:3px;padding:11px 18px}
+  .vz-page{padding:18px 15px 72px}
+  .vz-topbar{padding:0 15px}
+  .vz-hero{padding:56px 16px 32px}
+  .vz-hero h1{font-size:30px}
+  .vz-welcome h1{font-size:25px}
+  .vz-stats{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+  .vz-stat-val{font-size:26px}
+  .vz-dl-row{flex-direction:column;gap:4px;padding:12px 20px}
   .vz-dl-row dd{text-align:left}
-  .vz-refblock,.vz-verdict,.vz-slip-actions,.vz-slip-foot{padding-left:18px;padding-right:18px}
+  .vz-refblock,.vz-verdict,.vz-slip-actions,.vz-slip-foot,.vz-valeur{padding-left:20px;padding-right:20px}
   .vz-cards{grid-template-columns:1fr}
   /* Trois boutons empilés plutôt que deux sur une ligne et le troisième
      orphelin au milieu : au pouce, une cible pleine largeur se touche sans
      viser. */
   .vz-certcard-actions{flex-direction:column}
-  .vz-certcard-actions .vz-btn{width:100%;height:38px}
+  .vz-certcard-actions .vz-btn{width:100%;height:40px}
   .vz-certcard-liens{justify-content:space-between}
   .vz-filtres{flex-direction:column;align-items:stretch}
   .vz-filtres .vz-input,.vz-filtres .vz-select{max-width:none!important;width:100%}
@@ -311,17 +689,22 @@
   .vz-modal-bg{padding:14px 10px}
   .vz-modal-foot{flex-wrap:wrap}
   .vz-modal-foot .vz-btn{flex:1 1 auto}
+  .vz-table th,.vz-table td{padding-left:14px;padding-right:14px}
 }
 
 @media (max-width:560px){
   /* La barre publique débordait : la marque complète et deux actions ne
-     tiennent pas dans 375 px. Le mot « CERTIFY » et son filet cèdent la place —
-     c'est le logo qui identifie, pas la mention. */
-  .vz-public-bar{padding:0 12px;gap:8px}
+     tiennent pas dans 375 px. Le mot CERTIFY et son filet cèdent la place,
+     c'est le logo qui identifie. */
+  .vz-public-bar{padding:0 13px;gap:8px}
   .vz-public-bar .vz-mark-div,
   .vz-public-bar .vz-mark-text{display:none}
-  .vz-public-bar .vz-linkbtn{font-size:12px;padding:3px 5px}
-  .vz-public-body{padding:22px 12px 48px}
+  .vz-public-bar .vz-linkbtn{font-size:12px;padding:4px 6px}
+  .vz-public-body{padding:22px 12px 52px}
   .vz-searchbox{flex-direction:column}
   .vz-searchbox .vz-btn{width:100%}
+  .vz-hero h1{font-size:27px}
+  .vz-stats{grid-template-columns:1fr 1fr}
+  .vz-stat{padding:14px}
+  .vz-stat-val{font-size:24px}
 }

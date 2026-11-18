@@ -8,7 +8,11 @@
 
 import { effectiveStatus } from "../../lib/certificates.js";
 import { monthlySeries } from "../../lib/series.js";
-import { BarChart, Stat } from "../../ui/primitives.jsx";
+import { Stat, BarChart } from "../../ui/primitives.jsx";
+import {
+  IconeCertificats, IconeAuthentique, IconeRevoquer, IconeInfo, IconeCertifies,
+  IconeVerification, IconePartager, IconeTelecharger,
+} from "../../ui/icones.jsx";
 
 function AdminStats(p) {
   const certs = p.db.certificates;
@@ -54,18 +58,19 @@ function AdminStats(p) {
         <div>
           <div className="vz-eyebrow">Mesure</div>
           <h1 style={{ marginTop: 8 }}>Statistiques</h1>
+          <p>Ce que le registre a produit, et ce qui en a réellement été consulté.</p>
         </div>
       </div>
 
       <div className="vz-grid vz-stats" style={{ marginBottom: 16 }}>
-        <Stat label="Certifications" value={certs.length} sub="Délivrées depuis l'ouverture" />
-        <Stat label="En vigueur" value={par("ACTIVE")} accent="var(--vert)" />
-        <Stat label="Révoquées" value={par("REVOKED")} accent="var(--rouge)" />
-        <Stat label="Annulées" value={par("CANCELLED")} />
-        <Stat label="Certifiés" value={(p.db.users || []).filter((u) => u.role === "CERTIFIED").length} />
-        <Stat label="Vérifications" value={p.db.verifications.length} accent="var(--bleu)" sub="Consultations publiques" />
-        <Stat label="Partages" value={(p.db.shares || []).length} accent="var(--violet)" />
-        <Stat label="Sorties du document" value={telechargements + impressions} sub={`${telechargements} PDF · ${impressions} impressions`} />
+        <Stat label="Certifications" value={certs.length} sub="Délivrées depuis l'ouverture" icone={IconeCertificats} ton="bleu" />
+        <Stat label="En vigueur" value={par("ACTIVE")} icone={IconeAuthentique} ton="vert" />
+        <Stat label="Révoquées" value={par("REVOKED")} icone={IconeRevoquer} ton="rouge" />
+        <Stat label="Annulées" value={par("CANCELLED")} icone={IconeInfo} ton="gris" />
+        <Stat label="Certifiés" value={(p.db.users || []).filter((u) => u.role === "CERTIFIED").length} icone={IconeCertifies} ton="gris" />
+        <Stat label="Vérifications" value={p.db.verifications.length} sub="Consultations publiques" icone={IconeVerification} ton="orange" />
+        <Stat label="Partages" value={(p.db.shares || []).length} icone={IconePartager} ton="violet" />
+        <Stat label="Sorties du document" value={telechargements + impressions} sub={`${telechargements} PDF, ${impressions} impressions`} icone={IconeTelecharger} ton="gris" />
       </div>
 
       <div className="vz-alert info" style={{ marginBottom: 16 }}>
