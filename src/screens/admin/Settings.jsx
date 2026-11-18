@@ -126,8 +126,9 @@ function AdminSettings(p) {
 /* --- sauvegardes -----------------------------------------------------------
    Pourquoi cette carte existe
    ---------------------------
-   Une tâche planifiée sauvegarde chaque nuit, et c'est l'essentiel. Mais elle
-   ne se voit pas : rien, dans l'application, ne disait si elle tournait. Une
+   Le registre se sauvegarde tout seul, une fois par jour, après avoir répondu
+   à une requête — l'hébergement n'offre pas de tâches planifiées. Mais cela ne
+   se voit pas : rien, dans l'application, ne disait si cela se faisait. Une
    sauvegarde qu'on croit faite est pire qu'une sauvegarde qu'on sait absente.
 
    Cette carte montre donc ce qui existe réellement sur le serveur, et permet
@@ -190,8 +191,9 @@ function CarteSauvegardes({ notify }) {
   };
 
   const derniere = liste && liste.length > 0 ? liste[0] : null;
-  /* Une sauvegarde de plus de 48 h signale une tâche planifiée qui ne tourne
-     pas. Le dire ici, c'est la seule chance de s'en apercevoir à temps. */
+  /* Plus de 48 h sans sauvegarde : soit le site n'a reçu aucune visite — c'est
+     une visite qui déclenche l'entretien —, soit l'écriture échoue. Dans les
+     deux cas il faut le savoir, et c'est ici la seule chance de l'apprendre. */
   const vieille = derniere && lu - new Date(derniere.date).getTime() > 48 * 3600 * 1000;
 
   return (
@@ -199,10 +201,10 @@ function CarteSauvegardes({ notify }) {
       <div className="vz-card-head"><h3 style={{ fontSize: 14 }}>Sauvegardes</h3></div>
       <div className="vz-card-body">
         <p className="vz-small vz-muted" style={{ margin: "0 0 14px", lineHeight: 1.7 }}>
-          La copie est prise à chaud, vérifiée, chiffrée, et déposée hors du dossier web. Les trente
-          dernières sont gardées. <strong>Téléchargez-en une de temps en temps</strong> : une
-          sauvegarde qui ne quitte jamais le serveur protège des fausses manœuvres, pas d'une panne
-          de disque.
+          Une par jour, automatiquement. La copie est prise à chaud, vérifiée, chiffrée, et déposée
+          hors du dossier web ; les trente dernières sont gardées.{" "}
+          <strong>Téléchargez-en une de temps en temps</strong> : une sauvegarde qui ne quitte jamais
+          le serveur protège des fausses manœuvres, pas d'une panne de disque.
         </p>
 
         {panne && <div className="vz-alert err" style={{ marginBottom: 12 }}>{panne}</div>}
@@ -218,8 +220,9 @@ function CarteSauvegardes({ notify }) {
           <>
             {vieille && (
               <div className="vz-alert warn" style={{ marginBottom: 12 }}>
-                La dernière sauvegarde date du {quand(derniere.date)}. La tâche planifiée du panneau
-                d'hébergement ne tourne probablement plus.
+                La dernière sauvegarde date du {quand(derniere.date)}. Soit le site n'a reçu aucune
+                visite depuis — c'est une visite qui déclenche l'entretien quotidien —, soit l'écriture
+                échoue. Le bouton ci-dessous tranche la question en une seconde.
               </div>
             )}
             <div className="vz-tablewrap" style={{ marginBottom: 12 }}>

@@ -170,6 +170,77 @@ function traceVisiteur(): array
     ];
 }
 
+/* --- la sauvegarde quotidienne, sans tâche planifiée ------------------------
+ *
+ * Pourquoi ce code existe
+ * -----------------------
+ * Le panneau de cet hébergement n'offre PAS de tâches planifiées à cet
+ * abonnement : ni cron, ni « récupérer une URL ». La route GET /sauvegarde
+ * reste là pour le jour où ce sera possible, mais compter dessus aujourd'hui
+ * reviendrait à n'avoir aucune sauvegarde tout en croyant en avoir une — la
+ * situation exacte qui a coûté le registre précédent.
+ *
+ * Le registre s'en charge donc lui-même : une fois par jour, la première
+ * requête venue déclenche la sauvegarde — APRÈS avoir répondu.
+ * `fastcgi_finish_request()` rend la main au visiteur, puis PHP continue :
+ * personne n'attend, pas même celui qui a eu la malchance de passer en
+ * premier.
+ *
+ * Ce que cela suppose, et qu'il faut savoir : un site sans aucune visite ne se
+ * sauvegarde pas. Pour un registre qu'on consulte, c'est sans conséquence ;
+ * pour un registre oublié pendant un mois, la dernière sauvegarde datera de la
+ * dernière visite. L'écran Paramètres affiche cette date, précisément pour que
+ * personne n'ait à le deviner.
+ *
+ * Trois garde-fous :
+ *   — un témoin daté, pour ne regarder l'heure qu'une fois par jour (un stat,
+ *     le contrôle le moins cher qui soit) ;
+ *   — un verrou, pour que deux requêtes simultanées ne sauvegardent pas deux
+ *     fois ;
+ *   — un silence complet en cas d'échec : une sauvegarde ratée est consignée
+ *     dans le journal du serveur, elle ne casse pas une page.
+ */
+const SAUVEGARDE_INTERVALLE = 20 * 3600;
+
+function entretienAutomatique(): void
+{
+    $dossier = Config::DOSSIER_SAUVEGARDES;
+    $temoin = $dossier . '/.derniere-sauvegarde';
+
+    if (is_file($temoin) && time() - (int) filemtime($temoin) < SAUVEGARDE_INTERVALLE) {
+        return;
+    }
+    if (!is_dir($dossier) && !@mkdir($dossier, 0750, true) && !is_dir($dossier)) {
+        return;
+    }
+
+    $verrou = @fopen($dossier . '/.verrou', 'c');
+    if ($verrou === false || !flock($verrou, LOCK_EX | LOCK_NB)) {
+        return;
+    }
+
+    /* La réponse est déjà partie à ce point : le travail qui suit ne coûte
+       rien au visiteur. */
+    if (function_exists('fastcgi_finish_request')) {
+        @fastcgi_finish_request();
+    }
+
+    try {
+        /* Le témoin est posé AVANT la tentative. Sinon, une sauvegarde qui
+           échoue — disque plein, droits perdus — serait retentée à CHAQUE
+           requête, et transformerait une panne discrète en panne bruyante. */
+        @touch($temoin);
+        Sauvegarde::creer();
+    } catch (Throwable $e) {
+        error_log('[certify] sauvegarde automatique refusée : ' . $e->getMessage());
+    } finally {
+        flock($verrou, LOCK_UN);
+        fclose($verrou);
+    }
+}
+
+register_shutdown_function('entretienAutomatique');
+
 /* ========================================================================
    Routes
    ====================================================================== */
@@ -571,9 +642,13 @@ route('PATCH', '#^/programmes/([^/]+)$#', function (array $p, array $acteur) {
 });
 
 /* --- sauvegardes -------------------------------------------------------------------
-   Sans ligne de commande, la sauvegarde se déclenche par HTTP : un bouton dans
-   l'administration, ou une tâche planifiée du panneau qui appelle cette
-   adresse avec son jeton. */
+   Sans ligne de commande, la sauvegarde se déclenche par HTTP : le bouton de
+   l'administration (POST), ou une tâche planifiée qui récupère l'adresse avec
+   son jeton (GET).
+   Sur l'hébergement de VIZDATA, le panneau n'offre AUCUNE tâche planifiée à
+   cet abonnement : c'est `entretienAutomatique()`, plus haut, qui s'en charge.
+   Ces deux routes restent utiles — le bouton, et le jour où un vrai cron
+   deviendra possible. */
 
 route('POST', '#^/sauvegarde$#', function (array $p, ?array $acteur) {
     $jeton = (string) ($_GET['jeton'] ?? '');

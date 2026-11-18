@@ -155,12 +155,29 @@ vérifiée : `/api/sante` dit seulement que PHP répond et que la base s'ouvre.
 
 ### 7. Les sauvegardes
 
-**Outils & paramètres → Tâches planifiées → Ajouter une tâche**, type « Récupérer une
-URL », tous les jours à 3 h :
+**Il n'y a rien à mettre en place.** Le registre se sauvegarde lui-même, une fois par
+jour, à la première requête venue — et APRÈS y avoir répondu : `fastcgi_finish_request()`
+rend la main au visiteur, puis PHP continue. Personne n'attend.
+
+Pourquoi ainsi plutôt qu'une tâche planifiée : le panneau de cet hébergement n'en offre
+**aucune** à cet abonnement. Ni cron, ni « récupérer une URL ». Compter dessus serait
+n'avoir aucune sauvegarde tout en croyant en avoir une — exactement ce qui a coûté le
+registre précédent.
+
+Ce que cela suppose, et qu'il faut savoir : **un site sans aucune visite ne se sauvegarde
+pas.** L'écran **Administration → Paramètres** affiche la date de la dernière, et signale
+celles qui dépassent 48 h.
+
+Si votre hébergement, lui, propose des tâches planifiées, la route reste là — type
+« Récupérer une URL », tous les jours à 3 h :
 
 ```
 https://certify.vizdata.ci/api/sauvegarde?jeton=VOTRE_JETON_SAUVEGARDE
 ```
+
+C'est un **GET**, et ce n'est pas un détail : la tâche de Plesk ne sait faire que cela.
+Une route en POST seulement aurait répondu 405 chaque nuit, dans un journal que personne
+ne lit.
 
 La copie est prise à chaud par `VACUUM INTO` — jamais par une copie de fichier, qui
 donnerait une base à moitié écrite —, **vérifiée** par `pragma integrity_check`, chiffrée

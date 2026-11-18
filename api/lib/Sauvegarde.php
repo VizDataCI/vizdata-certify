@@ -120,6 +120,13 @@ final class Sauvegarde
 
         self::elaguer($dossier, Config::SAUVEGARDES_GARDEES);
 
+        /* Témoin daté : c'est lui que lit l'entretien automatique pour savoir
+           s'il doit sauvegarder. Le poser ici plutôt que chez l'appelant fait
+           qu'une sauvegarde déclenchée à la main — avant une manipulation
+           délicate — décale aussi l'automatique, au lieu d'en provoquer une
+           seconde dans la foulée. */
+        @touch($dossier . '/.derniere-sauvegarde');
+
         return [
             'fichier'  => $fichier,
             'nom'      => basename($fichier),
