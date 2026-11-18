@@ -28,6 +28,19 @@ declare(strict_types=1);
 ini_set('display_errors', '0');
 error_reporting(E_ALL);
 
+/* Sans config.php, PHP s'arrête sur une erreur fatale et répond une page vide :
+   aucune indication, sur le seul oubli que tout déploiement risque de faire.
+   Mieux vaut le dire, en JSON, comme le reste des réponses du registre. */
+if (!is_file(__DIR__ . '/config.php')) {
+    http_response_code(500);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode([
+        'error' => "api/config.php est absent. Copiez api/config.exemple.php en api/config.php "
+            . "et renseignez-le — voir docs/deploiement.md.",
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 require __DIR__ . '/config.php';
 require __DIR__ . '/lib/Base.php';
 require __DIR__ . '/lib/Autorisations.php';
@@ -75,8 +88,15 @@ function corpsJson(): array
         throw new Refus(413, 'Requête trop volumineuse.');
     }
     $objet = json_decode($brut, true);
-    if (!is_array($objet) || array_is_list($objet)) {
+    if (!is_array($objet)) {
         throw new Refus(400, 'Corps de requête illisible.');
+    }
+    /* `json_decode('{}', true)` rend un tableau VIDE, que `array_is_list()` tient
+       pour une liste : refuser les listes sans cette exception rejetterait un
+       corps `{}` parfaitement légitime — le cas d'une route qui n'attend aucun
+       champ. On ne refuse donc que les listes non vides. */
+    if ($objet !== [] && array_is_list($objet)) {
+        throw new Refus(400, 'Un objet JSON est attendu, pas une liste.');
     }
     return $objet;
 }
@@ -561,6 +581,32 @@ route('POST', '#^/sauvegarde$#', function (array $p, ?array $acteur) {
     if (!$parTache) {
         Autorisations::exigerAdmin($acteur);
     }
+    try {
+        return Sauvegarde::creer();
+    } catch (Refus $e) {
+        throw $e;
+    } catch (Throwable $e) {
+        throw new Refus(500, $e->getMessage());
+    }
+}, true);
+
+/* La même sauvegarde, en GET.
+   Ce n'est pas une facilité : la tâche planifiée de Plesk est de type
+   « Récupérer une URL » et fait une requête GET. Sans cette route, la
+   sauvegarde nocturne répondrait 405 chaque nuit — et personne ne regarde le
+   journal d'une tâche qui « tourne ».
+   Le jeton est ici le SEUL moyen d'entrer : une session d'administrateur ne
+   suffit pas, parce qu'un GET se déclenche depuis n'importe quelle page
+   extérieure — une balise <img> suffirait — et lancerait des sauvegardes à
+   l'insu de l'administrateur connecté. */
+route('GET', '#^/sauvegarde$#', function () {
+    $jeton = (string) ($_GET['jeton'] ?? '');
+    if (Config::JETON_SAUVEGARDE === '' || !hash_equals(Config::JETON_SAUVEGARDE, $jeton)) {
+        /* Un seul message pour les deux cas : distinguer « pas de jeton
+           configuré » de « mauvais jeton » renseignerait sur la configuration. */
+        throw new Refus(403, 'Jeton de sauvegarde absent ou incorrect.');
+    }
+    limiter('sauvegarde:' . empreinteClient(), 12, 3600);
     try {
         return Sauvegarde::creer();
     } catch (Refus $e) {

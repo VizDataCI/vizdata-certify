@@ -8,8 +8,9 @@
  * chose ne fonctionne pas.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { resetDb } from "../../data/store.js";
+import { lire, poster } from "../../lib/registre.js";
 import { Field } from "../../ui/primitives.jsx";
 
 function AdminSettings(p) {
@@ -94,6 +95,9 @@ function AdminSettings(p) {
         </div>
       </div>
 
+      {/* --- sauvegardes ---------------------------------------------------- */}
+      {p.remote && <CarteSauvegardes notify={p.notify} />}
+
       {/* --- démonstration -------------------------------------------------- */}
       {!p.remote && (
         <div className="vz-card">
@@ -116,6 +120,143 @@ function AdminSettings(p) {
         </div>
       )}
     </>
+  );
+}
+
+/* --- sauvegardes -----------------------------------------------------------
+   Pourquoi cette carte existe
+   ---------------------------
+   Une tâche planifiée sauvegarde chaque nuit, et c'est l'essentiel. Mais elle
+   ne se voit pas : rien, dans l'application, ne disait si elle tournait. Une
+   sauvegarde qu'on croit faite est pire qu'une sauvegarde qu'on sait absente.
+
+   Cette carte montre donc ce qui existe réellement sur le serveur, et permet
+   d'en déclencher une avant une manipulation délicate — un import en masse,
+   une révocation, une mise à jour.
+
+   Ce qu'elle ne fait PAS : restaurer. La restauration remplace le registre
+   officiel de VIZDATA et ne se rattrape pas ; elle passe par
+   `POST /api/sauvegardes/restaurer`, qui montre d'abord ce que contient la
+   sauvegarde et n'applique rien sans confirmation explicite. Ce n'est pas un
+   geste à mettre à portée d'un clic distrait. */
+
+const poids = (o) =>
+  o < 1024 * 1024 ? `${Math.round(o / 1024)} ko` : `${(o / 1024 / 1024).toFixed(1)} Mo`;
+
+const quand = (iso) => {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime())
+    ? iso
+    : d.toLocaleString("fr-FR", { dateStyle: "medium", timeStyle: "short" });
+};
+
+function CarteSauvegardes({ notify }) {
+  const [liste, setListe] = useState(null);
+  const [panne, setPanne] = useState("");
+  const [encours, setEncours] = useState(false);
+  /* Relu à chaque incrément — après une sauvegarde manuelle. */
+  const [tour, setTour] = useState(0);
+  /* L'instant de la lecture est retenu plutôt que relu au rendu : l'heure
+     n'est pas une donnée du rendu, et la relire à chaque passage ferait
+     changer l'affichage sans qu'aucune donnée n'ait bougé. */
+  const [lu, setLu] = useState(0);
+
+  useEffect(() => {
+    let vivant = true;
+    lire("/sauvegardes")
+      .then((l) => { if (vivant) { setListe(l); setLu(Date.now()); setPanne(""); } })
+      .catch((e) => { if (vivant) { setListe([]); setPanne(e.message); } });
+    return () => { vivant = false; };
+  }, [tour]);
+
+  const sauvegarder = async () => {
+    setEncours(true);
+    setPanne("");
+    try {
+      const faite = await poster("/sauvegarde");
+      if (notify) {
+        notify(
+          `Sauvegarde ${faite.nom} — ${poids(faite.taille)}, ` +
+            `${faite.contenu.certificats} certificat${faite.contenu.certificats > 1 ? "s" : ""}, ` +
+            `${faite.contenu.comptes} compte${faite.contenu.comptes > 1 ? "s" : ""}.`
+        );
+      }
+      setTour((t) => t + 1);
+    } catch (e) {
+      setPanne(e.message);
+    } finally {
+      setEncours(false);
+    }
+  };
+
+  const derniere = liste && liste.length > 0 ? liste[0] : null;
+  /* Une sauvegarde de plus de 48 h signale une tâche planifiée qui ne tourne
+     pas. Le dire ici, c'est la seule chance de s'en apercevoir à temps. */
+  const vieille = derniere && lu - new Date(derniere.date).getTime() > 48 * 3600 * 1000;
+
+  return (
+    <div className="vz-card" style={{ marginBottom: 16 }}>
+      <div className="vz-card-head"><h3 style={{ fontSize: 14 }}>Sauvegardes</h3></div>
+      <div className="vz-card-body">
+        <p className="vz-small vz-muted" style={{ margin: "0 0 14px", lineHeight: 1.7 }}>
+          La copie est prise à chaud, vérifiée, chiffrée, et déposée hors du dossier web. Les trente
+          dernières sont gardées. <strong>Téléchargez-en une de temps en temps</strong> : une
+          sauvegarde qui ne quitte jamais le serveur protège des fausses manœuvres, pas d'une panne
+          de disque.
+        </p>
+
+        {panne && <div className="vz-alert err" style={{ marginBottom: 12 }}>{panne}</div>}
+
+        {liste === null ? (
+          <p className="vz-small vz-muted" style={{ margin: 0 }}>Lecture des sauvegardes…</p>
+        ) : liste.length === 0 ? (
+          <div className="vz-alert warn" style={{ marginBottom: 12 }}>
+            Aucune sauvegarde sur le serveur. C'est exactement la situation qui a coûté le registre
+            précédent.
+          </div>
+        ) : (
+          <>
+            {vieille && (
+              <div className="vz-alert warn" style={{ marginBottom: 12 }}>
+                La dernière sauvegarde date du {quand(derniere.date)}. La tâche planifiée du panneau
+                d'hébergement ne tourne probablement plus.
+              </div>
+            )}
+            <div className="vz-tablewrap" style={{ marginBottom: 12 }}>
+              <table className="vz-table">
+                <thead>
+                  <tr><th>Fichier</th><th>Date</th><th>Taille</th><th>État</th></tr>
+                </thead>
+                <tbody>
+                  {liste.slice(0, 8).map((s) => (
+                    <tr key={s.nom}>
+                      <td className="vz-mono" style={{ fontSize: 12 }}>{s.nom}</td>
+                      <td style={{ whiteSpace: "nowrap" }}>{quand(s.date)}</td>
+                      <td style={{ whiteSpace: "nowrap" }}>{poids(s.taille)}</td>
+                      <td>
+                        <span className={"vz-badge " + (s.chiffree ? "vert" : "orange")}>
+                          {s.chiffree ? "Chiffrée" : "En clair"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {liste.length > 8 && (
+              <p className="vz-small vz-muted" style={{ margin: "0 0 12px" }}>
+                {liste.length - 8} sauvegarde{liste.length - 8 > 1 ? "s" : ""} plus ancienne
+                {liste.length - 8 > 1 ? "s" : ""} non affichée{liste.length - 8 > 1 ? "s" : ""}.
+              </p>
+            )}
+          </>
+        )}
+
+        <button className="vz-btn" onClick={sauvegarder} disabled={encours}>
+          {encours ? "Sauvegarde en cours…" : "Sauvegarder maintenant"}
+        </button>
+      </div>
+    </div>
   );
 }
 

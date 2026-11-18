@@ -11,9 +11,9 @@ publique** des certificats délivrés par VIZDATA.
 > appartenir à VIZDATA.**
 >
 > Le registre existe en **deux implémentations**, qui servent le même schéma et les mêmes
-> routes : **PHP** (`api/`) pour un hébergement mutualisé sans ligne de commande — c'est
-> celle de `certify.vizdata.ci` —, et **Node** (`server/`) pour un serveur dont on a la
-> main. L'interface ne sait pas laquelle elle a en face.
+> routes — à la sauvegarde près : **PHP** (`api/`) pour un hébergement mutualisé sans ligne
+> de commande, c'est celle de `certify.vizdata.ci` ; **Node** (`server/`) pour un serveur
+> dont on a la main. L'interface ne sait pas laquelle elle a en face.
 >
 > Marche à suivre : [docs/deploiement.md](docs/deploiement.md).
 

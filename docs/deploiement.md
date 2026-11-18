@@ -11,7 +11,11 @@ d'architecture : c'est ce que l'hébergement sait exécuter.
 | **Celle de VIZDATA** | **oui** | — |
 
 Les deux servent le **même schéma** — `server/schema/001_socle.sql`, du SQLite standard —
-et exposent les **mêmes routes**. L'interface ne sait pas laquelle elle a en face.
+et exposent les **mêmes routes** — à deux près : la voie PHP ajoute
+`POST /api/sauvegarde` et `GET /api/sauvegardes`, pour sauvegarder sans ligne de
+commande. Sur la voie Node, c'est `npm run sauvegarde` et une tâche cron, ce qui vaut
+mieux. L'interface ne sait pas laquelle elle a en face ; la carte « Sauvegardes » de
+l'administration n'apparaît que là où ces deux routes existent.
 
 ## Pourquoi VIZDATA est sur la voie PHP
 
