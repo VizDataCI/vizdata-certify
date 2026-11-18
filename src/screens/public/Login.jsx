@@ -35,14 +35,14 @@ function Login(p) {
   return (
     <PublicShell {...p}>
       <div className="vz-public-body">
-        <div className="vz-slip" style={{ maxWidth: 420 }}>
-          <div className="vz-card-body" style={{ padding: 26 }}>
-            <div className="vz-connexion-sceau"><IconeVerrou size={21} /></div>
-            <h2 style={{ fontSize: 21, margin: "16px 0 6px" }}>Accéder à mon espace</h2>
-            <p className="vz-small vz-muted" style={{ marginBottom: 20, lineHeight: 1.6 }}>
+        <div className="vz-slip" style={{ maxWidth: 440 }}>
+          <div className="vz-card-body" style={{ padding: "44px 40px 34px", textAlign: "center" }}>
+            <div className="vz-connexion-sceau"><IconeVerrou size={23} /></div>
+            <h2 style={{ fontSize: 25, margin: "18px 0 6px" }}>Accéder à mon espace</h2>
+            <p className="vz-small vz-muted" style={{ marginBottom: 24, lineHeight: 1.6 }}>
               Réservé aux certifiés VIZDATA et à l'équipe du registre.
             </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 15, textAlign: "left" }}>
               <Field label="Adresse e-mail">
                 <input className="vz-input" type="email" value={email} onChange={(e) => { setEmail(e.target.value); setErr(""); }} onKeyDown={(e) => e.key === "Enter" && submit()} placeholder="vous@exemple.ci" autoComplete="username" />
               </Field>
@@ -50,7 +50,7 @@ function Login(p) {
                 <input className="vz-input" type="password" value={pwd} onChange={(e) => { setPwd(e.target.value); setErr(""); }} onKeyDown={(e) => e.key === "Enter" && submit()} autoComplete="current-password" />
               </Field>
               {err && <div className="vz-alert err"><IconeErreur size={17} /><span>{err}</span></div>}
-              <button className="vz-btn vz-btn-primary vz-btn-lg" onClick={submit} disabled={busy}>
+              <button className="vz-btn vz-btn-primary vz-btn-lg" style={{ width: "100%", marginTop: 4 }} onClick={submit} disabled={busy}>
                 {busy ? "Connexion…" : <><IconeCourriel size={17} /> Se connecter</>}
               </button>
               {/* L'oubli du mot de passe a son propre écran : il doit pouvoir

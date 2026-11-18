@@ -29,15 +29,30 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Poppins:wght@400;500;600;700&display=swap');
 
 .vz {
-  /* --- bleu : la couleur de l'interface ---------------------------------- */
-  --bleu-050:#EDF6FA;
-  --bleu-100:#D6EAF3;
-  --bleu-200:#A9D2E5;
+  /* --- bleu : la couleur de l'interface ------------------------------------
+     Les valeurs viennent du CRM VIZDATA, relevées sur ses écrans plutôt que
+     rapprochées à l'œil. Les deux produits doivent se ressembler assez pour
+     qu'on les reconnaisse de la même maison. */
+  --bleu-050:#EDF5FA;
+  --bleu-100:#D5E8F2;
+  --bleu-200:#A6D0E3;
   --bleu-400:#2E8FBB;
-  --bleu:#12688F;
-  --bleu-600:#0F5A7C;
-  --bleu-700:#0C4A67;
-  --bleu-900:#07293A;
+  --bleu:#1E7FA6;
+  --bleu-600:#19698B;
+  --bleu-700:#125470;
+  --bleu-900:#0B2A3A;
+  --bleu-degrade:linear-gradient(100deg,#1E7FA6,#19698B);
+
+  /* --- la navigation, en sombre --------------------------------------------
+     Une barre latérale claire sur un fond clair ne se distingue que par un
+     filet d'un pixel : à l'écran, les deux zones se confondent. En sombre, la
+     séparation se voit avant d'être lue, et le regard sait immédiatement où il
+     est. La teinte descend du bleu de la marque, pas d'un gris neutre. */
+  --nuit:#102E3F;
+  --nuit-2:#0B2231;
+  --nuit-trait:rgba(255,255,255,.09);
+  --nuit-texte:rgba(255,255,255,.72);
+  --nuit-titre:rgba(255,255,255,.38);
 
   /* --- orange : ce qui appelle une décision ------------------------------ */
   --orange-050:#FEF5EC;
@@ -51,23 +66,23 @@
   --violet-050:#F6F2F9;
   --violet-100:#EAE1F1;
   --violet-300:#B493CC;
-  --violet:#4B2962;
-  --violet-600:#3C2050;
+  --violet:#4A2A63;
+  --violet-600:#3B2050;
 
   /* --- verdicts ----------------------------------------------------------- */
   --vert-050:#EFF8F3; --vert-100:#CDE9DA; --vert:#0E7A50; --vert-700:#0A5C3C;
   --rouge-050:#FDF3F2; --rouge-100:#F6D5D2; --rouge:#C0342A; --rouge-700:#942119;
 
   /* --- neutres ------------------------------------------------------------ */
-  --encre:#0C1726;
-  --encre-700:#344256;
-  --gris:#667085;
-  --gris-400:#98A2B3;
-  --gris-300:#CDD4E0;
-  --trait:#E5E9F0;
-  --trait-fort:#D3DAE5;
-  --surface:#F6F8FA;
-  --surface-2:#EFF2F6;
+  --encre:#15222F;
+  --encre-700:#3A4859;
+  --gris:#6B7A8C;
+  --gris-400:#98A5B5;
+  --gris-300:#C8D2DE;
+  --trait:#DDE5EE;
+  --trait-fort:#CBD6E2;
+  --surface:#F4F7FB;
+  --surface-2:#EBF1F8;
   --blanc:#FFFFFF;
 
   /* --- typographie -------------------------------------------------------- */
@@ -79,12 +94,14 @@
   --e1:4px; --e2:8px; --e3:12px; --e4:16px; --e5:20px; --e6:24px; --e8:32px; --e10:40px;
 
   /* --- arrondis ----------------------------------------------------------- */
-  --r-s:8px; --r-m:10px; --r-l:14px; --r-xl:18px;
+  /* Le CRM arrondit franchement : 11 px pour un champ, 20 px pour une carte.
+     C'est ce qui lui donne son air posé, et c'est reproduit ici. */
+  --r-s:10px; --r-m:12px; --r-l:16px; --r-xl:20px; --r-pilule:999px;
 
   /* --- ombres : trois niveaux, pas plus ----------------------------------- */
-  --ombre-1:0 1px 2px rgba(12,23,38,.05);
-  --ombre-2:0 4px 16px -4px rgba(12,23,38,.09), 0 1px 3px rgba(12,23,38,.05);
-  --ombre-3:0 20px 48px -12px rgba(12,23,38,.20), 0 4px 12px rgba(12,23,38,.07);
+  --ombre-1:0 1px 2px rgba(11,28,44,.04);
+  --ombre-2:0 1px 2px rgba(11,28,44,.04), 0 10px 28px -12px rgba(11,28,44,.14);
+  --ombre-3:0 1px 2px rgba(11,28,44,.04), 0 18px 48px -14px rgba(11,28,44,.16);
 
   /* --- mouvement ---------------------------------------------------------- */
   --vite:120ms cubic-bezier(.2,.7,.4,1);
@@ -136,11 +153,13 @@
 .vz-mark-text{font-weight:600;font-size:10px;letter-spacing:.17em;text-transform:uppercase;color:var(--gris)}
 
 /* --- boutons -------------------------------------------------------------- */
+/* Boutons en pilule, comme ceux du CRM. La forme est reconnaissable d'un
+   produit à l'autre, et c'est elle qu'on retient avant la couleur. */
 .vz-btn{
-  display:inline-flex;align-items:center;justify-content:center;gap:7px;
-  height:38px;padding:0 15px;border-radius:var(--r-s);
-  font-weight:500;font-size:13.5px;letter-spacing:-.005em;white-space:nowrap;
-  border:1px solid var(--trait-fort);background:var(--blanc);color:var(--encre-700);
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  height:40px;padding:0 17px;border-radius:var(--r-pilule);
+  font-weight:600;font-size:13.5px;letter-spacing:-.005em;white-space:nowrap;
+  border:1px solid var(--trait);background:var(--blanc);color:var(--encre-700);
   box-shadow:var(--ombre-1);
   transition:background var(--vite),border-color var(--vite),color var(--vite),box-shadow var(--vite),transform var(--vite);
 }
@@ -148,12 +167,12 @@
 .vz-btn:active{transform:translateY(1px)}
 .vz-btn svg{flex:0 0 auto}
 
-.vz-btn-primary{background:var(--bleu);border-color:var(--bleu);color:#fff;box-shadow:0 1px 2px rgba(12,23,38,.12)}
-.vz-btn-primary:hover{background:var(--bleu-600);border-color:var(--bleu-600);color:#fff}
+.vz-btn-primary{background:var(--bleu-degrade);border-color:transparent;color:#fff;box-shadow:0 6px 16px -8px rgba(30,127,166,.75)}
+.vz-btn-primary:hover{background:linear-gradient(100deg,#1B7498,#145B7A);border-color:transparent;color:#fff}
 
 /* L'orange ne porte qu'une action par écran : celle qu'on vient faire. */
-.vz-btn-accent{background:var(--marque);border-color:var(--marque);color:#fff}
-.vz-btn-accent:hover{background:#DE6F13;border-color:#DE6F13;color:#fff}
+.vz-btn-accent{background:linear-gradient(100deg,#F58020,#E06C0E);border-color:transparent;color:#fff;box-shadow:0 6px 16px -8px rgba(245,128,32,.8)}
+.vz-btn-accent:hover{background:linear-gradient(100deg,#E67415,#CC610B);border-color:transparent;color:#fff}
 
 .vz-btn-ghost{background:transparent;border-color:transparent;box-shadow:none;color:var(--gris)}
 .vz-btn-ghost:hover{background:var(--surface-2);color:var(--encre)}
@@ -161,27 +180,30 @@
 .vz-btn-danger{color:var(--rouge);border-color:var(--rouge-100);background:var(--blanc)}
 .vz-btn-danger:hover{background:var(--rouge-050);border-color:#EDBDB8;color:var(--rouge-700)}
 
-.vz-btn-lg{height:46px;padding:0 22px;font-size:15px;border-radius:var(--r-m)}
-.vz-btn-sm{height:32px;padding:0 11px;font-size:12.5px;border-radius:7px}
+.vz-btn-lg{height:49px;padding:0 26px;font-size:14.5px}
+.vz-btn-sm{height:34px;padding:0 13px;font-size:12.5px}
 .vz-btn[disabled]{opacity:.5;pointer-events:none;box-shadow:none}
 
 /* --- champs --------------------------------------------------------------- */
 .vz-field{display:flex;flex-direction:column;gap:6px}
-.vz-label{font-size:12.5px;font-weight:500;color:var(--encre-700)}
+.vz-label{font-size:13px;font-weight:600;color:var(--encre)}
+/* Champs REMPLIS plutôt que cernés : le fond pâle dit où écrire sans qu'un
+   trait ait à le dire, et c'est la grammaire des formulaires du CRM. */
 .vz-input,.vz-select,.vz-textarea{
-  height:38px;padding:0 12px;border:1px solid var(--trait-fort);border-radius:var(--r-s);
-  background:var(--blanc);width:100%;color:var(--encre);
+  height:44px;padding:0 14px;border:1px solid var(--trait);border-radius:11px;
+  background:var(--surface);width:100%;color:var(--encre);font-size:14.5px;
   transition:border-color var(--vite),box-shadow var(--vite),background var(--vite);
 }
 .vz-input::placeholder,.vz-textarea::placeholder{color:var(--gris-400)}
-.vz-textarea{height:auto;padding:10px 12px;min-height:110px;line-height:1.6;font-size:13px}
+.vz-textarea{height:auto;padding:12px 14px;min-height:112px;line-height:1.6;font-size:14px}
 .vz-select{appearance:none;padding-right:34px;cursor:pointer;
   background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23667085' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:right 11px center;
 }
-.vz-input:hover,.vz-select:hover,.vz-textarea:hover{border-color:var(--gris-300)}
+.vz-input:hover,.vz-select:hover,.vz-textarea:hover{border-color:var(--trait-fort)}
 .vz-input:focus,.vz-select:focus,.vz-textarea:focus{
-  outline:none;border-color:var(--bleu-400);box-shadow:0 0 0 3.5px var(--bleu-050);
+  outline:none;border-color:var(--bleu);background:var(--bleu-050);
+  box-shadow:0 0 0 4px rgba(30,127,166,.12);
 }
 /* Champ de recherche : l'icône est posée en fond, ce qui évite un conteneur
    supplémentaire autour de chaque champ. */
@@ -211,50 +233,69 @@
 
 /* --- barre latérale -------------------------------------------------------- */
 .vz-side{
-  width:248px;flex:0 0 248px;background:var(--blanc);border-right:1px solid var(--trait);
-  padding:18px 14px 14px;display:flex;flex-direction:column;
-  position:sticky;top:0;height:100vh;
+  width:252px;flex:0 0 252px;
+  background:linear-gradient(180deg,var(--nuit),var(--nuit-2));
+  border-right:1px solid rgba(0,0,0,.2);
+  padding:20px 14px 14px;display:flex;flex-direction:column;
+  position:sticky;top:0;height:100vh;color:var(--nuit-texte);
 }
+/* Le mot de la marque est violet sur fond clair ; sur fond sombre il
+   disparaîtrait. Le logo, lui, garde ses couleurs : elles tiennent. */
+.vz-side .vz-mark-word{color:#fff}
+.vz-side .vz-mark-div{background:rgba(255,255,255,.18)}
+.vz-side .vz-mark-text{color:rgba(255,255,255,.5)}
 .vz-side-mark{padding:2px 8px 18px}
 .vz-nav{display:flex;flex-direction:column;gap:2px;overflow-y:auto;flex:1;margin:0 -4px;padding:0 4px}
+/* La barre de défilement par défaut est claire : sur fond sombre elle dessine
+   un trait blanc le long de la navigation. Discrète et de la couleur du fond. */
+.vz-nav{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.16) transparent}
+.vz-nav::-webkit-scrollbar{width:6px}
+.vz-nav::-webkit-scrollbar-track{background:transparent}
+.vz-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:3px}
+.vz-nav::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.28)}
 .vz-nav-group{
   font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
-  color:var(--gris-400);padding:16px 10px 7px;
+  color:var(--nuit-titre);padding:18px 10px 7px;
 }
 .vz-nav-group:first-child{padding-top:2px}
 .vz-nav button{
   display:flex;align-items:center;gap:11px;width:100%;text-align:left;
-  padding:9px 10px;border-radius:var(--r-s);font-size:13.5px;font-weight:500;
-  color:var(--encre-700);position:relative;
+  padding:10px 11px;border-radius:var(--r-m);font-size:13.5px;font-weight:500;
+  color:var(--nuit-texte);position:relative;
   transition:background var(--vite),color var(--vite);
 }
-.vz-nav button svg{color:var(--gris);flex:0 0 auto;transition:color var(--vite)}
-.vz-nav button:hover{background:var(--surface)}
-.vz-nav button:hover svg{color:var(--encre-700)}
-.vz-nav button.on{background:var(--bleu-050);color:var(--bleu-700);font-weight:600}
-.vz-nav button.on svg{color:var(--bleu)}
+.vz-nav button svg{color:rgba(255,255,255,.45);flex:0 0 auto;transition:color var(--vite)}
+.vz-nav button:hover{background:rgba(255,255,255,.07);color:#fff}
+.vz-nav button:hover svg{color:rgba(255,255,255,.8)}
+/* L'écran courant est porté par le bleu de la marque, pas par un simple
+   éclaircissement : sur douze entrées, il faut qu'il saute aux yeux. */
+.vz-nav button.on{background:var(--bleu-degrade);color:#fff;font-weight:600;box-shadow:0 6px 16px -8px rgba(30,127,166,.9)}
+.vz-nav button.on svg{color:#fff}
 /* Le repère de la page active : un trait court à gauche, qui se lit même en
    vision périphérique, là où une simple nuance de fond passe inaperçue. */
-.vz-nav button.on::before{
-  content:"";position:absolute;left:-4px;top:50%;transform:translateY(-50%);
-  width:3px;height:18px;border-radius:0 3px 3px 0;background:var(--bleu);
-}
+/* Pas de repère latéral : le fond bleu plein dit déjà où l'on est. Un trait
+   en plus serait du bruit. */
 .vz-nav-compte{
-  margin-top:10px;padding:12px 10px 2px;border-top:1px solid var(--trait);
-  display:flex;align-items:center;gap:10px;
+  margin-top:10px;padding:14px 10px 4px;border-top:1px solid var(--nuit-trait);
+  display:flex;align-items:center;gap:10px;color:#fff;
 }
+.vz-nav-compte .vz-linkbtn{color:rgba(255,255,255,.55)}
+.vz-nav-compte .vz-linkbtn:hover{background:rgba(255,255,255,.08);color:#fff}
 .vz-avatar{
-  width:34px;height:34px;flex:0 0 34px;border-radius:50%;
+  width:36px;height:36px;flex:0 0 36px;border-radius:50%;
   background:var(--bleu-050);color:var(--bleu);border:1px solid var(--bleu-100);
   display:flex;align-items:center;justify-content:center;
-  font-size:12px;font-weight:600;letter-spacing:.02em;
+  font-size:12.5px;font-weight:600;letter-spacing:.02em;
 }
+/* Dans la barre sombre, la pastille devient translucide : un disque pâle y
+   ferait une tache. */
+.vz-side .vz-avatar{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.2)}
 .vz-avatar.violet{background:var(--violet-050);color:var(--violet);border-color:var(--violet-100)}
 
 /* --- zone principale -------------------------------------------------------- */
 .vz-main{flex:1;min-width:0;display:flex;flex-direction:column}
 .vz-topbar{
-  height:60px;border-bottom:1px solid var(--trait);background:rgba(255,255,255,.86);
+  height:62px;border-bottom:1px solid var(--trait);background:rgba(255,255,255,.88);
   backdrop-filter:saturate(180%) blur(12px);-webkit-backdrop-filter:saturate(180%) blur(12px);
   display:flex;align-items:center;justify-content:space-between;padding:0 24px;gap:14px;
   position:sticky;top:0;z-index:20;
@@ -269,7 +310,7 @@
    ========================================================================= */
 
 .vz-card{
-  background:var(--blanc);border:1px solid var(--trait);border-radius:var(--r-l);
+  background:var(--blanc);border:1px solid var(--trait);border-radius:var(--r-xl);
   box-shadow:var(--ombre-1);
   transition:box-shadow var(--normal),border-color var(--normal);
 }
@@ -284,15 +325,15 @@
 
 /* --- indicateur ------------------------------------------------------------- */
 .vz-stat{
-  background:var(--blanc);border:1px solid var(--trait);border-radius:var(--r-l);
-  padding:16px 17px;box-shadow:var(--ombre-1);
+  background:var(--blanc);border:1px solid var(--trait);border-radius:var(--r-xl);
+  padding:18px 19px;box-shadow:var(--ombre-1);
   transition:box-shadow var(--normal),transform var(--normal),border-color var(--normal);
 }
 .vz-stat:hover{box-shadow:var(--ombre-2);border-color:var(--trait-fort);transform:translateY(-1px)}
 .vz-stat-tete{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
 .vz-stat-label{font-size:12.5px;font-weight:500;color:var(--gris)}
 .vz-stat-icone{
-  width:32px;height:32px;flex:0 0 32px;border-radius:9px;
+  width:34px;height:34px;flex:0 0 34px;border-radius:11px;
   display:flex;align-items:center;justify-content:center;
   background:var(--bleu-050);color:var(--bleu);
 }
@@ -371,7 +412,16 @@
    qu'ailleurs dans l'application.
    ========================================================================= */
 
-.vz-public{min-height:100vh;background:var(--surface);display:flex;flex-direction:column}
+/* Deux halos de marque, très pâles, repris du CRM : un bleu en haut à gauche,
+   un violet en bas à droite. Ils donnent au fond une profondeur que le gris
+   plat n'a pas, sans jamais gêner la lecture de ce qui est posé dessus. */
+.vz-public{
+  min-height:100vh;display:flex;flex-direction:column;
+  background:
+    radial-gradient(1100px 620px at 14% -8%, rgba(30,127,166,.13), transparent 62%),
+    radial-gradient(900px 560px at 88% 108%, rgba(74,42,99,.12), transparent 60%),
+    var(--surface);
+}
 .vz-public-bar{
   height:62px;background:rgba(255,255,255,.88);border-bottom:1px solid var(--trait);
   backdrop-filter:saturate(180%) blur(12px);-webkit-backdrop-filter:saturate(180%) blur(12px);
@@ -384,7 +434,7 @@
 .vz-public-body{flex:1;display:flex;justify-content:center;align-items:flex-start;padding:38px 18px 72px}
 .vz-slip{
   width:100%;max-width:600px;background:var(--blanc);border:1px solid var(--trait);
-  border-radius:var(--r-xl);overflow:hidden;box-shadow:var(--ombre-2);
+  border-radius:var(--r-xl);overflow:hidden;box-shadow:var(--ombre-3);
   animation:vzrise .4s cubic-bezier(.2,.7,.4,1) both;
 }
 @keyframes vzrise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -717,7 +767,7 @@
    Un rappel de ce qu'on ouvre. L'écran de connexion d'un registre officiel ne
    doit ressembler à aucun formulaire d'inscription. */
 .vz-connexion-sceau{
-  width:46px;height:46px;border-radius:14px;
+  width:52px;height:52px;border-radius:16px;margin:0 auto;
   background:linear-gradient(140deg,var(--bleu-050),var(--violet-050));
   border:1px solid var(--bleu-100);color:var(--bleu);
   display:flex;align-items:center;justify-content:center;
