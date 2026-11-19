@@ -81,14 +81,6 @@ function CertificatDocument({ cert, verifyUrl }) {
               ))}
             </div>
           )}
-
-          {/* La formule consacrée. Elle ne décore pas : c'est elle qui fait du
-              document une attestation opposable, et son absence se remarque
-              sur un certificat présenté à une administration. */}
-          <p className="vzc-foi">
-            En foi de quoi, le présent certificat est délivré à l'intéressé(e)
-            pour servir et valoir ce que de droit.
-          </p>
         </div>
 
         <footer className="vzc-pied">

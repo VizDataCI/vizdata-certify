@@ -174,23 +174,6 @@
   white-space: nowrap;
 }
 
-/* --- la formule consacrée ---
-   Elle ferme le corps du document, juste au-dessus du pied. En italique et en
-   gris : elle a la valeur d'une mention légale, pas celle d'un argument, et ne
-   doit disputer le regard ni au nom du titulaire ni au programme. La largeur
-   est bornée pour qu'elle tienne sur deux lignes au plus, et pour qu'elle ne
-   vienne jamais au-dessus du cachet, qui occupe la gauche du pied. */
-.vzc-foi {
-  margin: auto auto 0;
-  padding-top: 18px;
-  max-width: 620px;
-  font-size: 11.5px;
-  font-style: italic;
-  line-height: 1.6;
-  color: #667085;
-  text-align: center;
-}
-
 /* --- pied : signature, mentions, QR code --- */
 .vzc-pied {
   flex: 0 0 auto;
