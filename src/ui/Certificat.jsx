@@ -109,7 +109,7 @@ function CertificatDocument({ cert, verifyUrl }) {
             </div>
             {cert.duration ? (
               <div>
-                <div className="vzc-eyebrow">Durée</div>
+                <div className="vzc-eyebrow">Durée de la formation</div>
                 <div className="vzc-meta-valeur">{cert.duration} heures</div>
               </div>
             ) : null}

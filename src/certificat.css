@@ -226,13 +226,18 @@
 .vzc-signature-nom { font-size: 13px; font-weight: 600; }
 .vzc-signature-role { font-size: 11px; color: #8a91a0; margin-top: 2px; }
 
+/* Les quatre blocs du pied — cachet, date, durée, QR code — se répartissent la
+   largeur à intervalles comparables. Groupées au centre d'un espace très large,
+   la date et la durée formaient un amas, avec un trou de part et d'autre.
+   « space-around » les pose au quart et aux trois quarts de l'espace libre, ce
+   qui aligne les quatre écarts. */
 .vzc-meta {
   flex: 1;
   display: flex;
-  gap: 34px;
-  justify-content: center;
-  padding-bottom: 2px;
+  justify-content: space-around;
+  padding: 0 6px 2px;
 }
+.vzc-meta > div { white-space: nowrap; }
 .vzc-meta-valeur { font-size: 12.5px; font-weight: 500; margin-top: 5px; }
 
 .vzc-qr {
