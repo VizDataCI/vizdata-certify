@@ -386,6 +386,7 @@ const ACTIONS = {
   DOMAIN_UPDATED: "Domaine modifié",
   PROGRAM_CREATED: "Programme créé",
   PROGRAM_UPDATED: "Programme modifié",
+  DOUBLE_FACTEUR_RETIRE: "Double facteur retiré",
   SKILL_CREATED: "Compétence ajoutée",
   SKILL_UPDATED: "Compétence renommée",
   CERTIFICATE_VERIFIED: "Certificat vérifié",

@@ -60,6 +60,7 @@ import {
 } from "./comptes.mjs";
 import { qualiteMotDePasse } from "../src/lib/mot-de-passe.js";
 import { estAdmin } from "../src/lib/permissions.js";
+import * as DF from "./double-facteur.mjs";
 import * as R from "./registre.mjs";
 import * as A from "./academie.mjs";
 import { envoyer } from "./courrier.mjs";
@@ -260,11 +261,61 @@ route(
     if (resultat.refus === "desactive") throw new Refus(403, "Ce compte a été désactivé. Contactez VIZDATA.");
     if (resultat.refus) throw new Refus(401, "Adresse e-mail ou mot de passe incorrect.");
 
+    /* Second facteur : aucune session n'est ouverte ici. On rend un défi,
+       valable cinq minutes, que l'écran de connexion échange contre une
+       session une fois le code vérifié. Ouvrir la session d'abord, quitte à la
+       refuser ensuite, reviendrait à poser le cookie avant la preuve. */
+    const ligne = db.prepare("select totp_actif from users where id = ?").get(resultat.compte.id);
+    if (DF.estActif(ligne)) {
+      return { deuxiemeFacteur: true, defi: DF.ouvrirDefi(db, resultat.compte.id) };
+    }
+
     const { secret } = ouvrirSession(db, resultat.compte.id, {
       userAgent: String(req.headers["user-agent"] || "").slice(0, 200),
     });
     res.setHeader("Set-Cookie", cookieSession(secret));
     return resultat.compte;
+  },
+  { publique: true }
+);
+
+/* Le second temps de la connexion : le code de l'application, ou un code de
+   secours. Le défi porte son propre compteur d'essais ; le limiteur par client
+   s'y ajoute, pour le cas où quelqu'un enchaînerait les défis. */
+route(
+  "POST",
+  /^\/api\/session\/code$/,
+  async ({ req, res }) => {
+    limiter("code-ip:" + empreinteClient(req), { max: 60, fenetre: 15 * 60_000 });
+    const { defi, code } = await corpsJson(req);
+
+    const verdict = DF.verifierDefi(db, defi, String(code || ""));
+    if (verdict.refus) {
+      const message = verdict.refus === "expire" || verdict.refus === "trop_essais"
+        ? "Cette tentative de connexion a expiré. Reprenez depuis votre mot de passe."
+        : verdict.refus === "deja_utilise"
+          ? "Ce code a déjà servi. Attendez le suivant dans votre application."
+          : "Code incorrect. Vérifiez l'heure de votre téléphone, ou utilisez un code de secours.";
+      throw new Refus(401, message);
+    }
+
+    const compte = compteParId(db, verdict.utilisateurId);
+    if (!compte || compte.account_status === "DISABLED") {
+      throw new Refus(403, "Ce compte a été désactivé. Contactez VIZDATA.");
+    }
+
+    const { secret } = ouvrirSession(db, compte.id, {
+      userAgent: String(req.headers["user-agent"] || "").slice(0, 200),
+    });
+    res.setHeader("Set-Cookie", cookieSession(secret));
+
+    /* Le titulaire doit savoir qu'il vient de brûler un code de secours, et
+       combien il lui en reste. */
+    return {
+      ...compte,
+      secours_utilise: Boolean(verdict.secours),
+      codes_secours_restants: DF.codesSecoursRestants(db, compte.id),
+    };
   },
   { publique: true }
 );
@@ -357,6 +408,70 @@ route("POST", /^\/api\/mot-de-passe\/changer$/, async ({ req, acteur }) => {
 
   definirMotDePasse(db, acteur.id, nouveau, { sauf: req.secretSession });
   return { modifie: true };
+});
+
+/* --- validation en deux étapes -------------------------------------------- *
+ *
+ * Trois gestes qui engagent le compte — activer, désactiver, renouveler les
+ * codes de secours — et tous redemandent le mot de passe, sauf l'activation,
+ * déjà protégée par le code à scanner. Un poste laissé déverrouillé ne doit
+ * pas suffire à retirer le second facteur de quelqu'un.
+ */
+
+function etatDoubleFacteur(acteur) {
+  const ligne = db.prepare("select totp_actif, totp_active_a from users where id = ?").get(acteur.id);
+  const actif = DF.estActif(ligne);
+  return {
+    actif,
+    active_a: ligne?.totp_active_a ?? null,
+    codes_restants: actif ? DF.codesSecoursRestants(db, acteur.id) : 0,
+  };
+}
+
+route("GET", /^\/api\/double-facteur$/, ({ acteur }) => etatDoubleFacteur(acteur));
+
+route("POST", /^\/api\/double-facteur\/preparer$/, ({ acteur }) => {
+  const ligne = db.prepare("select * from users where id = ?").get(acteur.id);
+  if (DF.estActif(ligne)) throw new Refus(409, "La validation en deux étapes est déjà active sur ce compte.");
+  return DF.preparer(db, ligne);
+});
+
+route("POST", /^\/api\/double-facteur\/activer$/, async ({ req, acteur }) => {
+  limiter("2fa-activer:" + acteur.id, { max: 12, fenetre: 15 * 60_000 });
+  const { code } = await corpsJson(req);
+  const ligne = db.prepare("select * from users where id = ?").get(acteur.id);
+  if (DF.estActif(ligne)) throw new Refus(409, "La validation en deux étapes est déjà active sur ce compte.");
+
+  const r = DF.activer(db, ligne, String(code || ""));
+  if (r.refus === "aucune_preparation") {
+    throw new Refus(409, "Aucune activation en cours. Recommencez depuis l'écran Sécurité.");
+  }
+  if (r.refus) {
+    throw new Refus(400, "Ce code n'est pas valide. Vérifiez l'heure de votre téléphone, puis réessayez.");
+  }
+  return { actif: true, codes: r.codes };
+});
+
+route("POST", /^\/api\/double-facteur\/desactiver$/, async ({ req, acteur }) => {
+  const { motDePasse } = await corpsJson(req);
+  const ligne = db.prepare("select password_hash from users where id = ?").get(acteur.id);
+  if (!verifierMotDePasse(String(motDePasse || ""), ligne?.password_hash)) {
+    limiter("2fa-off:" + acteur.id, { max: 10, fenetre: 15 * 60_000 });
+    throw new Refus(400, "Votre mot de passe est incorrect.");
+  }
+  DF.desactiver(db, acteur.id);
+  return { actif: false };
+});
+
+route("POST", /^\/api\/double-facteur\/codes$/, async ({ req, acteur }) => {
+  const { motDePasse } = await corpsJson(req);
+  const ligne = db.prepare("select password_hash, totp_actif from users where id = ?").get(acteur.id);
+  if (!DF.estActif(ligne)) throw new Refus(409, "La validation en deux étapes n'est pas active sur ce compte.");
+  if (!verifierMotDePasse(String(motDePasse || ""), ligne?.password_hash)) {
+    limiter("2fa-codes:" + acteur.id, { max: 10, fenetre: 15 * 60_000 });
+    throw new Refus(400, "Votre mot de passe est incorrect.");
+  }
+  return { codes: DF.renouvelerCodesSecours(db, acteur.id) };
 });
 
 /* --- espace du titulaire -------------------------------------------------- */
@@ -462,6 +577,23 @@ route("POST", /^\/api\/comptes\/([^/]+)\/invitation$/, async ({ params, acteur }
     jeton: secret,
   });
   return { envoye: courrier.envoye, lien: courrier.envoye ? null : courrier.lien, raison: courrier.raison ?? null };
+});
+
+/* Le secours de dernier recours : téléphone perdu, codes de secours égarés.
+   Sans cette route, le compte serait définitivement clos. Réservée aux
+   administrateurs, inscrite au journal, et toutes les sessions du compte sont
+   fermées : si quelqu'un d'autre était entré, il ressort. */
+route("POST", /^\/api\/comptes\/([^/]+)\/double-facteur$/, ({ params, acteur }) => {
+  if (!estAdmin(acteur)) throw new Refus(403, "Réservé aux administrateurs.");
+  const cible = compteParId(db, params[0]);
+  if (!cible) throw new Refus(404, "Compte introuvable.");
+
+  DF.desactiver(db, cible.id);
+  fermerToutesSessions(db, cible.id);
+  R.journaliser(db, acteur, "DOUBLE_FACTEUR_RETIRE", {
+    entite: "user", entiteId: cible.id, valeur: cible.email,
+  });
+  return { actif: false };
 });
 
 /* --- administration : certificats ----------------------------------------- */

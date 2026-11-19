@@ -68,7 +68,7 @@ function AdminUtilisateurs(p) {
         <div className="vz-tablewrap">
           <table className="vz-table">
             <thead>
-              <tr><th>Nom</th><th>Adresse e-mail</th><th>Rôle</th><th>Autorisations</th><th>Compte</th><th></th></tr>
+              <tr><th>Nom</th><th>Adresse e-mail</th><th>Rôle</th><th>Autorisations</th><th>Compte</th><th>Double facteur</th><th></th></tr>
             </thead>
             <tbody>
               {lignes.map((u) => (
@@ -91,9 +91,19 @@ function AdminUtilisateurs(p) {
                       ? <span className="vz-badge orange">Invitation en attente</span>
                       : <span className="vz-badge vert">Actif</span>}
                   </td>
+                  <td className="vz-small">
+                    {u.totp_actif
+                      ? <span className="vz-badge vert">Active</span>
+                      : <span className="vz-muted">Non</span>}
+                  </td>
                   <td>
                     <div className="vz-rowactions">
                       <button className="vz-linkbtn" onClick={() => setModal({ type: "role", u })}>Rôle</button>
+                      {/* Téléphone perdu et codes de secours égarés : sans ce
+                          retrait, le compte serait définitivement clos. */}
+                      {u.totp_actif && (
+                        <button className="vz-linkbtn danger" onClick={() => setModal({ type: "doubleFacteur", u })}>Retirer le double facteur</button>
+                      )}
                       {/* Se désactiver soi-même fermerait la porte de
                           l'intérieur : l'action n'est pas proposée. */}
                       {u.id !== p.session.id && (
@@ -116,6 +126,7 @@ function AdminUtilisateurs(p) {
       {modal?.type === "role" && <FormulaireRole {...p} utilisateur={modal.u} onErreur={setErr} onClose={() => setModal(null)} />}
       {modal?.type === "statut" && <ConfirmationStatut {...p} utilisateur={modal.u} vers={modal.vers} onErreur={setErr} onClose={() => setModal(null)} />}
       {modal?.type === "nouveau" && <FormulaireCompte {...p} onErreur={setErr} onClose={() => setModal(null)} />}
+      {modal?.type === "doubleFacteur" && <ConfirmationDoubleFacteur {...p} utilisateur={modal.u} onClose={() => setModal(null)} />}
     </>
   );
 }
@@ -211,6 +222,61 @@ function FormulaireRole({ utilisateur, onClose, ...p }) {
 }
 
 /* --- activation et désactivation ----------------------------------------- */
+
+/* --- retrait du second facteur --------------------------------------------
+ *
+ * Le secours de dernier recours : téléphone perdu, codes de secours égarés.
+ * Sans lui, le compte serait définitivement clos et la seule issue serait
+ * d'ouvrir la base à la main.
+ *
+ * L'acte est consigné au journal, et toutes les sessions du compte sont
+ * fermées : si quelqu'un d'autre était entré, il ressort.
+ */
+function ConfirmationDoubleFacteur({ utilisateur, onClose, ...p }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  const confirmer = async () => {
+    if (busy) return;
+    setBusy(true);
+    setErr("");
+    try {
+      await p.actions.retirerDoubleFacteur(utilisateur);
+      p.notify("Double facteur retiré. Le titulaire se reconnecte avec son seul mot de passe.");
+      onClose();
+    } catch (e) {
+      setErr(e.message);
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Modal
+      title="Retirer la validation en deux étapes"
+      onClose={onClose}
+      foot={
+        <>
+          <button className="vz-btn" onClick={onClose}>Annuler</button>
+          <button className="vz-btn vz-btn-danger" onClick={confirmer} disabled={busy}>
+            {busy ? "…" : "Retirer"}
+          </button>
+        </>
+      }
+    >
+      {err && <div className="vz-alert err" style={{ marginBottom: 14 }}>{err}</div>}
+      <p style={{ lineHeight: 1.75 }}>
+        <strong>{utilisateur.first_name} {utilisateur.last_name}</strong>, {utilisateur.email}
+      </p>
+      <div className="vz-alert warn" style={{ marginTop: 14 }}>
+        <span>
+          Le compte redeviendra accessible avec le seul mot de passe, et ses sessions ouvertes seront
+          fermées. Ne faites ce geste qu'après avoir identifié la personne autrement que par un message :
+          c'est exactement ce qu'un attaquant demanderait.
+        </span>
+      </div>
+    </Modal>
+  );
+}
 
 function ConfirmationStatut({ utilisateur, vers, onClose, ...p }) {
   const [busy, setBusy] = useState(false);

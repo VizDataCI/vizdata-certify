@@ -128,6 +128,12 @@ async function updateProgram(id, champs) {
 /* Le référentiel des compétences : ce qu'un certificat peut attester. Rien ne
    s'y ajoute tout seul, et rien ne s'en retire — une compétence effacée
    disparaîtrait des certificats déjà délivrés. */
+/** Retire le second facteur d'un compte. Réservé aux administrateurs. */
+async function retirerDoubleFacteur(id) {
+  exigerRegistre();
+  return poster(`/comptes/${encodeURIComponent(id)}/double-facteur`, {});
+}
+
 async function createSkill(champs) {
   exigerRegistre();
   return poster("/competences", champs);
@@ -231,6 +237,7 @@ export {
   updateProgram,
   createSkill,
   updateSkill,
+  retirerDoubleFacteur,
   createCertificate,
   updateCertificate,
   setCertificateStatus,

@@ -50,6 +50,7 @@ require __DIR__ . '/lib/Academie.php';
 require __DIR__ . '/lib/Courrier.php';
 require __DIR__ . '/lib/Chiffrement.php';
 require __DIR__ . '/lib/Sauvegarde.php';
+require __DIR__ . '/lib/DoubleFacteur.php';
 
 const COOKIE = 'vz_session';
 const CORPS_MAX = 256 * 1024;
@@ -365,12 +366,64 @@ route('POST', '#^/session$#', function () {
         throw new Refus(401, 'Adresse e-mail ou mot de passe incorrect.');
     }
 
+    /* Second facteur : le mot de passe ne suffit plus, et aucune session n'est
+       ouverte ici. On rend un défi, valable cinq minutes, que l'écran de
+       connexion échange contre une session une fois le code vérifié.
+       Ouvrir la session d'abord, quitte à la refuser ensuite, reviendrait à
+       poser le cookie avant la preuve. */
+    $ligne = Base::un('select totp_actif from users where id = ?', [$resultat['compte']['id']]);
+    if (DoubleFacteur::estActif($ligne)) {
+        return [
+            'deuxiemeFacteur' => true,
+            'defi' => DoubleFacteur::ouvrirDefi((string) $resultat['compte']['id']),
+        ];
+    }
+
     $session = Comptes::ouvrirSession(
         $resultat['compte']['id'],
         mb_substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 200)
     );
     poserCookie($session['secret']);
     return $resultat['compte'];
+}, true);
+
+/* Le second temps de la connexion : le code de l'application, ou un code de
+   secours. Le défi porte son propre compteur d'essais ; le limiteur par client
+   s'y ajoute, pour le cas où quelqu'un enchaînerait les défis. */
+route('POST', '#^/session/code$#', function () {
+    limiter('code-ip:' . empreinteClient(), 60, 900);
+    $corps = corpsJson();
+
+    $verdict = DoubleFacteur::verifierDefi(
+        isset($corps['defi']) ? (string) $corps['defi'] : null,
+        (string) ($corps['code'] ?? '')
+    );
+
+    if (isset($verdict['refus'])) {
+        throw new Refus(401, match ($verdict['refus']) {
+            'expire', 'trop_essais' => 'Cette tentative de connexion a expiré. Reprenez depuis votre mot de passe.',
+            'deja_utilise' => 'Ce code a déjà servi. Attendez le suivant dans votre application.',
+            default => "Code incorrect. Vérifiez l'heure de votre téléphone, ou utilisez un code de secours.",
+        });
+    }
+
+    $compte = Comptes::parId($verdict['utilisateurId']);
+    if ($compte === null || ($compte['account_status'] ?? '') === 'DISABLED') {
+        throw new Refus(403, 'Ce compte a été désactivé. Contactez VIZDATA.');
+    }
+
+    $session = Comptes::ouvrirSession(
+        $compte['id'],
+        mb_substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 200)
+    );
+    poserCookie($session['secret']);
+
+    /* Le titulaire doit savoir qu'il vient de brûler un code de secours, et
+       combien il lui en reste : s'en apercevoir le jour où il n'en a plus
+       serait trop tard. */
+    $compte['secours_utilise'] = (bool) ($verdict['secours'] ?? false);
+    $compte['codes_secours_restants'] = DoubleFacteur::codesSecoursRestants((string) $compte['id']);
+    return $compte;
 }, true);
 
 route('GET', '#^/session$#', fn (array $p, ?array $acteur) => $acteur, true);
@@ -458,6 +511,60 @@ route('POST', '#^/mot-de-passe/changer$#', function (array $p, array $acteur) {
 
     Comptes::definirMotDePasse($acteur['id'], $nouveau, $_COOKIE[COOKIE] ?? null);
     return ['modifie' => true];
+});
+
+/* --- validation en deux étapes ------------------------------------------------
+ *
+ * Trois gestes qui engagent le compte — activer, désactiver, renouveler les
+ * codes de secours — et tous redemandent le mot de passe, sauf l'activation,
+ * qui est déjà protégée par le code à scanner. Un poste laissé déverrouillé
+ * ne doit pas suffire à retirer le second facteur de quelqu'un.
+ */
+
+/** Ce que l'interface a besoin de savoir, et rien de plus. */
+function etatDoubleFacteur(array $acteur): array
+{
+    $ligne = Base::un('select totp_actif, totp_active_a from users where id = ?', [$acteur['id']]);
+    $actif = DoubleFacteur::estActif($ligne);
+    return [
+        'actif' => $actif,
+        'active_a' => $ligne['totp_active_a'] ?? null,
+        'codes_restants' => $actif ? DoubleFacteur::codesSecoursRestants((string) $acteur['id']) : 0,
+    ];
+}
+
+route('GET', '#^/double-facteur$#', fn (array $p, array $acteur) => etatDoubleFacteur($acteur));
+
+route('POST', '#^/double-facteur/preparer$#', function (array $p, array $acteur) {
+    return DoubleFacteur::preparer($acteur);
+});
+
+route('POST', '#^/double-facteur/activer$#', function (array $p, array $acteur) {
+    limiter('2fa-activer:' . $acteur['id'], 12, 900);
+    $resultat = DoubleFacteur::activer($acteur, (string) (corpsJson()['code'] ?? ''));
+    return ['actif' => true, 'codes' => $resultat['codes']];
+});
+
+route('POST', '#^/double-facteur/desactiver$#', function (array $p, array $acteur) {
+    $ligne = Base::un('select password_hash from users where id = ?', [$acteur['id']]);
+    if (!Comptes::verifierMotDePasse((string) (corpsJson()['motDePasse'] ?? ''), $ligne['password_hash'] ?? null)) {
+        limiter('2fa-off:' . $acteur['id'], 10, 900);
+        throw new Refus(400, 'Votre mot de passe est incorrect.');
+    }
+    DoubleFacteur::desactiver((string) $acteur['id']);
+    return ['actif' => false];
+});
+
+route('POST', '#^/double-facteur/codes$#', function (array $p, array $acteur) {
+    $ligne = Base::un('select password_hash, totp_actif from users where id = ?', [$acteur['id']]);
+    if (!DoubleFacteur::estActif($ligne)) {
+        throw new Refus(409, "La validation en deux étapes n'est pas active sur ce compte.");
+    }
+    if (!Comptes::verifierMotDePasse((string) (corpsJson()['motDePasse'] ?? ''), $ligne['password_hash'] ?? null)) {
+        limiter('2fa-codes:' . $acteur['id'], 10, 900);
+        throw new Refus(400, 'Votre mot de passe est incorrect.');
+    }
+    return ['codes' => DoubleFacteur::renouvelerCodesSecours((string) $acteur['id'])];
 });
 
 /* --- espace du titulaire ------------------------------------------------------ */
@@ -569,6 +676,24 @@ route('POST', '#^/comptes/([^/]+)/invitation$#', function (array $p, array $acte
         'jeton' => $jeton['secret'],
     ]);
     return ['envoye' => $courrier['envoye'], 'lien' => $courrier['lien'], 'raison' => $courrier['raison']];
+});
+
+/* Le secours de dernier recours : téléphone perdu, codes de secours égarés.
+   Sans cette route, le compte serait définitivement clos, et la seule issue
+   serait d'ouvrir la base à la main. Réservée aux administrateurs, et inscrite
+   au journal : retirer un second facteur est un acte, pas un réglage. */
+route('POST', '#^/comptes/([^/]+)/double-facteur$#', function (array $p, array $acteur) {
+    Autorisations::exigerAdmin($acteur);
+    $cible = Comptes::parId($p[0]);
+    if ($cible === null) {
+        throw new Refus(404, 'Compte introuvable.');
+    }
+    DoubleFacteur::desactiver((string) $cible['id']);
+    Comptes::fermerToutesSessions((string) $cible['id']);
+    Registre::journaliser($acteur, 'DOUBLE_FACTEUR_RETIRE', [
+        'entite' => 'user', 'entiteId' => $cible['id'], 'valeur' => $cible['email'],
+    ]);
+    return ['actif' => false];
 });
 
 /* --- administration : certificats ------------------------------------------------ */
@@ -844,6 +969,7 @@ try {
        seule occasion de retirer sessions et jetons périmés. */
     if (random_int(1, 500) === 1) {
         Comptes::menage();
+        DoubleFacteur::menage();
     }
 
     $resultat = ($trouvee['gestionnaire'])($params, $acteur);

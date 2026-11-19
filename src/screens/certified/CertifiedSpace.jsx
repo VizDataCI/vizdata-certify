@@ -13,6 +13,7 @@ import { useState, useEffect } from "react";
 import { changePassword, isAuthConfigured, qualiteMotDePasse } from "../../lib/auth.js";
 import { fmtLong } from "../../lib/dates.js";
 import { CertificateModal } from "../../modals/CertificateModal.jsx";
+import { DoubleFacteurCarte } from "./DoubleFacteur.jsx";
 import { ShareModal } from "../../modals/ShareModal.jsx";
 import { AppShell } from "../../ui/AppShell.jsx";
 import { ZoneImpression, imprimerCertificat } from "../../ui/Certificat.jsx";
@@ -24,7 +25,9 @@ import {
 } from "../../ui/icones.jsx";
 
 function CertifiedSpace(p) {
-  const [page, setPage] = useState("certs");
+  /* L'onglet peut être demandé par la route : « Mon compte », depuis
+     l'administration, ouvre directement la sécurité. */
+  const [page, setPage] = useState(() => p.route?.tab || "certs");
   const [modal, setModal] = useState(null);
   const [me, setMe] = useState(p.session);
   const [certs, setCerts] = useState(null);
@@ -318,6 +321,8 @@ function Securite({ p }) {
           </p>
         </div>
       </div>
+
+      <DoubleFacteurCarte notify={p.notify} />
     </>
   );
 }

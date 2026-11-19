@@ -191,9 +191,9 @@ function registreComplet(db, { pourAdmin = false } = {}) {
 
   return {
     users: db
-      .prepare("select id, email, first_name, last_name, phone, username, linkedin_url, public_profile, role, account_status, must_change_password, permissions, invited_at, activated_at, last_login_at, created_at from users order by created_at desc")
+      .prepare("select id, email, first_name, last_name, phone, username, linkedin_url, public_profile, totp_actif, role, account_status, must_change_password, permissions, invited_at, activated_at, last_login_at, created_at from users order by created_at desc")
       .all()
-      .map((u) => ({ ...u, public_profile: u.public_profile === 1, must_change_password: u.must_change_password === 1, permissions: json(u.permissions) })),
+      .map((u) => ({ ...u, public_profile: u.public_profile === 1, totp_actif: u.totp_actif === 1, must_change_password: u.must_change_password === 1, permissions: json(u.permissions) })),
     domains: db.prepare("select * from certification_domains order by sort_order, name").all(),
     types: programmes,
     templates: pourAdmin ? db.prepare("select * from certificate_templates order by name").all() : [],

@@ -58,13 +58,26 @@ function AppShell({ nav, current, onNav, session, go, logout, title, children, s
             <div className="vz-small" style={{ fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {session.first_name} {session.last_name}
             </div>
-            <button
-              className="vz-linkbtn"
-              style={{ padding: 0, color: "var(--gris)", fontSize: 12 }}
-              onClick={logout}
-            >
-              Déconnexion
-            </button>
+            <div style={{ display: "flex", gap: 12, alignItems: "center", whiteSpace: "nowrap" }}>
+              {/* Mot de passe et validation en deux étapes vivent dans l'espace
+                  personnel. L'administration n'y menait par aucun lien : un
+                  administrateur ne pouvait ni changer son mot de passe ni
+                  activer sa protection sans connaître l'adresse par cœur. */}
+              <button
+                className="vz-linkbtn"
+                style={{ padding: 0, color: "var(--gris)", fontSize: 12 }}
+                onClick={() => go({ view: "espace", tab: "settings" })}
+              >
+                Mon compte
+              </button>
+              <button
+                className="vz-linkbtn"
+                style={{ padding: 0, color: "var(--gris)", fontSize: 12 }}
+                onClick={logout}
+              >
+                Déconnexion
+              </button>
+            </div>
           </div>
         </div>
       </aside>

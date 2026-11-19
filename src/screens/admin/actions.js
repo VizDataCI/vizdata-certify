@@ -128,6 +128,18 @@ function creerActions({ remote, dbRef, setDb, session, recharger }) {
       journaliser(status === "DISABLED" ? "ACCOUNT_DISABLED" : "ACCOUNT_ENABLED", utilisateur.id, utilisateur.email, "user");
     },
 
+    /* Retrait du second facteur par un administrateur : le secours de
+       dernier recours quand le téléphone ET les codes de secours sont perdus. */
+    async retirerDoubleFacteur(utilisateur) {
+      if (remote) {
+        await api.retirerDoubleFacteur(utilisateur.id);
+        await recharger();
+        return;
+      }
+      setDb((d) => ({ ...d, users: d.users.map((u) => (u.id === utilisateur.id ? { ...u, totp_actif: false } : u)) }));
+      journaliser(DOUBLE_FACTEUR_RETIRE, utilisateur.id, utilisateur.email, user);
+    },
+
     async changerEmail(utilisateur, email) {
       const adresse = email.trim().toLowerCase();
       if (remote) {

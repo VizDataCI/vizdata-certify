@@ -11,7 +11,7 @@ import { useState, useEffect, useRef } from "react";
 import { BASE_URL } from "./data/seed.js";
 import { STORE_KEY, loadDb } from "./data/store.js";
 import * as api from "./data/api.js";
-import { currentUser, isAuthConfigured, onAuthChange, signIn, signOut } from "./lib/auth.js";
+import { currentUser, isAuthConfigured, onAuthChange, signIn, signOut, verifierCode } from "./lib/auth.js";
 import { effectiveStatus, projectionPublique } from "./lib/certificates.js";
 import { estAdministration } from "./lib/permissions.js";
 import { currentRoute, onNavigate, pushRoute, toPath } from "./lib/router.js";
@@ -90,8 +90,8 @@ export default function App() {
   };
 
   /** Connexion : le registre valide l'identité et fournit le profil. */
-  const login = async (email, password) => {
-    const account = await signIn(email, password);
+  /** Ouvre la session à partir du compte rendu par le serveur. */
+  const ouvrirSession = async (account) => {
     const profile = await profileFor(account);
     if (!profile) {
       /* Compte authentifié mais absent du registre : on ne laisse pas de session orpheline. */
@@ -108,6 +108,34 @@ export default function App() {
     }
     setSession(profile);
     go(accueilDe(profile));
+    return profile;
+  };
+
+  /**
+   * Connexion.
+   *
+   * Quand le compte porte un second facteur, le serveur ne rend pas de profil
+   * mais un défi : aucune session n'est ouverte, et c'est l'écran de connexion
+   * qui demande le code. On lui rend la réponse telle quelle plutôt que de
+   * l'interpréter ici — la décision d'afficher un champ de plus lui appartient.
+   */
+  const login = async (email, password) => {
+    const account = await signIn(email, password);
+    if (account?.deuxiemeFacteur) return account;
+    await ouvrirSession(account);
+    return null;
+  };
+
+  /** Second temps de la connexion : le code de l'application, ou un code de secours. */
+  const loginCode = async (defi, code) => {
+    const account = await verifierCode(defi, code);
+    const profil = await ouvrirSession(account);
+    if (account?.secours_utilise) {
+      notify(
+        `Vous venez d'utiliser un code de secours. Il ne vous en reste que ${account.codes_secours_restants ?? 0} : renouvelez-les depuis Sécurité.`
+      );
+    }
+    return profil;
   };
 
   const logout = async () => {
@@ -254,7 +282,7 @@ export default function App() {
 
   /* --- rendu --- */
   const shared = {
-    db, setDb, session, setSession, sessionConnue, login, logout, route, go, notify,
+    db, setDb, session, setSession, sessionConnue, login, loginCode, logout, route, go, notify,
     userOf, typeOf, domainOf, certByToken, certByRef, verifyUrl, log,
     recordVerification, recordShare, recordPublicShare, toPublic,
     findByReference, findByToken, findProfile, myCertificates, saveProfile,

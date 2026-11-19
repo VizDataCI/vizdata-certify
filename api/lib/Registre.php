@@ -280,11 +280,12 @@ final class Registre
 
         $comptes = array_map(function (array $u): array {
             $u['public_profile'] = Base::bool($u['public_profile']);
+            $u['totp_actif'] = Base::bool($u['totp_actif'] ?? 0);
             $u['must_change_password'] = Base::bool($u['must_change_password']);
             $u['permissions'] = Base::json($u['permissions']);
             return $u;
         }, Base::tous(
-            'select id, email, first_name, last_name, phone, username, linkedin_url, public_profile,
+            'select id, email, first_name, last_name, phone, username, linkedin_url, public_profile, totp_actif,
                     role, account_status, must_change_password, permissions, invited_at, activated_at,
                     last_login_at, created_at
                from users order by created_at desc'

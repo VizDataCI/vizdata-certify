@@ -18,6 +18,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { ouvrirBase, uid, maintenant } from "../server/db.mjs";
 import { creerJeton } from "../server/comptes.mjs";
+import { codePour } from "../server/double-facteur.mjs";
 
 let processus;
 let base;
@@ -566,6 +567,58 @@ test("le cookie de session est hors de portée du JavaScript", async () => {
   const pose = (reponse.headers.getSetCookie?.() ?? []).join(" ");
   assert.match(pose, /HttpOnly/i);
   assert.match(pose, /SameSite=Lax/i);
+});
+
+test("la connexion en deux temps est câblée de bout en bout", async () => {
+  /* Le parcours complet, par HTTP : activer, se déconnecter, et constater que
+     le mot de passe seul ne donne plus de session. C'est la différence entre
+     « l'algorithme est juste » — éprouvé dans double-facteur.test.js contre
+     les vecteurs de la RFC — et « la porte est réellement verrouillée ». */
+  const prep = await appel("/api/double-facteur/preparer", { methode: "POST", corps: {} });
+  assert.equal(prep.statut, 200);
+  assert.match(prep.donnees.secret, /^[A-Z2-7]{32}$/);
+  assert.match(prep.donnees.uri, /^otpauth:\/\/totp\//);
+
+  const secret = prep.donnees.secret;
+  const pas = Math.floor(Date.now() / 1000 / 30);
+
+  const refus = await appel("/api/double-facteur/activer", { methode: "POST", corps: { code: "000000" } });
+  assert.equal(refus.statut, 400, "un code faux ne doit pas activer la protection");
+
+  const active = await appel("/api/double-facteur/activer", { methode: "POST", corps: { code: codePour(secret, pas) } });
+  assert.equal(active.statut, 200);
+  assert.equal(active.donnees.codes.length, 10);
+
+  await appel("/api/session", { methode: "DELETE" });
+
+  /* Le mot de passe seul ne rend plus un profil, mais un défi — et surtout
+     aucun cookie. */
+  const premier = await fetch(base + "/api/session", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: "direction@vizdata.ci", motDePasse: "VizData2026" }),
+  });
+  const corps = await premier.json();
+  assert.equal(premier.status, 200);
+  assert.equal(corps.deuxiemeFacteur, true);
+  assert.ok(corps.defi, "aucun défi rendu");
+  assert.equal(corps.email, undefined, "le profil ne doit pas fuiter avant le second facteur");
+  assert.equal((premier.headers.getSetCookie?.() ?? []).length, 0, "un cookie a été posé avant la preuve");
+
+  const faux = await appel("/api/session/code", { methode: "POST", corps: { defi: corps.defi, code: "000001" } });
+  assert.equal(faux.statut, 401);
+
+  /* Le pas suivant, et pas celui de l'activation : un code déjà consommé ne
+     vaut plus, c'est ce qui ferme le rejeu. */
+  const ok = await appel("/api/session/code", { methode: "POST", corps: { defi: corps.defi, code: codePour(secret, pas + 1) } });
+  assert.equal(ok.statut, 200);
+  assert.equal(ok.donnees.email, "direction@vizdata.ci");
+  assert.equal(ok.donnees.codes_secours_restants, 10);
+
+  /* On repart propre : les tests suivants supposent une session ordinaire. */
+  const coupe = await appel("/api/double-facteur/desactiver", { methode: "POST", corps: { motDePasse: "VizData2026" } });
+  assert.equal(coupe.statut, 200);
+  assert.equal(coupe.donnees.actif, false);
 });
 
 test("trop de tentatives de connexion finissent par être bloquées", async () => {

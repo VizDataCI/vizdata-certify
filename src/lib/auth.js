@@ -103,6 +103,49 @@ async function definirMotDePasse(jeton, motDePasse) {
   return poster("/mot-de-passe/definir", { jeton, motDePasse });
 }
 
+/* --- validation en deux étapes -------------------------------------------- *
+ *
+ * Le serveur ne rend pas un profil quand le compte porte un second facteur :
+ * il rend { deuxiemeFacteur: true, defi }. L'écran de connexion reconnaît
+ * cette forme et demande le code ; aucune session n'existe tant qu'il n'a pas
+ * été vérifié, et le cookie n'est posé qu'à ce moment.
+ */
+
+/** Échange un défi et un code contre une session. */
+async function verifierCode(defi, code) {
+  const saisie = String(code || "").trim();
+  if (!saisie) throw new Error("Entrez le code affiché par votre application.");
+  return poster("/session/code", { defi, code: saisie });
+}
+
+/** État du second facteur sur le compte en cours. */
+async function lireDoubleFacteur() {
+  if (!registreDistant) return { actif: false, indisponible: true, codes_restants: 0 };
+  return lire("/double-facteur");
+}
+
+/** Prépare une activation : rend le secret et l'adresse otpauth à scanner. */
+async function preparerDoubleFacteur() {
+  return poster("/double-facteur/preparer", {});
+}
+
+/** Confirme l'activation par un premier code. Rend les codes de secours. */
+async function activerDoubleFacteur(code) {
+  const saisie = String(code || "").trim();
+  if (!saisie) throw new Error("Entrez le code affiché par votre application.");
+  return poster("/double-facteur/activer", { code: saisie });
+}
+
+async function desactiverDoubleFacteur(motDePasse) {
+  if (!motDePasse) throw new Error("Entrez votre mot de passe pour confirmer.");
+  return poster("/double-facteur/desactiver", { motDePasse });
+}
+
+async function renouvelerCodesSecours(motDePasse) {
+  if (!motDePasse) throw new Error("Entrez votre mot de passe pour confirmer.");
+  return poster("/double-facteur/codes", { motDePasse });
+}
+
 /** Changement depuis l'espace personnel : l'ancien mot de passe est exigé. */
 async function changePassword(_email, ancien, nouveau) {
   if (!ancien) throw new Error("Entrez votre mot de passe actuel.");
@@ -123,6 +166,12 @@ export {
   sendPasswordReset,
   definirMotDePasse,
   changePassword,
+  verifierCode,
+  lireDoubleFacteur,
+  preparerDoubleFacteur,
+  activerDoubleFacteur,
+  desactiverDoubleFacteur,
+  renouvelerCodesSecours,
   jetonDansAdresse,
   qualiteMotDePasse,
   humanError,

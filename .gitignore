@@ -54,3 +54,7 @@ paquet/
 # elle porte la cle de chiffrement des sauvegardes et le jeton d'installation.
 # Seul le modele, api/config.exemple.php, est dans le depot.
 api/config.php
+
+# La cle qui chiffre les secrets du second facteur. Elle vit a cote de la base,
+# hors du depot : une cle versionnee ne protege plus rien.
+.cle-secrets

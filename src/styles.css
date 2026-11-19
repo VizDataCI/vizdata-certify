@@ -184,6 +184,37 @@
 .vz-btn-sm{height:34px;padding:0 13px;font-size:12.5px}
 .vz-btn[disabled]{opacity:.5;pointer-events:none;box-shadow:none}
 
+/* --- validation en deux étapes ------------------------------------------------
+   Le champ de code : chiffré, espacé, centré. Un code à six chiffres saisi dans
+   un champ ordinaire se relit mal, et la moindre faute de frappe oblige à tout
+   recommencer parce qu'on ne voit pas où elle est. */
+.vz-code{
+  font-family:var(--mono);font-size:21px;letter-spacing:.34em;text-align:center;
+  height:52px;font-weight:600;
+}
+.vz-code::placeholder{letter-spacing:.34em;color:var(--trait-fort)}
+
+/* Le QR code est posé sur un carré blanc cerné : sur le fond pâle des cartes,
+   un QR sans cadre perd sa zone de silence et devient capricieux à scanner. */
+.vz-2fa-qr{
+  align-self:center;padding:12px;background:#fff;
+  border:1px solid var(--trait);border-radius:var(--r-m);line-height:0;
+}
+.vz-2fa-secret{
+  font-family:var(--mono);font-size:14px;letter-spacing:.08em;
+  background:var(--surface);border:1px solid var(--trait);border-radius:var(--r-s);
+  padding:11px 13px;text-align:center;word-break:break-all;color:var(--encre);
+}
+/* Deux colonnes : dix codes en une seule ferait une liste qu'on fait défiler,
+   et qu'on recopie mal. */
+.vz-2fa-codes{
+  display:grid;grid-template-columns:1fr 1fr;gap:7px 14px;
+  background:var(--surface);border:1px solid var(--trait);border-radius:var(--r-m);
+  padding:14px 16px;
+}
+.vz-2fa-codes span{font-family:var(--mono);font-size:14px;letter-spacing:.04em;text-align:center}
+@media (max-width:460px){ .vz-2fa-codes{grid-template-columns:1fr} }
+
 /* L'action qui conclut un formulaire : centrée sous les champs, et assez large
    pour qu'on la vise sans effort. Collée à gauche sous une carte de 560 px, la
    composition penchait et le bouton se perdait. La largeur minimale est
