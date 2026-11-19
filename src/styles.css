@@ -321,7 +321,17 @@
 .vz-card-head h3{font-size:14.5px}
 .vz-card-body{padding:18px}
 .vz-grid{display:grid;gap:16px}
-.vz-stats{grid-template-columns:repeat(auto-fit,minmax(196px,1fr))}
+.vz-stats{grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+
+/* Les huit indicateurs du tableau de bord tiennent sur une seule ligne : à
+   196 px de large ils en demandaient deux, et la moitié haute de l'écran
+   partait en cartouches avant le premier graphique.
+   Le nombre de colonnes est fixé par palier, et non laissé à « auto-fit » :
+   au fil du redimensionnement, celui-ci passait à sept colonnes et laissait
+   une carte seule sur la deuxième ligne, ce qui est pire que deux rangées
+   pleines. */
+@media (min-width:1260px){ .vz-stats-rangee{grid-template-columns:repeat(8,minmax(0,1fr))} }
+@media (min-width:700px) and (max-width:1259px){ .vz-stats-rangee{grid-template-columns:repeat(4,minmax(0,1fr))} }
 
 /* --- barre de filtres --------------------------------------------------------
    Reprise du tableau de bord du CRM VIZDATA : une carte claire, un libellé
@@ -346,9 +356,9 @@
    rangée de cartes blanches, c'est lui qui distingue les familles d'un coup
    d'œil, avant même l'icône. Il tient la même teinte que le chiffre. */
 .vz-stat{
-  background:var(--blanc);border:1px solid var(--trait);border-radius:var(--r-xl);
+  background:var(--blanc);border:1px solid var(--trait);border-radius:var(--r-l);
   border-top:3px solid var(--bleu);
-  padding:17px 19px 18px;box-shadow:var(--ombre-1);
+  padding:12px 13px 13px;box-shadow:var(--ombre-1);
   transition:box-shadow var(--normal),transform var(--normal),border-color var(--normal);
 }
 .vz-stat.t-violet{border-top-color:var(--violet)}
@@ -363,23 +373,24 @@
   border-left-color:var(--trait-fort);border-right-color:var(--trait-fort);
   border-bottom-color:var(--trait-fort);
 }
-.vz-stat-tete{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
-.vz-stat-label{font-size:12.5px;font-weight:500;color:var(--gris)}
+.vz-stat-ligne{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px}
+.vz-stat-label{font-size:11.5px;font-weight:500;color:var(--gris);line-height:1.3}
 .vz-stat-icone{
-  width:34px;height:34px;flex:0 0 34px;border-radius:11px;
+  width:26px;height:26px;flex:0 0 26px;border-radius:9px;
   display:flex;align-items:center;justify-content:center;
   background:var(--bleu-050);color:var(--bleu);
 }
+.vz-stat-icone svg{width:14px;height:14px}
 .vz-stat-icone.violet{background:var(--violet-050);color:var(--violet)}
 .vz-stat-icone.orange{background:var(--orange-050);color:var(--orange)}
 .vz-stat-icone.vert{background:var(--vert-050);color:var(--vert)}
 .vz-stat-icone.rouge{background:var(--rouge-050);color:var(--rouge)}
 .vz-stat-icone.gris{background:var(--surface-2);color:var(--gris)}
 .vz-stat-val{
-  font-size:30px;font-weight:600;letter-spacing:-.035em;line-height:1;
+  font-size:25px;font-weight:600;letter-spacing:-.035em;line-height:1;
   font-variant-numeric:tabular-nums;
 }
-.vz-stat-sub{font-size:12px;color:var(--gris);margin-top:8px;line-height:1.45}
+.vz-stat-sub{font-size:10.5px;color:var(--gris);margin-top:7px;line-height:1.4}
 
 /* --- tableaux ---------------------------------------------------------------- */
 .vz-tablewrap{overflow-x:auto}
@@ -760,8 +771,7 @@
   .vz-hero{padding:56px 16px 32px}
   .vz-hero h1{font-size:30px}
   .vz-welcome h1{font-size:25px}
-  .vz-stats{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
-  .vz-stat-val{font-size:26px}
+  .vz-stats{grid-template-columns:repeat(auto-fit,minmax(132px,1fr))}
   .vz-dl-row{flex-direction:column;gap:4px;padding:12px 20px}
   .vz-dl-row dd{text-align:left}
   .vz-refblock,.vz-verdict,.vz-slip-actions,.vz-slip-foot,.vz-valeur{padding-left:20px;padding-right:20px}
@@ -799,8 +809,8 @@
      au téléphone : elle doit tenir d'un seul tenant. */
   .vz-refblock .vz-bigref{font-size:18px;letter-spacing:.02em}
   .vz-stats{grid-template-columns:1fr 1fr}
-  .vz-stat{padding:14px}
-  .vz-stat-val{font-size:24px}
+  .vz-stat{padding:13px}
+  .vz-stat-val{font-size:23px}
 }
 
 /* --- sceau des formulaires publics -------------------------------------------

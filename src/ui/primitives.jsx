@@ -62,15 +62,21 @@ const Field = ({ label, children, hint }) => (
  * ressemblent, c'est elle qu'on retrouve d'un coup d'œil, pas le libellé.
  * Sa teinte reprend celle du chiffre, pour que l'œil associe les deux.
  *
+ * L'icône est posée à côté du chiffre, et non à côté du libellé. Sur une
+ * rangée de huit cartes, chacune fait moins de 120 pixels : partagée avec
+ * l'icône, la ligne du libellé ne laissait plus la place d'écrire
+ * « Certifications », qui débordait de la carte. Le chiffre, lui, tient en
+ * deux ou trois caractères et lui laisse volontiers la moitié de la ligne.
+ *
  * `ton` prend : bleu (défaut), violet, orange, vert, rouge, gris.
  */
 const Stat = ({ label, value, sub, icone: Icone, ton = "bleu" }) => (
   <div className={"vz-stat vz-apparait t-" + ton}>
-    <div className="vz-stat-tete">
-      <span className="vz-stat-label">{label}</span>
-      {Icone && <span className={"vz-stat-icone " + ton}><Icone size={17} /></span>}
+    <div className="vz-stat-label">{label}</div>
+    <div className="vz-stat-ligne">
+      <div className="vz-stat-val" style={{ color: COULEUR_TON[ton] }}>{value}</div>
+      {Icone && <span className={"vz-stat-icone " + ton}><Icone size={15} /></span>}
     </div>
-    <div className="vz-stat-val" style={{ color: COULEUR_TON[ton] }}>{value}</div>
     {sub && <div className="vz-stat-sub">{sub}</div>}
   </div>
 );

@@ -83,6 +83,19 @@ function AdminSpace(p) {
      Et il n'agit qu'une fois la session CONNUE : rediriger avant mettrait
      dehors un administrateur parfaitement connecté, simplement parce que la
      réponse du serveur n'est pas encore arrivée. */
+  const horsAdministration = p.sessionConnue && (!p.session || !estAdministration(p.session));
+
+  /* La redirection part d'un effet, jamais du rendu.
+     Appelée pendant le rendu, elle changeait l'état de App au moment où React
+     dessinait AdminSpace : « Cannot update a component while rendering a
+     different component ». Et surtout, la course se perdait parfois contre la
+     session qui venait de s'ouvrir, ce qui renvoyait à l'écran de connexion
+     quelqu'un qui venait de s'y connecter. */
+  useEffect(() => {
+    if (horsAdministration) p.go({ view: "login" });
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [horsAdministration]);
+
   if (!p.sessionConnue) {
     return (
       <div className="vz-public">
@@ -94,7 +107,8 @@ function AdminSpace(p) {
       </div>
     );
   }
-  if (!p.session || !estAdministration(p.session)) { p.go({ view: "login" }); return null; }
+  if (horsAdministration) return null;
+  if (!p.session) return null;
 
   const admin = estAdmin(p.session);
 

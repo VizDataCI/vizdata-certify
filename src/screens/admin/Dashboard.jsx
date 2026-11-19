@@ -206,7 +206,7 @@ function AdminDashboard(p) {
         </div>
       )}
 
-      <div className="vz-grid vz-stats" style={{ marginBottom: 18 }}>
+      <div className="vz-grid vz-stats vz-stats-rangee" style={{ marginBottom: 18 }}>
         <Stat
           label="Certifications"
           value={certs.length}

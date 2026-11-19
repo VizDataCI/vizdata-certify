@@ -60,9 +60,18 @@ function CertifiedSpace(p) {
      avant reviendrait à mettre dehors quelqu'un de parfaitement connecté,
      simplement parce que la réponse du serveur n'est pas encore arrivée — ce
      qui arrive à chaque fois qu'on ouvre directement l'adresse de son espace,
-     par exemple depuis le lien d'un courrier. */
+     par exemple depuis le lien d'un courrier.
+     Le renvoi part d'un effet et non du rendu : changer l'état de App pendant
+     qu'il dessine cet écran gagnait parfois la course contre la session qui
+     venait de s'ouvrir. */
+  const aRenvoyer = p.sessionConnue && !p.session;
+  useEffect(() => {
+    if (aRenvoyer) p.go({ view: "login" });
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [aRenvoyer]);
+
   if (!p.sessionConnue) return <Patienter texte="Ouverture de votre espace…" />;
-  if (!p.session) { p.go({ view: "login" }); return null; }
+  if (!p.session) return null;
 
   const sortir = (cert, mode) => {
     /* Un nouvel objet à chaque fois, même certificat : l'effet doit se
