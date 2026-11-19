@@ -34,6 +34,11 @@ import { VizdataLogo } from "./VizdataLogo.jsx";
 const LARGEUR = 1123;
 const HAUTEUR = 794;
 
+/* Le cachet est servi depuis la racine du site plutôt qu'importé : il part
+   ainsi tel quel dans le paquet, sous un nom stable, et le document imprimé
+   ne dépend pas d'une empreinte de construction. */
+const CACHET = "/cachet-vizdata.png";
+
 /* --- le document ---------------------------------------------------------- */
 
 function CertificatDocument({ cert, verifyUrl }) {
@@ -80,6 +85,10 @@ function CertificatDocument({ cert, verifyUrl }) {
 
         <footer className="vzc-pied">
           <div className="vzc-signature">
+            {/* Le cachet de la Direction Générale, posé au-dessus du trait
+                comme il le serait sur le papier. Il porte la signature : les
+                deux ne se séparent pas. */}
+            <img className="vzc-cachet" src={CACHET} alt="" aria-hidden="true" />
             <div className="vzc-signature-trait" />
             <div className="vzc-signature-nom">{cert.signatory || "Direction VIZDATA"}</div>
             <div className="vzc-signature-role">VIZDATA — Côte d'Ivoire</div>
@@ -96,12 +105,10 @@ function CertificatDocument({ cert, verifyUrl }) {
                 <div className="vzc-meta-valeur">{cert.duration} heures</div>
               </div>
             ) : null}
-            {cert.trainer ? (
-              <div>
-                <div className="vzc-eyebrow">Formateur</div>
-                <div className="vzc-meta-valeur">{cert.trainer}</div>
-              </div>
-            ) : null}
+            {/* Le formateur ne figure plus sur le document. Ce que le
+                certificat atteste est l'acquis du titulaire ; qui a animé la
+                session relève du dossier de formation, pas de l'attestation.
+                Le champ reste saisi et conservé au registre. */}
           </div>
 
           <div className="vzc-qr">

@@ -300,7 +300,11 @@
   display:flex;align-items:center;justify-content:space-between;padding:0 24px;gap:14px;
   position:sticky;top:0;z-index:20;
 }
-.vz-page{padding:26px 24px 72px;max-width:1280px;width:100%}
+/* Le contenu est centré dans l'espace qui reste à droite de la barre sombre,
+   et ne la touche jamais : la gouttière sépare le menu du travail, comme sur
+   le CRM VIZDATA. Collé au bord, le tableau de bord donnait l'impression de
+   déborder de la barre. */
+.vz-page{padding:28px 40px 72px;max-width:1280px;width:100%;margin:0 auto}
 .vz-page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap}
 .vz-page-head h1{font-size:25px}
 .vz-page-head p{color:var(--gris);font-size:13.5px;margin-top:6px;max-width:560px}
@@ -323,15 +327,16 @@
 .vz-grid{display:grid;gap:16px}
 .vz-stats{grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
 
-/* Les huit indicateurs du tableau de bord tiennent sur une seule ligne : à
-   196 px de large ils en demandaient deux, et la moitié haute de l'écran
-   partait en cartouches avant le premier graphique.
+/* Les indicateurs du tableau de bord tiennent sur une seule ligne : à 196 px
+   de large ils en demandaient deux, et la moitié haute de l'écran partait en
+   cartouches avant le premier graphique.
    Le nombre de colonnes est fixé par palier, et non laissé à « auto-fit » :
-   au fil du redimensionnement, celui-ci passait à sept colonnes et laissait
-   une carte seule sur la deuxième ligne, ce qui est pire que deux rangées
-   pleines. */
-@media (min-width:1260px){ .vz-stats-rangee{grid-template-columns:repeat(8,minmax(0,1fr))} }
-@media (min-width:700px) and (max-width:1259px){ .vz-stats-rangee{grid-template-columns:repeat(4,minmax(0,1fr))} }
+   au fil du redimensionnement, celui-ci laissait une carte seule sur une
+   deuxième ligne, ce qui est pire que deux rangées pleines. Le palier suit le
+   nombre de cartes — six aujourd'hui ; en ajouter une demande de revoir ce
+   chiffre ici. */
+@media (min-width:1100px){ .vz-stats-rangee{grid-template-columns:repeat(6,minmax(0,1fr))} }
+@media (min-width:700px) and (max-width:1099px){ .vz-stats-rangee{grid-template-columns:repeat(3,minmax(0,1fr))} }
 
 /* --- barre de filtres --------------------------------------------------------
    Reprise du tableau de bord du CRM VIZDATA : une carte claire, un libellé

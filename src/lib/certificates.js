@@ -41,4 +41,53 @@ function slugify(s) {
     .replace(/^-|-$/g, "");
 }
 
-export { effectiveStatus, STATUS_META, nextReference, slugify };
+/**
+ * Projection publique d'un certificat du registre.
+ *
+ * C'est la forme que lisent le document imprimé, la page de vérification et
+ * la modale de consultation. Les correspondances — titulaire, programme,
+ * domaine, compétences — sont passées en paramètre et non lues ici : la même
+ * projection sert au registre du serveur et au jeu de démonstration, qui ne
+ * vivent pas au même endroit.
+ *
+ * Cette indépendance n'est pas une coquetterie. La projection était écrite
+ * dans App, avec SA base ; l'administration, elle, travaille sur l'instantané
+ * qu'elle a téléchargé. Ouvrir un certificat depuis l'administration cherchait
+ * donc le titulaire dans une base qui ne le contenait pas, et le document
+ * officiel s'imprimait au nom de « Titulaire inconnu », programme
+ * « Programme inconnu ».
+ *
+ * Ni date d'expiration ni score : ils ne sont plus exposés nulle part.
+ */
+function projectionPublique(c, { userOf, typeOf, domainOf, skills = [] }) {
+  const u = userOf(c);
+  const t = typeOf(c);
+  const d = domainOf(t);
+  return {
+    id: c.id,
+    reference: c.reference,
+    holder_name: u && (u.first_name || u.last_name)
+      ? `${u.first_name || ""} ${u.last_name || ""}`.trim()
+      : "Titulaire inconnu",
+    certification: t?.name || "Programme inconnu",
+    domain: d?.name || "",
+    program_code: t?.code || "",
+    issuer: "VIZDATA",
+    issue_date: c.issue_date,
+    status: effectiveStatus(c),
+    revoke_reason: c.revoke_reason,
+    public_token: c.public_token,
+    description: t?.description || "",
+    duration: c.duration,
+    trainer: c.trainer,
+    signatory: c.signatory,
+    created_at: c.created_at,
+    /* Les compétences sont des identifiants dans le registre, des noms sur le
+       document : on aligne sur les noms. */
+    skills: (c.skills || []).map((id) => skills.find((s) => s.id === id)?.name).filter(Boolean),
+    /* Seul le registre complet permet d'alimenter l'historique et les compteurs. */
+    local_record: c,
+  };
+}
+
+export { effectiveStatus, STATUS_META, nextReference, slugify, projectionPublique };

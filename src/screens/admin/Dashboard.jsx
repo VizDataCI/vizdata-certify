@@ -24,8 +24,8 @@ import { peut } from "../../lib/permissions.js";
 import { monthlySeries } from "../../lib/series.js";
 import { Badge, BarChart, Stat, Vide } from "../../ui/primitives.jsx";
 import {
-  IconeCertificats, IconeCertifies, IconeVerification, IconeCatalogue,
-  IconeRevoquer, IconeAuthentique, IconeUtilisateurs, IconeHistorique,
+  IconeCertificats, IconeCertifies, IconeVerification,
+  IconeRevoquer, IconeAuthentique, IconeHistorique,
   IconePlus, IconeInfo, IconeDroite, IconeStats, IconeDate,
 } from "../../ui/icones.jsx";
 
@@ -87,7 +87,6 @@ function AdminDashboard(p) {
      finissaient par diverger. */
   const borne = Boolean(depuis || jusqu);
   const surPeriode = certs.filter((c) => dansLaPeriode(c.issue_date));
-  const nouveauxTitulaires = titulaires.filter((u) => dansLaPeriode(u.created_at)).length;
   const verifsPeriode = (p.db.verifications || []).filter((v) => dansLaPeriode(v.verified_at)).length;
 
   const par = (s) => certs.filter((c) => effectiveStatus(c) === s).length;
@@ -243,25 +242,11 @@ function AdminDashboard(p) {
           ton="gris"
         />
         <Stat
-          label="Nouveaux certifiés"
-          value={nouveauxTitulaires}
-          sub={borne ? libellePeriode : "au total"}
-          icone={IconeUtilisateurs}
-          ton="gris"
-        />
-        <Stat
           label="Vérifications"
           value={verifsPeriode}
           sub={borne ? libellePeriode : "consultations publiques"}
           icone={IconeVerification}
           ton="orange"
-        />
-        <Stat
-          label="Domaines actifs"
-          value={parDomaine.length}
-          sub="Ayant délivré sur la période"
-          icone={IconeCatalogue}
-          ton="gris"
         />
       </div>
 
@@ -403,6 +388,10 @@ const ACTIONS = {
   PROGRAM_UPDATED: "Programme modifié",
   SKILL_CREATED: "Compétence ajoutée",
   SKILL_UPDATED: "Compétence renommée",
+  CERTIFICATE_VERIFIED: "Certificat vérifié",
+  CERTIFICATE_SHARED: "Certificat partagé",
+  CERTIFICATE_PRINTED: "Certificat imprimé",
+  CERTIFICATE_DOWNLOADED: "Certificat téléchargé",
   INVITATION_SENT: "Invitation envoyée",
   PASSWORD_RESET: "Mot de passe réinitialisé",
   CANDIDATURE_UPDATED: "Candidature mise à jour",

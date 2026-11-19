@@ -14,6 +14,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import * as api from "../../data/api.js";
 import { isAuthConfigured } from "../../lib/auth.js";
+import { projectionPublique } from "../../lib/certificates.js";
 import { estAdmin, estAdministration, peut } from "../../lib/permissions.js";
 import { CertificateModal } from "../../modals/CertificateModal.jsx";
 import { ShareModal } from "../../modals/ShareModal.jsx";
@@ -139,13 +140,21 @@ function AdminSpace(p) {
   const pageCourante = autorisee ? page : "dashboard";
 
   /* Les accès par identifiant suivent la source retenue. */
+  const userOf = (c) => db?.users.find((u) => u.id === c.user_id) || { first_name: "Titulaire", last_name: "inconnu", email: "" };
+  const typeOf = (c) => db?.types.find((t) => t.id === c.certificate_type_id) || { name: "Programme inconnu", code: "", description: "" };
+  const domainOf = (t) => t?.certification_domains || (db?.domains || []).find((d) => d.id === t?.domain_id) || null;
+
   const shared = db
     ? {
         ...p,
         db,
-        userOf: (c) => db.users.find((u) => u.id === c.user_id) || { first_name: "Titulaire", last_name: "inconnu", email: "" },
-        typeOf: (c) => db.types.find((t) => t.id === c.certificate_type_id) || { name: "Programme inconnu", code: "", description: "" },
-        domainOf: (t) => t?.certification_domains || (db.domains || []).find((d) => d.id === t?.domain_id) || null,
+        userOf,
+        typeOf,
+        domainOf,
+        /* La projection de App lit la base de App. Ici, c'est l'instantané du
+           registre qui fait foi : sans cette redéfinition, un certificat ouvert
+           depuis l'administration s'imprimait au nom de « Titulaire inconnu ». */
+        toPublic: (c) => projectionPublique(c, { userOf, typeOf, domainOf, skills: db.skills || [] }),
         remote: isAuthConfigured,
         actions,
         setModal,
@@ -183,8 +192,8 @@ function AdminSpace(p) {
         {shared && pageCourante === "settings" && <AdminSettings {...shared} />}
       </div>
 
-      {shared && modal?.type === "cert" && <CertificateModal cert={p.toPublic(modal.c)} {...shared} onClose={() => setModal(null)} />}
-      {shared && modal?.type === "share" && <ShareModal cert={p.toPublic(modal.c)} {...shared} onClose={() => setModal(null)} />}
+      {shared && modal?.type === "cert" && <CertificateModal cert={shared.toPublic(modal.c)} {...shared} onClose={() => setModal(null)} />}
+      {shared && modal?.type === "share" && <ShareModal cert={shared.toPublic(modal.c)} {...shared} onClose={() => setModal(null)} />}
       {shared && modal?.type === "form" && <CertificateForm cert={modal.c} titulaire={modal.titulaire} {...shared} onClose={() => setModal(null)} />}
       {shared && modal?.type === "holder" && <HolderForm titulaire={modal.c} {...shared} onClose={() => setModal(null)} />}
       {shared && modal?.type === "titulaire" && <HolderDetail titulaire={modal.c} {...shared} setModal={setModal} onClose={() => setModal(null)} />}

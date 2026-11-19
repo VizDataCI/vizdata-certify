@@ -185,9 +185,23 @@
   border-top: 1px solid #eef0f4;
 }
 
-.vzc-signature { flex: 0 0 216px; }
+.vzc-signature { flex: 0 0 216px; position: relative; }
+/* Le cachet déborde volontairement vers le haut : posé dans le flux, il
+   repousserait le trait de signature et déséquilibrerait le pied. Sorti du
+   flux, il se pose sur le document comme un tampon sur le papier.
+   « multiply » efface le fond blanc du fichier sans l'avoir détouré : sur un
+   document blanc, le résultat est identique à une image transparente. */
+.vzc-cachet {
+  position: absolute;
+  bottom: 42px;
+  left: -16px;
+  width: 215px;
+  height: auto;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
 .vzc-signature-trait {
-  width: 180px;
+  width: 128px;
   height: 1px;
   background: #101a2b;
   margin-bottom: 8px;
@@ -283,6 +297,33 @@
     display: block !important;
     margin: 0;
     padding: 0;
+    /* Rien ne doit pouvoir dépasser de la feuille : ce qui dépasse crée une
+       seconde page. */
+    overflow: hidden;
+  }
+
+  /* Pourquoi le gabarit rétrécit de trois pixels à l'impression.
+
+     1123 × 794 px à 96 ppp font 297,07 × 210,08 mm. L'A4 en fait 297 × 210.
+     Le document est donc plus grand que la feuille de huit centièmes de
+     millimètre — invisible à l'œil, décisif pour le moteur d'impression, qui
+     constate un débordement et ouvre une deuxième page, vide. C'est ce que
+     produisait l'export PDF : deux pages, dont une blanche.
+
+     Trois pixels de moins laissent presque un millimètre de marge. Aucune
+     dimension intérieure ne bouge : le document reste celui de l'écran. */
+  #impression .vzc {
+    width: 1120px !important;
+    height: 791px !important;
+  }
+
+  /* Le mélange « multiply » du cachet n'est pas garanti sur toutes les
+     sorties : certaines le rendent, d'autres l'ignorent. Le cachet est posé
+     au-dessus du trait de signature, de sorte qu'il ne masque rien dans les
+     deux cas. Les couleurs, elles, doivent être imprimées telles quelles. */
+  #impression .vzc-cachet {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   #impression .vzc {

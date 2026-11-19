@@ -12,7 +12,7 @@ import { BASE_URL } from "./data/seed.js";
 import { STORE_KEY, loadDb } from "./data/store.js";
 import * as api from "./data/api.js";
 import { currentUser, isAuthConfigured, onAuthChange, signIn, signOut } from "./lib/auth.js";
-import { effectiveStatus } from "./lib/certificates.js";
+import { effectiveStatus, projectionPublique } from "./lib/certificates.js";
 import { estAdministration } from "./lib/permissions.js";
 import { currentRoute, onNavigate, pushRoute, toPath } from "./lib/router.js";
 import { NotFound } from "./screens/public/NotFound.jsx";
@@ -179,34 +179,8 @@ export default function App() {
   /** Projection publique d'un certificat local, alignée sur celle du registre.
    *  Ni la date d'expiration ni le score n'en font partie : ils ne sont plus
    *  exposés, et la vue publique du registre ne les porte plus non plus. */
-  const toPublic = (c) => {
-    const u = userOf(c);
-    const t = typeOf(c);
-    const d = domainOf(t);
-    return {
-      id: c.id,
-      reference: c.reference,
-      holder_name: u ? `${u.first_name} ${u.last_name}` : "Titulaire inconnu",
-      certification: t?.name || "Programme inconnu",
-      domain: d?.name || "",
-      program_code: t?.code || "",
-      issuer: "VIZDATA",
-      issue_date: c.issue_date,
-      status: effectiveStatus(c),
-      revoke_reason: c.revoke_reason,
-      public_token: c.public_token,
-      description: t?.description || "",
-      duration: c.duration,
-      trainer: c.trainer,
-      signatory: c.signatory,
-      created_at: c.created_at,
-      /* Les compétences sont des identifiants dans le registre local et des
-         noms côté base : on aligne sur les noms. */
-      skills: (c.skills || []).map((id) => (db.skills || []).find((s) => s.id === id)?.name).filter(Boolean),
-      /* Seul le registre local permet d'alimenter l'historique et les compteurs. */
-      local_record: c,
-    };
-  };
+  const toPublic = (c) =>
+    projectionPublique(c, { userOf, typeOf, domainOf, skills: db.skills || [] });
 
   const findByReference = async (reference) => {
     if (isAuthConfigured) return api.verifyByReference(reference);
