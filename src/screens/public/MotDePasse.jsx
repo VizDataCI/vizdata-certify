@@ -89,7 +89,7 @@ function ForgotPassword(p) {
           Le lien n'est valable qu'une heure, et une seule fois. Pensez à regarder dans les indésirables.
           {!isAuthConfigured && " (En démonstration, aucun e-mail n'est réellement envoyé.)"}
         </p>
-        <div style={{ display: "flex", gap: 8, marginTop: 18, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 8, marginTop: 18, flexWrap: "wrap", justifyContent: "center" }}>
           <button className="vz-btn" onClick={() => p.go({ view: "login" })}>Retour à la connexion</button>
           <button className="vz-btn" onClick={() => { setEnvoye(false); setErr(""); }}>Renvoyer le lien</button>
         </div>
@@ -115,7 +115,7 @@ function ForgotPassword(p) {
           />
         </Field>
         {err && <div className="vz-alert err">{err}</div>}
-        <button className="vz-btn vz-btn-primary vz-btn-lg" onClick={envoyer} disabled={busy}>
+        <button className="vz-btn vz-btn-primary vz-btn-lg vz-btn-form" onClick={envoyer} disabled={busy}>
           {busy ? "Envoi…" : "Envoyer le lien"}
         </button>
         <button className="vz-linkbtn" style={{ alignSelf: "center" }} onClick={() => p.go({ view: "login" })}>
@@ -177,7 +177,7 @@ function NewPassword(p) {
           Pour choisir un mot de passe, suivez le lien reçu par e-mail. Si vous n'en avez pas, ou s'il a expiré,
           demandez-en un nouveau.
         </div>
-        <div style={{ display: "flex", gap: 8, marginTop: 18, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 8, marginTop: 18, flexWrap: "wrap", justifyContent: "center" }}>
           <button className="vz-btn vz-btn-primary" onClick={() => p.go({ view: "forgotPassword" })}>Demander un lien</button>
           <button className="vz-btn" onClick={() => p.go({ view: "login" })}>Connexion</button>
         </div>
@@ -193,7 +193,7 @@ function NewPassword(p) {
           Les liens ne servent qu'une fois, et ne restent valables qu'un temps : un lien qui traînerait dans une
           boîte de réception resterait sinon une clé de votre compte.
         </p>
-        <div style={{ display: "flex", gap: 8, marginTop: 18, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 8, marginTop: 18, flexWrap: "wrap", justifyContent: "center" }}>
           <button className="vz-btn vz-btn-primary" onClick={() => p.go({ view: "forgotPassword" })}>Demander un nouveau lien</button>
           <button className="vz-btn" onClick={() => p.go({ view: "login" })}>Connexion</button>
         </div>
@@ -260,7 +260,7 @@ function NewPassword(p) {
           />
         </Field>
         {err && <div className="vz-alert err">{err}</div>}
-        <button className="vz-btn vz-btn-primary vz-btn-lg" onClick={enregistrer} disabled={busy}>
+        <button className="vz-btn vz-btn-primary vz-btn-lg vz-btn-form" onClick={enregistrer} disabled={busy}>
           {busy ? "Enregistrement…" : "Enregistrer le mot de passe"}
         </button>
       </div>

@@ -219,7 +219,7 @@ function CertifiedSpace(p) {
                   </label>
                 </div>
                 {err && <div className="vz-alert err" style={{ marginTop: 14 }}>{err}</div>}
-                <div style={{ display: "flex", gap: 8, marginTop: 20, flexWrap: "wrap" }}>
+                <div style={{ display: "flex", gap: 8, marginTop: 20, flexWrap: "wrap", justifyContent: "center" }}>
                   <button className="vz-btn vz-btn-primary" onClick={saveProfile} disabled={saving}>
                     {saving ? "Enregistrement…" : "Enregistrer"}
                   </button>
@@ -309,7 +309,7 @@ function Securite({ p }) {
             <input className="vz-input" type="password" value={confirmation} onChange={(e) => { setConfirmation(e.target.value); setErr(""); }} onKeyDown={(e) => e.key === "Enter" && changer()} autoComplete="new-password" />
           </Field>
           {err && <div className="vz-alert err">{err}</div>}
-          <button className="vz-btn vz-btn-primary" style={{ alignSelf: "flex-start" }} onClick={changer} disabled={busy}>
+          <button className="vz-btn vz-btn-primary vz-btn-form" onClick={changer} disabled={busy}>
             {busy ? "Modification…" : "Modifier mon mot de passe"}
           </button>
           <p className="vz-small vz-muted" style={{ lineHeight: 1.7, borderTop: "1px solid var(--trait)", paddingTop: 14, margin: 0 }}>

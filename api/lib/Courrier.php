@@ -38,18 +38,34 @@ final class Courrier
         return htmlspecialchars((string) $s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     }
 
+    /**
+     * Le gabarit commun.
+     *
+     * Le logo est une image matricielle servie par le site, et non le SVG de
+     * l'application : Gmail supprime le SVG, Outlook ne l'a jamais su. Le mot
+     * « vizdata » reste écrit en toutes lettres sous l'image — les messageries
+     * bloquent les images distantes par défaut, et la marque doit tenir même
+     * quand le destinataire ne les a pas affichées.
+     *
+     * Le bouton est centré par l'attribut `align` d'un tableau, et pas par une
+     * marge automatique : Outlook ignore `margin:auto`, et le bouton repartait
+     * contre le bord gauche.
+     */
     private static function gabarit(string $titre, string $intro, string $corps, ?array $lien = null): string
     {
         $site = self::site();
         $bouton = '';
         if ($lien !== null) {
             $url = self::e($lien['url']);
-            $bouton = '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:26px 0;">'
-                . '<tr><td style="background:#12688F;border-radius:6px;">'
-                . '<a href="' . $url . '" style="display:inline-block;padding:13px 24px;color:#ffffff;font-weight:600;font-size:14px;text-decoration:none;">'
+            $bouton = '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:26px 0 18px;">'
+                . '<tr><td align="center">'
+                . '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">'
+                . '<tr><td align="center" style="background:#12688F;border-radius:999px;">'
+                . '<a href="' . $url . '" style="display:inline-block;padding:14px 34px;color:#ffffff;font-family:Helvetica,Arial,sans-serif;font-weight:600;font-size:14.5px;text-decoration:none;white-space:nowrap;">'
                 . self::e($lien['libelle']) . '</a></td></tr></table>'
-                . '<p style="margin:0 0 6px;font-size:12px;color:#8a91a0;">Si le bouton ne fonctionne pas, copiez cette adresse :</p>'
-                . '<p style="margin:0;font-size:12px;color:#12688F;word-break:break-all;">' . $url . '</p>';
+                . '</td></tr></table>'
+                . '<p style="margin:0 0 6px;font-size:12px;color:#8a91a0;text-align:center;">Si le bouton ne fonctionne pas, copiez cette adresse :</p>'
+                . '<p style="margin:0;font-size:12px;color:#12688F;word-break:break-all;text-align:center;">' . $url . '</p>';
         }
 
         return '<!doctype html><html lang="fr"><head><meta charset="utf-8">'
@@ -58,12 +74,14 @@ final class Courrier
             . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F6F7F9;padding:32px 16px;">'
             . '<tr><td align="center">'
             . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fff;border:1px solid #E3E6EC;border-radius:10px;">'
-            . '<tr><td style="padding:26px 30px 0;">'
-            . '<div style="font-family:Helvetica,Arial,sans-serif;font-weight:600;font-size:16px;color:#4A2A63;">vizdata</div>'
+            . '<tr><td align="center" style="padding:30px 30px 0;">'
+            . '<img src="' . $site . '/logo-courriel.png" width="104" height="74" alt="VIZDATA" '
+            . 'style="display:block;margin:0 auto;border:0;outline:none;text-decoration:none;width:104px;height:auto;">'
+            . '<div style="font-family:Helvetica,Arial,sans-serif;font-weight:600;font-size:17px;color:#4A2A63;margin-top:10px;">vizdata</div>'
             . '<div style="font-family:Helvetica,Arial,sans-serif;font-size:10px;letter-spacing:.19em;text-transform:uppercase;color:#667085;margin-top:3px;">certify</div>'
             . '</td></tr>'
-            . '<tr><td style="padding:24px 30px 30px;font-family:Helvetica,Arial,sans-serif;color:#101A2B;">'
-            . '<h1 style="margin:0 0 14px;font-size:21px;font-weight:600;">' . self::e($titre) . '</h1>'
+            . '<tr><td style="padding:22px 30px 30px;font-family:Helvetica,Arial,sans-serif;color:#101A2B;">'
+            . '<h1 style="margin:0 0 14px;font-size:21px;font-weight:600;text-align:center;">' . self::e($titre) . '</h1>'
             . '<p style="margin:0 0 14px;font-size:15px;line-height:1.6;color:#344054;">' . $intro . '</p>'
             . $corps . $bouton
             . '<p style="margin:22px 0 0;font-size:12.5px;line-height:1.6;color:#667085;border-top:1px solid #E3E6EC;padding-top:16px;">'
@@ -106,17 +124,30 @@ final class Courrier
                     ['url' => "$site/nouveau-mot-de-passe?jeton=" . ($p['jeton'] ?? ''), 'libelle' => 'Choisir un nouveau mot de passe']
                 ),
             ],
+            /* Le message qu'on reçoit une fois, et qu'on garde.
+               Il annonçait platement qu'une certification « est attribuée ».
+               Derrière une certification il y a des semaines de travail : le
+               message le dit, et félicite, avant de parler de références et de
+               boutons. */
             'CERTIFICAT_ATTRIBUE' => [
-                'sujet' => 'Votre certification ' . ($p['certification'] ?? '') . ' est disponible',
+                'sujet' => 'Félicitations ' . ($p['prenom'] ?? '') . ', votre certification ' . ($p['certification'] ?? '') . ' est délivrée',
                 'html' => self::gabarit(
-                    'Une nouvelle certification vous est attribuée',
-                    "Bonjour $prenom, VIZDATA vient de vous délivrer une certification. Elle est disponible dans votre espace personnel, où vous pouvez la consulter, la télécharger en PDF et l'imprimer.",
-                    '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #E3E6EC;border-radius:8px;">'
+                    'Félicitations' . ($prenom !== '' ? " $prenom" : '') . ' !',
+                    "Vous avez validé votre parcours, et VIZDATA a le plaisir de vous délivrer votre certification. "
+                    . "C'est l'aboutissement de votre travail et de votre assiduité : prenez le temps d'en être fier.",
+                    '<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#344054;">'
+                    . 'Votre certificat est dès maintenant enregistré au registre officiel VIZDATA. '
+                    . 'Il porte une référence unique et un QR code : un employeur, un partenaire ou un recruteur '
+                    . 'peut en vérifier l\'authenticité à tout moment, sans passer par vous.</p>'
+                    . '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #E3E6EC;border-radius:8px;">'
                     . self::ligne('Certification', (string) ($p['certification'] ?? ''))
                     . self::ligne('Domaine', (string) ($p['domaine'] ?? '—'))
                     . self::ligne('Référence', (string) ($p['reference'] ?? ''), true)
-                    . '</table>',
-                    ['url' => "$site/espace", 'libelle' => 'Ouvrir mon espace']
+                    . '</table>'
+                    . '<p style="margin:16px 0 0;font-size:14px;line-height:1.6;color:#344054;">'
+                    . 'Depuis votre espace, vous pouvez le consulter, le télécharger en PDF, l\'imprimer '
+                    . 'et le partager. Nous vous souhaitons de belles suites avec ces compétences.</p>',
+                    ['url' => "$site/espace", 'libelle' => 'Voir ma certification']
                 ),
             ],
             'PROFIL_MODIFIE' => [
