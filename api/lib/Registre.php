@@ -366,6 +366,12 @@ final class Registre
         }
         Base::ecrire('delete from certificate_skills where certificate_id = ?', [$certificatId]);
         foreach ($skills as $skill) {
+            /* Une compétence inconnue violerait la clé étrangère, et l'erreur
+               remonterait sous la forme illisible « Les données envoyées ne
+               sont pas valides. ». On la nomme. */
+            if (Base::un('select id from skills where id = ?', [$skill]) === null) {
+                throw new Refus(400, 'Compétence inconnue du référentiel : ' . $skill);
+            }
             Base::ecrire(
                 'insert or ignore into certificate_skills (certificate_id, skill_id) values (?, ?)',
                 [$certificatId, $skill]
@@ -538,6 +544,59 @@ final class Registre
         Base::ecrire("update certificate_types set $colonnes where id = ?", [...array_values($retenus), $id]);
         self::journaliser($acteur, 'PROGRAM_UPDATED', ['entite' => 'program', 'entiteId' => $id, 'valeur' => $champs['code'] ?? '']);
         return Base::un('select * from certificate_types where id = ?', [$id]);
+    }
+
+    /* --- compétences --------------------------------------------------------- *
+     *
+     * Le référentiel des compétences est propre à VIZDATA : rien n'y entre
+     * automatiquement. Il alimente les cases à cocher de l'attribution, et
+     * c'est la seule source possible — un certificat ne peut porter qu'un
+     * acquis qui existe ici.
+     *
+     * Aucune suppression. Une compétence effacée disparaîtrait des certificats
+     * déjà délivrés (la clé étrangère est en cascade), et la page publique
+     * d'un titulaire maigrirait sans que personne ne l'ait décidé. On renomme,
+     * on ne retire pas.
+     */
+
+    public static function creerCompetence(array $acteur, array $champs): array
+    {
+        $nom = trim((string) ($champs['name'] ?? ''));
+        if ($nom === '') {
+            throw new Refus(400, 'Le nom de la compétence est obligatoire.');
+        }
+
+        /* Le nom est unique sans égard à la casse : « Power Query » saisi deux
+           fois donnerait deux cases à cocher identiques. On rend l'existante. */
+        $deja = Base::un('select * from skills where name = ? collate nocase', [$nom]);
+        if ($deja !== null) {
+            return $deja;
+        }
+
+        $id = Base::uid();
+        Base::ecrire(
+            'insert into skills (id, name, description) values (?, ?, ?)',
+            [$id, $nom, (string) ($champs['description'] ?? '')]
+        );
+        self::journaliser($acteur, 'SKILL_CREATED', ['entite' => 'skill', 'entiteId' => $id, 'valeur' => $nom]);
+        return Base::un('select * from skills where id = ?', [$id]);
+    }
+
+    public static function majCompetence(array $acteur, string $id, array $champs): array
+    {
+        if (Base::un('select id from skills where id = ?', [$id]) === null) {
+            throw new Refus(404, 'Compétence introuvable.');
+        }
+        $nom = trim((string) ($champs['name'] ?? ''));
+        if ($nom === '') {
+            throw new Refus(400, 'Le nom de la compétence est obligatoire.');
+        }
+        Base::ecrire(
+            'update skills set name = ?, description = ? where id = ?',
+            [$nom, (string) ($champs['description'] ?? ''), $id]
+        );
+        self::journaliser($acteur, 'SKILL_UPDATED', ['entite' => 'skill', 'entiteId' => $id, 'valeur' => $nom]);
+        return Base::un('select * from skills where id = ?', [$id]);
     }
 
     /* --- comptes ------------------------------------------------------------ */

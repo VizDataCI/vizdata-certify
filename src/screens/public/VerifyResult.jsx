@@ -24,6 +24,7 @@ import { STATUS_META } from "../../lib/certificates.js";
 import { fmtLong } from "../../lib/dates.js";
 import { CertificateModal } from "../../modals/CertificateModal.jsx";
 import { QRCode } from "../../ui/QRCode.jsx";
+import { VizdataMark } from "../../ui/VizdataLogo.jsx";
 import { Badge } from "../../ui/primitives.jsx";
 import {
   IconeAuthentique, IconeAlerte, IconeRevoquer, IconeInfo, IconeValider,
@@ -176,50 +177,39 @@ function VerifyResult(p) {
             </div>
           )}
 
-          {enVigueur && (
-            <>
-              <div className="vz-valeur">
-                <h3>Une compétence reconnue et valorisée</h3>
-                <p>
-                  Cette certification atteste que son titulaire a suivi avec succès le parcours de
-                  formation correspondant et satisfait aux exigences de validation définies par VIZDATA.
-                </p>
-                <p>
-                  Elle témoigne de sa capacité à mobiliser les compétences acquises dans un contexte
-                  professionnel et à les mettre en pratique pour répondre à des situations concrètes.
-                </p>
-                <p>
-                  Elle constitue un élément de valorisation de son parcours et peut être présentée
-                  auprès des employeurs, partenaires et recruteurs.
-                </p>
-              </div>
+          {/* Une seule section, et courte.
+              Trois paragraphes de valorisation tenaient ici, suivis d'un second
+              encart pour les acquis : l'essentiel passait sous la ligne de
+              flottaison, et celui qui vérifie faisait défiler pour rien. La
+              phrase qui engage VIZDATA est gardée, le reste est parti.
 
-              {/* Rien n'est déduit ici. Les acquis affichés sont ceux qui ont été
-                  rattachés au certificat au moment de la délivrance ; à défaut,
-                  la description du programme, écrite par VIZDATA. Sans l'un ni
-                  l'autre, la section disparaît. Annoncer des compétences que la
-                  formation ne couvre pas ferait de ce registre un argument de
-                  vente, ce qu'il n'est pas. */}
-              {(acquis.length > 0 || cert.description) && (
-                <div className="vz-valeur">
-                  <h3>Ce que cette certification atteste</h3>
-                  {acquis.length > 0 ? (
-                    <ul className="vz-acquis">
-                      {acquis.map((s) => (
-                        <li key={s}><IconeValider size={16} /><span>{s}</span></li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p>{cert.description}</p>
-                  )}
-                  {cert.duration > 0 && (
-                    <p className="vz-small vz-muted" style={{ marginTop: 14 }}>
-                      Parcours de {cert.duration} heures de formation.
-                    </p>
-                  )}
-                </div>
+              Rien n'est déduit. Les acquis affichés sont ceux rattachés au
+              certificat au moment de la délivrance ; à défaut, la description
+              du programme, écrite par VIZDATA. Annoncer des compétences que la
+              formation ne couvre pas ferait de ce registre un argument de
+              vente, ce qu'il n'est pas. */}
+          {enVigueur && (
+            <div className="vz-valeur">
+              <h3>Ce que cette certification atteste</h3>
+              <p>
+                Son titulaire a suivi le parcours de formation VIZDATA correspondant et satisfait aux
+                exigences de validation. Elle peut être présentée à un employeur ou à un recruteur.
+              </p>
+              {acquis.length > 0 ? (
+                <ul className="vz-acquis">
+                  {acquis.map((s) => (
+                    <li key={s}><IconeValider size={16} /><span>{s}</span></li>
+                  ))}
+                </ul>
+              ) : (
+                cert.description && <p style={{ marginTop: 10 }}>{cert.description}</p>
               )}
-            </>
+              {cert.duration > 0 && (
+                <p className="vz-small vz-muted" style={{ marginTop: 12 }}>
+                  Parcours de {cert.duration} heures de formation.
+                </p>
+              )}
+            </div>
           )}
 
           {/* Consultation seule. Ni téléchargement ni partage : celui qui vérifie
@@ -234,13 +224,18 @@ function VerifyResult(p) {
             </div>
           )}
 
-          <div className="vz-slip-foot">
-            Ce certificat a été délivré par VIZDATA. Son authenticité peut être vérifiée à tout moment
-            à partir de cette page.
+          {/* Pied signé : la marque, la phrase qui dit d'où vient le document,
+              et le QR code à côté plutôt qu'en dessous. Empilés, ils ajoutaient
+              une hauteur d'écran sur un téléphone. */}
+          <div className="vz-slip-foot vz-foot-signe">
+            <div className="vz-foot-marque">
+              <VizdataMark size={22} />
+              <span>Délivré par VIZDATA. Vérifiable à tout moment depuis cette page.</span>
+            </div>
             {url && (
-              <div style={{ marginTop: 12, display: "flex", gap: 15, alignItems: "center" }}>
-                <QRCode value={url} size={132} />
-                <span className="vz-mono" style={{ fontSize: 11, wordBreak: "break-all" }}>{url}</span>
+              <div className="vz-foot-qr">
+                <QRCode value={url} size={92} />
+                <span className="vz-mono">{url}</span>
               </div>
             )}
           </div>

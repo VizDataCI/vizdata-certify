@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { REFERENCE_EXEMPLE } from "../../data/seed.js";
+import { EnteteForm } from "../../ui/primitives.jsx";
 import { PublicShell } from "./PublicShell.jsx";
 
 function VerifySearch(p) {
@@ -44,14 +45,14 @@ function VerifySearch(p) {
   return (
     <PublicShell {...p}>
       <div className="vz-public-body">
-        <div className="vz-slip" style={{ maxWidth: 480 }}>
-          <div className="vz-card-body" style={{ padding: 26 }}>
-            <div className="vz-eyebrow">Vérification</div>
-            <h2 style={{ fontSize: 19, margin: "10px 0 6px" }}>Vérifier un certificat</h2>
-            <p className="vz-small vz-muted" style={{ marginBottom: 18 }}>Entrez la référence figurant sur le certificat.</p>
+        <div className="vz-slip" style={{ maxWidth: 440 }}>
+          <div className="vz-card-body" style={{ padding: "44px 40px 34px" }}>
+            <EnteteForm titre="Vérifier un certificat">
+              Entrez la référence figurant sur le certificat.
+            </EnteteForm>
             <input
               className="vz-input"
-              style={{ height: 44, fontFamily: "var(--mono)", letterSpacing: ".04em" }}
+              style={{ height: 44, fontFamily: "var(--mono)", letterSpacing: ".04em", textAlign: "center" }}
               placeholder={REFERENCE_EXEMPLE}
               value={ref}
               onChange={(e) => { setRef(e.target.value); setErr(""); }}
@@ -62,7 +63,7 @@ function VerifySearch(p) {
             <button className="vz-btn vz-btn-primary vz-btn-lg" style={{ width: "100%", marginTop: 14 }} onClick={() => submit()} disabled={busy}>
               {busy ? "Vérification…" : "Vérifier"}
             </button>
-            <p className="vz-small vz-muted" style={{ marginTop: 16, lineHeight: 1.6 }}>
+            <p className="vz-small vz-muted" style={{ marginTop: 16, lineHeight: 1.6, textAlign: "center" }}>
               Exemple de référence valide : <span className="vz-ref">{REFERENCE_EXEMPLE}</span>
             </p>
           </div>

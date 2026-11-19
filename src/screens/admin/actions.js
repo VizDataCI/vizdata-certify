@@ -202,6 +202,41 @@ function creerActions({ remote, dbRef, setDb, session, recharger }) {
       journaliser("PROGRAM_UPDATED", id, champs.code || "", "program");
     },
 
+    /* --- compétences ----------------------------------------------------- *
+     *
+     * Le référentiel est commun à tous les programmes, et il se remplit à la
+     * main. Une compétence ne s'invente pas au moment d'attribuer : ce qui
+     * figure sur un certificat engage VIZDATA.
+     *
+     * Le serveur rend la compétence existante si le nom est déjà pris, sans
+     * créer de doublon : « Power Query » saisi deux fois donnerait deux cases
+     * à cocher identiques. */
+    async ajouterCompetence(nom) {
+      const propre = (nom || "").trim();
+      if (!propre) throw new Error("Nommez la compétence à ajouter.");
+      if (remote) {
+        const creee = await api.createSkill({ name: propre });
+        await recharger();
+        return creee;
+      }
+      const deja = (local().skills || []).find((s) => s.name.toLowerCase() === propre.toLowerCase());
+      if (deja) return deja;
+      const creee = { id: prochainId(local().skills || []), name: propre, description: "" };
+      setDb((d) => ({ ...d, skills: [...(d.skills || []), creee] }));
+      journaliser("SKILL_CREATED", creee.id, propre, "skill");
+      return creee;
+    },
+
+    async majCompetence(id, champs) {
+      if (remote) {
+        await api.updateSkill(id, champs);
+        await recharger();
+        return;
+      }
+      setDb((d) => ({ ...d, skills: (d.skills || []).map((x) => (x.id === id ? { ...x, ...champs } : x)) }));
+      journaliser("SKILL_UPDATED", id, champs.name || "", "skill");
+    },
+
     /* --- certificats ----------------------------------------------------- */
 
     /** Délivre ou modifie un certificat.

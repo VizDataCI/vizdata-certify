@@ -26,16 +26,22 @@
  */
 
 import { useState } from "react";
-import { SKILLS } from "../../data/seed.js";
 import { fmtShort } from "../../lib/dates.js";
 import { peut } from "../../lib/permissions.js";
 import { Field, Modal } from "../../ui/primitives.jsx";
+import { IconePlus } from "../../ui/icones.jsx";
 
 function CertificateForm({ cert, titulaire: titulaireImpose, onClose, ...p }) {
   const nouveau = !cert;
   const programmes = (p.db.types || []).filter((t) => t.status !== "INACTIVE" || !nouveau);
   const domaines = p.db.domains || [];
-  const competences = p.db.skills?.length ? p.db.skills : SKILLS;
+  /* Le référentiel du registre, et lui seul.
+     Une liste de secours venue de la démonstration tenait ici : quand la base
+     n'avait aucune compétence, elle affichait celles du jeu d'essai. Leurs
+     identifiants n'existent pas en production, et cocher l'une d'elles faisait
+     échouer l'attribution sur la clé étrangère. Mieux vaut n'avoir rien à
+     cocher, et le dire. */
+  const competences = p.db.skills || [];
 
   /* --- titulaire -------------------------------------------------------- */
   const titulaireInitial = cert ? p.userOf(cert) : titulaireImpose || null;
@@ -67,6 +73,8 @@ function CertificateForm({ cert, titulaire: titulaireImpose, onClose, ...p }) {
   const [avertir, setAvertir] = useState(true);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+  const [nouvelleCompetence, setNouvelleCompetence] = useState("");
+  const [ajoutEnCours, setAjoutEnCours] = useState(false);
 
   /* Deux caractères au minimum : au premier, la liste entière remonterait et
      n'aiderait personne à choisir. */
@@ -98,6 +106,25 @@ function CertificateForm({ cert, titulaire: titulaireImpose, onClose, ...p }) {
 
   const basculerCompetence = (id) =>
     setF((v) => ({ ...v, skills: v.skills.includes(id) ? v.skills.filter((s) => s !== id) : [...v.skills, id] }));
+
+  /* Une compétence créée depuis ce formulaire est aussitôt cochée : on ne
+     l'ajoute pas pour la retrouver plus tard, on l'ajoute pour l'attribuer. */
+  const ajouterCompetence = async () => {
+    const nom = nouvelleCompetence.trim();
+    if (!nom || ajoutEnCours) return;
+    setAjoutEnCours(true);
+    setErr("");
+    try {
+      const creee = await p.actions.ajouterCompetence(nom);
+      if (creee?.id) {
+        setF((v) => (v.skills.includes(creee.id) ? v : { ...v, skills: [...v.skills, creee.id] }));
+      }
+      setNouvelleCompetence("");
+    } catch (e) {
+      setErr(e.message);
+    }
+    setAjoutEnCours(false);
+  };
 
   /* --- création d'un titulaire depuis le formulaire --------------------- */
   const creerTitulaire = async () => {
@@ -351,17 +378,45 @@ function CertificateForm({ cert, titulaire: titulaireImpose, onClose, ...p }) {
 
         <div style={{ marginTop: 16 }}>
           <div className="vz-label" style={{ marginBottom: 9 }}>Compétences validées</div>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {competences.map((s) => (
-              <button
-                key={s.id}
-                className={"vz-chip vz-chip-bascule" + (f.skills.includes(s.id) ? " on" : "")}
-                onClick={() => basculerCompetence(s.id)}
-                type="button"
-              >
-                {s.name}
-              </button>
-            ))}
+          {competences.length > 0 ? (
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {competences.map((s) => (
+                <button
+                  key={s.id}
+                  className={"vz-chip vz-chip-bascule" + (f.skills.includes(s.id) ? " on" : "")}
+                  onClick={() => basculerCompetence(s.id)}
+                  type="button"
+                >
+                  {s.name}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="vz-small vz-muted">
+              Le référentiel est vide. Ajoutez ci-dessous les compétences que ce parcours valide ;
+              elles resteront disponibles pour les prochaines attributions.
+            </p>
+          )}
+          {/* La création se fait ici parce que c'est ici que le manque se voit.
+              Le référentiel se gère aussi depuis « Domaines et programmes ». */}
+          <div style={{ display: "flex", gap: 7, marginTop: 10 }}>
+            <input
+              className="vz-input"
+              style={{ maxWidth: 280 }}
+              placeholder="Ajouter une compétence"
+              value={nouvelleCompetence}
+              onChange={(e) => setNouvelleCompetence(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); ajouterCompetence(); } }}
+              aria-label="Nom de la compétence à ajouter"
+            />
+            <button
+              className="vz-btn vz-btn-sm"
+              type="button"
+              onClick={ajouterCompetence}
+              disabled={ajoutEnCours || !nouvelleCompetence.trim()}
+            >
+              <IconePlus size={15} /> {ajoutEnCours ? "Ajout…" : "Ajouter"}
+            </button>
           </div>
           <p className="vz-small vz-muted" style={{ marginTop: 8 }}>
             Les six premières figurent sur le certificat imprimé ; toutes apparaissent sur la page de vérification.

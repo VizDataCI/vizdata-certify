@@ -26,7 +26,7 @@ import { Badge, BarChart, Stat, Vide } from "../../ui/primitives.jsx";
 import {
   IconeCertificats, IconeCertifies, IconeVerification, IconeCatalogue,
   IconeRevoquer, IconeAuthentique, IconeUtilisateurs, IconeHistorique,
-  IconePlus, IconeInfo, IconeDroite, IconeStats,
+  IconePlus, IconeInfo, IconeDroite, IconeStats, IconeDate,
 } from "../../ui/icones.jsx";
 
 const PERIODES = [
@@ -34,22 +34,47 @@ const PERIODES = [
   { cle: "90", label: "90 derniers jours", jours: 90 },
   { cle: "365", label: "12 derniers mois", jours: 365 },
   { cle: "tout", label: "Depuis l'ouverture", jours: null },
+  { cle: "perso", label: "Période personnalisée", jours: null },
 ];
 
-function AdminDashboard(p) {
-  const [periode, setPeriode] = useState("30");
-  const choisie = PERIODES.find((x) => x.cle === periode) || PERIODES[0];
+const FILTRE_INITIAL = { periode: "30", du: "", au: "" };
 
-  const depuis = useMemo(() => {
-    if (!choisie.jours) return null;
+function AdminDashboard(p) {
+  /* Deux états plutôt qu'un : ce qui est saisi, et ce qui est appliqué. Sans
+     cette séparation, choisir une date de début recalculerait tout le tableau
+     avant que la date de fin ne soit saisie, et les chiffres sauteraient sous
+     les yeux pendant la saisie. C'est « Appliquer » qui décide. */
+  const [saisie, setSaisie] = useState(FILTRE_INITIAL);
+  const [filtre, setFiltre] = useState(FILTRE_INITIAL);
+  const choisie = PERIODES.find((x) => x.cle === filtre.periode) || PERIODES[0];
+  const perso = saisie.periode === "perso";
+
+  const { depuis, jusqu } = useMemo(() => {
+    if (filtre.periode === "perso") {
+      return {
+        depuis: filtre.du ? new Date(filtre.du + "T00:00:00") : null,
+        jusqu: filtre.au ? new Date(filtre.au + "T23:59:59") : null,
+      };
+    }
+    if (!choisie.jours) return { depuis: null, jusqu: null };
     const d = new Date();
     d.setDate(d.getDate() - choisie.jours);
-    return d;
-  }, [choisie]);
+    return { depuis: d, jusqu: null };
+  }, [filtre, choisie]);
+
+  /* Le libellé qui accompagne les chiffres : il doit dire ce qu'on regarde,
+     sans quoi « 2 » ne veut rien dire. */
+  const libellePeriode = filtre.periode === "perso"
+    ? [filtre.du && "du " + fmtShort(filtre.du), filtre.au && "au " + fmtShort(filtre.au)].filter(Boolean).join(" ") || "sans borne de date"
+    : choisie.label.toLowerCase();
 
   const dansLaPeriode = (valeur) => {
-    if (!depuis || !valeur) return Boolean(valeur) || !depuis;
-    return new Date(valeur) >= depuis;
+    if (!depuis && !jusqu) return true;
+    if (!valeur) return false;
+    const d = new Date(valeur);
+    if (depuis && d < depuis) return false;
+    if (jusqu && d > jusqu) return false;
+    return true;
   };
 
   const certs = p.db.certificates;
@@ -57,13 +82,13 @@ function AdminDashboard(p) {
   const domaines = p.db.domains || [];
   const programmes = p.db.types || [];
 
-  const surPeriode = depuis ? certs.filter((c) => dansLaPeriode(c.issue_date)) : certs;
-  const nouveauxTitulaires = depuis
-    ? titulaires.filter((u) => u.created_at && new Date(u.created_at) >= depuis).length
-    : titulaires.length;
-  const verifsPeriode = depuis
-    ? p.db.verifications.filter((v) => new Date(v.verified_at) >= depuis).length
-    : p.db.verifications.length;
+  /* Une seule fonction décide de l'appartenance à la période, bornes comprises.
+     Les trois comptages passent par elle : trois conditions écrites à la main
+     finissaient par diverger. */
+  const borne = Boolean(depuis || jusqu);
+  const surPeriode = certs.filter((c) => dansLaPeriode(c.issue_date));
+  const nouveauxTitulaires = titulaires.filter((u) => dansLaPeriode(u.created_at)).length;
+  const verifsPeriode = (p.db.verifications || []).filter((v) => dansLaPeriode(v.verified_at)).length;
 
   const par = (s) => certs.filter((c) => effectiveStatus(c) === s).length;
 
@@ -103,15 +128,6 @@ function AdminDashboard(p) {
           <p>Activité du registre, certifications délivrées et consultations publiques.</p>
         </div>
         <div style={{ display: "flex", gap: 9, flexWrap: "wrap", alignItems: "center" }}>
-          <select
-            className="vz-select"
-            style={{ width: "auto" }}
-            value={periode}
-            onChange={(e) => setPeriode(e.target.value)}
-            aria-label="Période observée"
-          >
-            {PERIODES.map((x) => <option key={x.cle} value={x.cle}>{x.label}</option>)}
-          </select>
           {peut(p.session, "attribuer_certificats") && (
             <button className="vz-btn vz-btn-accent" onClick={() => p.setModal({ type: "form", c: null })}>
               <IconePlus size={16} />
@@ -119,6 +135,53 @@ function AdminDashboard(p) {
             </button>
           )}
         </div>
+      </div>
+
+      {/* Barre de filtres, dans la disposition du CRM VIZDATA : chaque champ
+          porte son libellé, et rien ne bouge tant qu'on n'a pas appliqué. */}
+      <div className="vz-filtrebar">
+        <div className="vz-filtrebar-champ">
+          <label className="vz-label" htmlFor="vz-periode">
+            <IconeDate size={14} /> Période
+          </label>
+          <select
+            id="vz-periode"
+            className="vz-select"
+            value={saisie.periode}
+            onChange={(e) => {
+              const v = e.target.value;
+              setSaisie((s) => ({ ...s, periode: v }));
+              /* Les périodes fixes n'ont rien à saisir : on applique tout de
+                 suite, le bouton ne sert qu'aux dates. */
+              if (v !== "perso") setFiltre({ periode: v, du: "", au: "" });
+            }}
+          >
+            {PERIODES.map((x) => <option key={x.cle} value={x.cle}>{x.label}</option>)}
+          </select>
+        </div>
+        <div className="vz-filtrebar-champ">
+          <label className="vz-label" htmlFor="vz-du">Du</label>
+          <input
+            id="vz-du" type="date" className="vz-input"
+            value={saisie.du} disabled={!perso}
+            onChange={(e) => setSaisie((s) => ({ ...s, du: e.target.value }))}
+          />
+        </div>
+        <div className="vz-filtrebar-champ">
+          <label className="vz-label" htmlFor="vz-au">Au</label>
+          <input
+            id="vz-au" type="date" className="vz-input"
+            value={saisie.au} disabled={!perso}
+            onChange={(e) => setSaisie((s) => ({ ...s, au: e.target.value }))}
+          />
+        </div>
+        <button
+          className="vz-btn vz-btn-primary"
+          disabled={!perso}
+          onClick={() => setFiltre({ ...saisie })}
+        >
+          Appliquer
+        </button>
       </div>
 
       {(enAttente > 0 || notificationsRatees > 0) && (
@@ -152,9 +215,9 @@ function AdminDashboard(p) {
           ton="bleu"
         />
         <Stat
-          label={choisie.jours ? "Sur la période" : "Sur l'ensemble"}
+          label={borne ? "Sur la période" : "Sur l'ensemble"}
           value={surPeriode.length}
-          sub={choisie.label.toLowerCase()}
+          sub={libellePeriode}
           icone={IconeStats}
           ton="violet"
         />
@@ -182,14 +245,14 @@ function AdminDashboard(p) {
         <Stat
           label="Nouveaux certifiés"
           value={nouveauxTitulaires}
-          sub={choisie.jours ? choisie.label.toLowerCase() : "au total"}
+          sub={borne ? libellePeriode : "au total"}
           icone={IconeUtilisateurs}
           ton="gris"
         />
         <Stat
           label="Vérifications"
           value={verifsPeriode}
-          sub={choisie.jours ? choisie.label.toLowerCase() : "consultations publiques"}
+          sub={borne ? libellePeriode : "consultations publiques"}
           icone={IconeVerification}
           ton="orange"
         />
@@ -206,7 +269,7 @@ function AdminDashboard(p) {
         <div className="vz-card">
           <div className="vz-card-head">
             <h3>Par domaine</h3>
-            <span className="vz-small vz-muted">{choisie.label}</span>
+            <span className="vz-small vz-muted">{libellePeriode}</span>
           </div>
           <div className="vz-card-body">
             {parDomaine.length === 0 ? (
@@ -319,19 +382,33 @@ function AdminDashboard(p) {
    La table de correspondance les rend en français ; un code inconnu reste
    affiché tel quel plutôt que de disparaître. */
 const ACTIONS = {
+  /* Le registre PHP écrit CERTIFICATE_CREATED ; le registre local, de son
+     côté, écrivait CERTIFICATE_ISSUED. Les deux sont ici, faute de quoi le
+     journal affichait le code brut en production. */
+  CERTIFICATE_CREATED: "Certification délivrée",
   CERTIFICATE_ISSUED: "Certification délivrée",
   CERTIFICATE_UPDATED: "Certification modifiée",
   CERTIFICATE_REVOKED: "Certification révoquée",
+  CERTIFICATE_CANCELLED: "Certification annulée",
   CERTIFICATE_RESTORED: "Certification rétablie",
   HOLDER_CREATED: "Titulaire créé",
   HOLDER_UPDATED: "Compte modifié",
+  ROLE_CHANGED: "Rôle modifié",
+  ACCOUNT_DISABLED: "Compte désactivé",
+  ACCOUNT_ENABLED: "Compte réactivé",
+  EMAIL_CHANGED: "Adresse e-mail modifiée",
   DOMAIN_CREATED: "Domaine créé",
   DOMAIN_UPDATED: "Domaine modifié",
   PROGRAM_CREATED: "Programme créé",
   PROGRAM_UPDATED: "Programme modifié",
+  SKILL_CREATED: "Compétence ajoutée",
+  SKILL_UPDATED: "Compétence renommée",
   INVITATION_SENT: "Invitation envoyée",
   PASSWORD_RESET: "Mot de passe réinitialisé",
+  CANDIDATURE_UPDATED: "Candidature mise à jour",
   COHORTE_PUBLISHED: "Cohorte publiée",
+  COHORTE_PUBLIEE: "Cohorte publiée",
+  COHORTE_SUPPRIMEE: "Cohorte supprimée",
 };
 const libelleAction = (code) => ACTIONS[code] || code;
 

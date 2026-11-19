@@ -8,7 +8,7 @@
    ========================================================================= */
 
 import { useState, useEffect, useRef } from "react";
-import { BASE_URL, SKILLS } from "./data/seed.js";
+import { BASE_URL } from "./data/seed.js";
 import { STORE_KEY, loadDb } from "./data/store.js";
 import * as api from "./data/api.js";
 import { currentUser, isAuthConfigured, onAuthChange, signIn, signOut } from "./lib/auth.js";
@@ -202,7 +202,7 @@ export default function App() {
       created_at: c.created_at,
       /* Les compétences sont des identifiants dans le registre local et des
          noms côté base : on aligne sur les noms. */
-      skills: (c.skills || []).map((id) => (db.skills || SKILLS).find((s) => s.id === id)?.name).filter(Boolean),
+      skills: (c.skills || []).map((id) => (db.skills || []).find((s) => s.id === id)?.name).filter(Boolean),
       /* Seul le registre local permet d'alimenter l'historique et les compteurs. */
       local_record: c,
     };

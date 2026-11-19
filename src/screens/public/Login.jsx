@@ -7,8 +7,8 @@
 
 import { useState } from "react";
 import { isAuthConfigured } from "../../lib/auth.js";
-import { Field } from "../../ui/primitives.jsx";
-import { IconeVerrou, IconeCourriel, IconeErreur } from "../../ui/icones.jsx";
+import { Field, EnteteForm } from "../../ui/primitives.jsx";
+import { IconeCourriel, IconeErreur } from "../../ui/icones.jsx";
 import { PublicShell } from "./PublicShell.jsx";
 
 function Login(p) {
@@ -37,11 +37,9 @@ function Login(p) {
       <div className="vz-public-body">
         <div className="vz-slip" style={{ maxWidth: 440 }}>
           <div className="vz-card-body" style={{ padding: "44px 40px 34px", textAlign: "center" }}>
-            <div className="vz-connexion-sceau"><IconeVerrou size={23} /></div>
-            <h2 style={{ fontSize: 25, margin: "18px 0 6px" }}>Accéder à mon espace</h2>
-            <p className="vz-small vz-muted" style={{ marginBottom: 24, lineHeight: 1.6 }}>
+            <EnteteForm titre="Accéder à mon espace">
               Réservé aux certifiés VIZDATA et à l'équipe du registre.
-            </p>
+            </EnteteForm>
             <div style={{ display: "flex", flexDirection: "column", gap: 15, textAlign: "left" }}>
               <Field label="Adresse e-mail">
                 <input className="vz-input" type="email" value={email} onChange={(e) => { setEmail(e.target.value); setErr(""); }} onKeyDown={(e) => e.key === "Enter" && submit()} placeholder="vous@exemple.ci" autoComplete="username" />

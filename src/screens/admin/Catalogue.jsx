@@ -153,6 +153,8 @@ function AdminCatalogue(p) {
         </section>
       )}
 
+      <Competences {...p} />
+
       {modal?.type === "domaine" && (
         <FormulaireDomaine {...p} domaine={modal.valeur} onClose={() => setModal(null)} />
       )}
@@ -160,6 +162,111 @@ function AdminCatalogue(p) {
         <FormulaireProgramme {...p} programme={modal.valeur} domaineParDefaut={modal.domaine} onClose={() => setModal(null)} />
       )}
     </>
+  );
+}
+
+/* --- référentiel des compétences ------------------------------------------
+ *
+ * C'est la liste dans laquelle l'attribution puise. Elle était absente de
+ * l'interface : la base restait vide, et le formulaire d'attribution se
+ * rabattait sur les compétences de la démonstration, dont les identifiants
+ * n'existent nulle part en production. Cocher l'une d'elles faisait échouer
+ * l'enregistrement.
+ *
+ * On ajoute et on renomme, on ne supprime pas : la clé étrangère est en
+ * cascade, et effacer une compétence la retirerait des certificats déjà
+ * délivrés, donc des pages publiques qui font foi.
+ */
+function Competences(p) {
+  const competences = p.db.skills || [];
+  const [nom, setNom] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const [edite, setEdite] = useState(null);
+  const [nomEdite, setNomEdite] = useState("");
+
+  const compte = (id) => (p.db.certificates || []).filter((c) => (c.skills || []).includes(id)).length;
+
+  const ajouter = async () => {
+    if (!nom.trim() || busy) return;
+    setBusy(true); setErr("");
+    try { await p.actions.ajouterCompetence(nom); setNom(""); }
+    catch (e) { setErr(e.message); }
+    setBusy(false);
+  };
+
+  const renommer = async () => {
+    if (!nomEdite.trim() || busy) return;
+    setBusy(true); setErr("");
+    try { await p.actions.majCompetence(edite, { name: nomEdite.trim() }); setEdite(null); }
+    catch (e) { setErr(e.message); }
+    setBusy(false);
+  };
+
+  return (
+    <section className="vz-card" style={{ marginTop: 16 }}>
+      <div className="vz-card-head">
+        <div>
+          <h3 style={{ fontSize: 14 }}>Compétences</h3>
+          <p className="vz-small vz-muted" style={{ marginTop: 3 }}>
+            Ce qu'un certificat peut attester. Rien n'est attribué automatiquement : chaque compétence
+            est cochée à la main au moment de délivrer.
+          </p>
+        </div>
+      </div>
+      <div className="vz-card-body">
+        {err && <div className="vz-alert err" style={{ marginBottom: 12 }}>{err}</div>}
+        {competences.length === 0 ? (
+          <p className="vz-small vz-muted" style={{ marginBottom: 12 }}>
+            Le référentiel est vide. Tant qu'il l'est, l'attribution ne propose aucune compétence à cocher.
+          </p>
+        ) : (
+          <div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginBottom: 14 }}>
+            {competences.map((s) =>
+              edite === s.id ? (
+                <span key={s.id} style={{ display: "flex", gap: 6 }}>
+                  <input
+                    className="vz-input"
+                    style={{ maxWidth: 220, height: 34 }}
+                    value={nomEdite}
+                    onChange={(e) => setNomEdite(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") renommer(); if (e.key === "Escape") setEdite(null); }}
+                    aria-label={"Renommer " + s.name}
+                  />
+                  <button className="vz-btn vz-btn-sm" onClick={renommer} disabled={busy}>Enregistrer</button>
+                  <button className="vz-linkbtn" onClick={() => setEdite(null)}>Annuler</button>
+                </span>
+              ) : (
+                <button
+                  key={s.id}
+                  type="button"
+                  className="vz-chip"
+                  title={compte(s.id) > 0 ? `Portée par ${compte(s.id)} certificat(s). Cliquer pour renommer.` : "Cliquer pour renommer"}
+                  onClick={() => { setEdite(s.id); setNomEdite(s.name); }}
+                >
+                  {s.name}
+                  {compte(s.id) > 0 && <span className="vz-muted"> · {compte(s.id)}</span>}
+                </button>
+              )
+            )}
+          </div>
+        )}
+        <div style={{ display: "flex", gap: 7 }}>
+          <input
+            className="vz-input"
+            style={{ maxWidth: 280 }}
+            placeholder="Nouvelle compétence"
+            value={nom}
+            onChange={(e) => setNom(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && ajouter()}
+            aria-label="Nom de la nouvelle compétence"
+          />
+          <button className="vz-btn vz-btn-sm" onClick={ajouter} disabled={busy || !nom.trim()}>
+            <IconePlus size={15} /> Ajouter
+          </button>
+        </div>
+      </div>
+    </section>
   );
 }
 

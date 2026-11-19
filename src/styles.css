@@ -323,13 +323,46 @@
 .vz-grid{display:grid;gap:16px}
 .vz-stats{grid-template-columns:repeat(auto-fit,minmax(196px,1fr))}
 
+/* --- barre de filtres --------------------------------------------------------
+   Reprise du tableau de bord du CRM VIZDATA : une carte claire, un libellé
+   au-dessus de chaque champ, le bouton d'application au bout de la ligne. */
+.vz-filtrebar{
+  background:var(--blanc);border:1px solid var(--trait);border-radius:var(--r-l);
+  padding:14px 16px;margin-bottom:16px;box-shadow:var(--ombre-1);
+  display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;
+}
+.vz-filtrebar-champ{display:flex;flex-direction:column;gap:6px;min-width:150px}
+.vz-filtrebar-champ .vz-label{display:flex;align-items:center;gap:6px;margin:0}
+.vz-filtrebar-champ .vz-label svg{color:var(--bleu)}
+.vz-filtrebar .vz-input:disabled,.vz-filtrebar .vz-select:disabled{opacity:.55;cursor:not-allowed}
+.vz-filtrebar .vz-btn{margin-left:auto}
+@media (max-width:620px){
+  .vz-filtrebar-champ{min-width:0;flex:1 1 130px}
+  .vz-filtrebar .vz-btn{margin-left:0;width:100%}
+}
+
 /* --- indicateur ------------------------------------------------------------- */
+/* Le filet coloré en tête reprend le tableau de bord du CRM VIZDATA : sur une
+   rangée de cartes blanches, c'est lui qui distingue les familles d'un coup
+   d'œil, avant même l'icône. Il tient la même teinte que le chiffre. */
 .vz-stat{
   background:var(--blanc);border:1px solid var(--trait);border-radius:var(--r-xl);
-  padding:18px 19px;box-shadow:var(--ombre-1);
+  border-top:3px solid var(--bleu);
+  padding:17px 19px 18px;box-shadow:var(--ombre-1);
   transition:box-shadow var(--normal),transform var(--normal),border-color var(--normal);
 }
-.vz-stat:hover{box-shadow:var(--ombre-2);border-color:var(--trait-fort);transform:translateY(-1px)}
+.vz-stat.t-violet{border-top-color:var(--violet)}
+.vz-stat.t-orange{border-top-color:var(--orange)}
+.vz-stat.t-vert{border-top-color:var(--vert)}
+.vz-stat.t-rouge{border-top-color:var(--rouge)}
+.vz-stat.t-gris{border-top-color:var(--trait-fort)}
+/* Le survol fonce le cadre, mais surtout pas le filet du haut : « border-color »
+   en raccourci le repeignait en gris et la couleur de famille disparaissait. */
+.vz-stat:hover{
+  box-shadow:var(--ombre-2);transform:translateY(-1px);
+  border-left-color:var(--trait-fort);border-right-color:var(--trait-fort);
+  border-bottom-color:var(--trait-fort);
+}
 .vz-stat-tete{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
 .vz-stat-label{font-size:12.5px;font-weight:500;color:var(--gris)}
 .vz-stat-icone{
@@ -472,6 +505,13 @@
 .vz-acquis{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:9px}
 .vz-acquis li{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;line-height:1.55;color:var(--encre-700)}
 .vz-acquis li svg{flex:0 0 auto;color:var(--vert);margin-top:1px}
+
+/* --- pied signé de la page de vérification ------------------------------- */
+.vz-foot-signe{display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.vz-foot-marque{display:flex;gap:11px;align-items:center;flex:1 1 230px;min-width:0}
+.vz-foot-marque svg{flex:0 0 auto}
+.vz-foot-qr{display:flex;gap:12px;align-items:center;min-width:0}
+.vz-foot-qr .vz-mono{font-size:10.5px;word-break:break-all;max-width:168px;line-height:1.45}
 
 /* ===========================================================================
    ACCUEIL PUBLIC
@@ -763,12 +803,14 @@
   .vz-stat-val{font-size:24px}
 }
 
-/* --- sceau de la page de connexion ------------------------------------------
-   Un rappel de ce qu'on ouvre. L'écran de connexion d'un registre officiel ne
-   doit ressembler à aucun formulaire d'inscription. */
+/* --- sceau des formulaires publics -------------------------------------------
+   Un rappel de ce qu'on ouvre. Les écrans d'un registre officiel ne doivent
+   ressembler à aucun formulaire d'inscription. Le sceau porte le logo : le
+   fond reste clair pour que les trois couleurs de la marque tiennent. */
+.vz-sceau,
 .vz-connexion-sceau{
-  width:52px;height:52px;border-radius:16px;margin:0 auto;
-  background:linear-gradient(140deg,var(--bleu-050),var(--violet-050));
-  border:1px solid var(--bleu-100);color:var(--bleu);
+  width:56px;height:56px;border-radius:18px;margin:0 auto;
+  background:var(--blanc);
+  border:1px solid var(--trait);box-shadow:var(--ombre-1);color:var(--bleu);
   display:flex;align-items:center;justify-content:center;
 }

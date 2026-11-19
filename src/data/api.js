@@ -125,6 +125,19 @@ async function updateProgram(id, champs) {
   return modifier(`/programmes/${encodeURIComponent(id)}`, champs);
 }
 
+/* Le référentiel des compétences : ce qu'un certificat peut attester. Rien ne
+   s'y ajoute tout seul, et rien ne s'en retire — une compétence effacée
+   disparaîtrait des certificats déjà délivrés. */
+async function createSkill(champs) {
+  exigerRegistre();
+  return poster("/competences", champs);
+}
+
+async function updateSkill(id, champs) {
+  exigerRegistre();
+  return modifier(`/competences/${encodeURIComponent(id)}`, champs);
+}
+
 /* --- écritures : certificats ---------------------------------------------- */
 
 /**
@@ -216,6 +229,8 @@ export {
   updateDomain,
   createProgram,
   updateProgram,
+  createSkill,
+  updateSkill,
   createCertificate,
   updateCertificate,
   setCertificateStatus,

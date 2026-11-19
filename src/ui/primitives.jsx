@@ -20,6 +20,26 @@ const Mark = ({ sub = "CERTIFY" }) => (
   </div>
 );
 
+/**
+ * En-tête des formulaires publics.
+ *
+ * Connexion, vérification, mot de passe : trois écrans qui s'ouvrent au même
+ * endroit de la page et qui doivent se ressembler. Le sceau porte le logo
+ * VIZDATA plutôt qu'un pictogramme : c'est à la marque qu'on confie une
+ * référence de certificat ou un mot de passe, pas à un cadenas.
+ */
+const EnteteForm = ({ titre, children }) => (
+  <div style={{ textAlign: "center", marginBottom: 22 }}>
+    <div className="vz-sceau"><VizdataMark size={25} /></div>
+    <h2 style={{ fontSize: 22, margin: "16px 0 6px", letterSpacing: "-.02em" }}>{titre}</h2>
+    {children && (
+      <p className="vz-small vz-muted" style={{ lineHeight: 1.6, maxWidth: 330, margin: "0 auto" }}>
+        {children}
+      </p>
+    )}
+  </div>
+);
+
 /* Un statut inconnu ne doit pas faire tomber l'écran : la base peut gagner une
    valeur d'énuméré avant que l'application ne la connaisse. */
 const Badge = ({ status }) => {
@@ -45,7 +65,7 @@ const Field = ({ label, children, hint }) => (
  * `ton` prend : bleu (défaut), violet, orange, vert, rouge, gris.
  */
 const Stat = ({ label, value, sub, icone: Icone, ton = "bleu" }) => (
-  <div className="vz-stat vz-apparait">
+  <div className={"vz-stat vz-apparait t-" + ton}>
     <div className="vz-stat-tete">
       <span className="vz-stat-label">{label}</span>
       {Icone && <span className={"vz-stat-icone " + ton}><Icone size={17} /></span>}
@@ -140,4 +160,4 @@ function BarChart({ data, alt }) {
   );
 }
 
-export { Mark, Badge, Field, Stat, Vide, Modal, BarChart };
+export { Mark, EnteteForm, Badge, Field, Stat, Vide, Modal, BarChart };

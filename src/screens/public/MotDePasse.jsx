@@ -32,18 +32,17 @@ import {
   qualiteMotDePasse,
 } from "../../lib/auth.js";
 import { effacerJetonDeLAdresse } from "../../lib/mot-de-passe.js";
-import { Field } from "../../ui/primitives.jsx";
+import { Field, EnteteForm } from "../../ui/primitives.jsx";
 import { PublicShell } from "./PublicShell.jsx";
 
 /* --- carte commune aux deux écrans --------------------------------------- */
-function Carte({ p, eyebrow, titre, children, pied }) {
+function Carte({ p, titre, children, pied }) {
   return (
     <PublicShell {...p}>
       <div className="vz-public-body">
         <div className="vz-slip" style={{ maxWidth: 440 }}>
-          <div className="vz-card-body" style={{ padding: 28 }}>
-            <div className="vz-eyebrow">{eyebrow}</div>
-            <h2 style={{ fontSize: 20, margin: "10px 0 6px" }}>{titre}</h2>
+          <div className="vz-card-body" style={{ padding: "40px 34px 30px" }}>
+            <EnteteForm titre={titre} />
             {children}
           </div>
           {pied && <div className="vz-slip-foot">{pied}</div>}
@@ -82,7 +81,7 @@ function ForgotPassword(p) {
      deux cas. */
   if (envoye) {
     return (
-      <Carte p={p} eyebrow="Mot de passe" titre="Vérifiez votre messagerie">
+      <Carte p={p} titre="Vérifiez votre messagerie">
         <div className="vz-alert ok" style={{ marginTop: 16 }}>
           Si un compte existe pour <strong>{email.trim().toLowerCase()}</strong>, un lien de réinitialisation vient d'y être envoyé.
         </div>
@@ -99,7 +98,7 @@ function ForgotPassword(p) {
   }
 
   return (
-    <Carte p={p} eyebrow="Mot de passe" titre="Réinitialiser mon mot de passe">
+    <Carte p={p} titre="Réinitialiser mon mot de passe">
       <p className="vz-small vz-muted" style={{ marginBottom: 18, lineHeight: 1.7 }}>
         Entrez l'adresse e-mail de votre compte. Vous recevrez un lien pour choisir un nouveau mot de passe.
       </p>
@@ -173,7 +172,7 @@ function NewPassword(p) {
 
   if (!jeton) {
     return (
-      <Carte p={p} eyebrow="Mot de passe" titre="Cette page s'ouvre depuis un lien">
+      <Carte p={p} titre="Cette page s'ouvre depuis un lien">
         <div className="vz-alert warn" style={{ marginTop: 16 }}>
           Pour choisir un mot de passe, suivez le lien reçu par e-mail. Si vous n'en avez pas, ou s'il a expiré,
           demandez-en un nouveau.
@@ -188,7 +187,7 @@ function NewPassword(p) {
 
   if (perime) {
     return (
-      <Carte p={p} eyebrow="Mot de passe" titre="Ce lien n'est plus valable">
+      <Carte p={p} titre="Ce lien n'est plus valable">
         <div className="vz-alert warn" style={{ marginTop: 16 }}>{perime}</div>
         <p className="vz-small vz-muted" style={{ marginTop: 14, lineHeight: 1.7 }}>
           Les liens ne servent qu'une fois, et ne restent valables qu'un temps : un lien qui traînerait dans une
@@ -205,7 +204,7 @@ function NewPassword(p) {
   if (fait) {
     const session = p.session;
     return (
-      <Carte p={p} eyebrow="Mot de passe" titre="Votre mot de passe est enregistré">
+      <Carte p={p} titre="Votre mot de passe est enregistré">
         <div className="vz-alert ok" style={{ marginTop: 16 }}>
           Il est actif dès maintenant, et votre session est ouverte.
         </div>
@@ -232,7 +231,6 @@ function NewPassword(p) {
   return (
     <Carte
       p={p}
-      eyebrow="Mot de passe"
       titre="Choisissez votre mot de passe"
       pied="Huit caractères au minimum, dont une lettre et un chiffre."
     >

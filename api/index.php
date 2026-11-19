@@ -641,6 +641,22 @@ route('PATCH', '#^/programmes/([^/]+)$#', function (array $p, array $acteur) {
     return Registre::majProgramme($acteur, $p[0], corpsJson());
 });
 
+/* Le référentiel des compétences. Il manquait, et son absence se voyait à
+   l'attribution : la base ne contenant aucune compétence, le formulaire
+   proposait celles de la démonstration, dont les identifiants n'existent pas
+   en production. Les cocher faisait échouer l'enregistrement sur la clé
+   étrangère, et l'écran répondait « Les données envoyées ne sont pas
+   valides. » sans dire laquelle. */
+route('POST', '#^/competences$#', function (array $p, array $acteur) {
+    Autorisations::exigerAdmin($acteur);
+    return Registre::creerCompetence($acteur, corpsJson());
+});
+
+route('PATCH', '#^/competences/([^/]+)$#', function (array $p, array $acteur) {
+    Autorisations::exigerAdmin($acteur);
+    return Registre::majCompetence($acteur, $p[0], corpsJson());
+});
+
 /* --- sauvegardes -------------------------------------------------------------------
    Sans ligne de commande, la sauvegarde se déclenche par HTTP : le bouton de
    l'administration (POST), ou une tâche planifiée qui récupère l'adresse avec
