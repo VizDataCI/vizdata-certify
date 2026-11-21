@@ -87,3 +87,29 @@ test("l'adresse de retour des liens Supabase est /nouveau-mot-de-passe", () => {
   assert.deepEqual(toRoute("/nouveau-mot-de-passe"), { view: "newPassword" });
   assert.equal(toPath({ view: "newPassword" }), "/nouveau-mot-de-passe");
 });
+
+/* L'espace du titulaire s'atteint par la vue « dashboard », pas par « espace ».
+ *
+ * Le nom de la vue et celui du chemin diffèrent, et c'est un piège : trois
+ * liens de l'administration ont été écrits avec « espace », la vue inconnue
+ * est retombée sur l'accueil, et le bouton « Ma sécurité » ramenait à la page
+ * d'accueil sans que rien ne le signale.
+ *
+ * Ce test fige le nom de la vue, et le suivant fige le repli silencieux comme
+ * un comportement connu plutôt que subi. */
+test("l'espace du titulaire répond au nom de vue « dashboard »", () => {
+  assert.equal(toPath({ view: "dashboard" }), "/espace");
+  assert.deepEqual(toRoute("/espace"), { view: "dashboard" });
+});
+
+test("une vue inconnue retombe sur l'accueil, et ne prétend pas mener ailleurs", () => {
+  assert.equal(toPath({ view: "espace" }), "/");
+  assert.equal(toPath({ view: "nimporte-quoi" }), "/");
+});
+
+/* L'onglet voyage avec la route sans changer l'adresse : l'espace a trois
+   onglets et une seule adresse, et un lien direct vers la sécurité ne doit pas
+   inventer un chemin qui n'existe pas côté serveur. */
+test("l'onglet demandé ne modifie pas le chemin", () => {
+  assert.equal(toPath({ view: "dashboard", tab: "settings" }), "/espace");
+});

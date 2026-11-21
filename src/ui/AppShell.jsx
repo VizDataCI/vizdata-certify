@@ -70,7 +70,7 @@ function AppShell({ nav, current, onNav, session, go, logout, title, children, s
               <button
                 className="vz-linkbtn"
                 style={{ padding: 0, color: "var(--gris)", fontSize: 12 }}
-                onClick={() => go({ view: "espace", tab: "settings" })}
+                onClick={() => go({ view: "dashboard", tab: "settings" })}
               >
                 Mon compte
               </button>

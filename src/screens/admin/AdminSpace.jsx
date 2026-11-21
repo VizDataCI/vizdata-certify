@@ -132,7 +132,7 @@ function AdminSpace(p) {
        elle n'était atteignable que par un lien discret en pied de barre :
        un administrateur ne pouvait ni changer son mot de passe ni activer son
        second facteur sans connaître l'adresse. */
-    { key: "securite", label: "Ma sécurité", icone: IconeVerrou, aller: { view: "espace", tab: "settings" } },
+    { key: "securite", label: "Ma sécurité", icone: IconeVerrou, aller: { view: "dashboard", tab: "settings" } },
     { group: "Académie" },
     { key: "candidatures", label: "Candidatures", icone: IconeCandidatures },
     { key: "cohortes", label: "Cohortes", icone: IconeCohortes },

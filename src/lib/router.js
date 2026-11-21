@@ -36,8 +36,19 @@ function toPath(route) {
       return route.token ? `/verifier/${encodeURIComponent(route.token)}` : CHEMINS.verify;
     case "publicProfile":
       return `/u/${encodeURIComponent(route.username || "")}`;
-    default:
-      return CHEMINS[route.view] || "/";
+    default: {
+      const chemin = CHEMINS[route.view];
+      /* Une vue inconnue retombait sur l'accueil SANS RIEN DIRE. Un bouton qui
+         ramène à la page d'accueil se lit comme une page cassée, jamais comme
+         une faute de frappe dans un nom de vue — c'est exactement ce qui est
+         arrivé à « Ma sécurité », écrit « espace » au lieu de « dashboard ».
+         Le repli reste, parce qu'un visiteur ne doit pas tomber sur un écran
+         blanc ; mais en développement, il parle. */
+      if (!chemin && import.meta.env?.DEV) {
+        console.warn(`[routeur] vue inconnue « ${route.view} » : repli sur l'accueil.`);
+      }
+      return chemin || "/";
+    }
   }
 }
 
