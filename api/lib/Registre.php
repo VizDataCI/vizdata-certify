@@ -228,10 +228,26 @@ final class Registre
               order by issue_date desc',
             [$utilisateurId]
         );
-        return array_map(function (array $l): array {
+        /* Le nombre de consultations publiques, rapatrié en une requête plutôt
+           qu'une par certificat. Le titulaire a le droit de savoir que son
+           diplôme travaille pour lui : c'est la seule mesure que le registre
+           produit à son profit, et elle était restée invisible. */
+        $compte = [];
+        foreach (Base::tous(
+            'select certificate_id, count(*) as n
+               from verifications
+              where certificate_id in (select id from certificates where user_id = ?)
+              group by certificate_id',
+            [$utilisateurId]
+        ) as $ligne) {
+            $compte[$ligne['certificate_id']] = (int) $ligne['n'];
+        }
+
+        return array_map(function (array $l) use ($compte): array {
             $c = self::projectionPublique($l);
             $c['id'] = $l['id'];
             $c['created_at'] = $l['created_at'];
+            $c['verifications'] = $compte[$l['id']] ?? 0;
             return $c;
         }, $lignes);
     }
@@ -390,6 +406,26 @@ final class Registre
             }
             if (Base::un('select id from users where id = ?', [$champs['user_id'] ?? '']) === null) {
                 throw new Refus(400, 'Titulaire inconnu.');
+            }
+
+            /* Un même programme ne se délivre qu'une fois à la même personne.
+               Deux certificats en vigueur pour le même parcours ne veulent rien
+               dire : lequel ferait foi ? Lequel un employeur verrait-il ?
+               Un certificat révoqué ou annulé, lui, ne barre pas la route : il
+               n'est plus en vigueur, et une révocation par erreur ne doit pas
+               fermer le programme à quelqu'un pour toujours. */
+            $deja = Base::un(
+                "select reference from certificates
+                  where user_id = ? and certificate_type_id = ? and status = 'ACTIVE'
+                  limit 1",
+                [$champs['user_id'], $champs['certificate_type_id']]
+            );
+            if ($deja !== null) {
+                throw new Refus(409, sprintf(
+                    'Ce titulaire détient déjà « %s » : certificat %s, en vigueur. Révoquez-le avant d\'en délivrer un autre.',
+                    (string) $programme['name'],
+                    (string) $deja['reference']
+                ));
             }
 
             $date = $champs['issue_date'] ?? Base::jour();

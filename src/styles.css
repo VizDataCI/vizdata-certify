@@ -684,6 +684,23 @@
 .vz-certcard h3{font-size:16.5px;line-height:1.32}
 .vz-certcard-ref{font-family:var(--mono);font-size:12.5px;font-weight:500;color:var(--bleu);margin-top:12px}
 .vz-certcard-date{font-size:12.5px;color:var(--gris);margin-top:5px}
+/* L'ajout au profil LinkedIn. Sorti de la rangée des boutons de partage : il
+   ne fait pas la même chose qu'eux, et c'est le seul dont l'effet dure. */
+.vz-linkedin{
+  display:flex;gap:16px;align-items:center;flex-wrap:wrap;
+  background:var(--bleu-050);border:1px solid var(--bleu-100);
+  border-radius:var(--r-l);padding:15px 17px;margin-bottom:18px;
+}
+.vz-linkedin > div{flex:1 1 240px}
+
+/* Le compteur de consultations : discret, mais pas caché. C'est la preuve que
+   le certificat circule, et c'est au titulaire qu'elle appartient. */
+.vz-certcard-vus{
+  display:flex;align-items:center;gap:7px;margin-top:10px;
+  font-size:12.5px;color:var(--gris);
+}
+.vz-certcard-vus svg{color:var(--bleu);flex:0 0 auto}
+.vz-certcard-vus strong{color:var(--encre);font-weight:600;font-variant-numeric:tabular-nums}
 .vz-certcard-skills{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
 .vz-certcard-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid var(--trait)}
 .vz-certcard-liens{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}

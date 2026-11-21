@@ -19,6 +19,7 @@
  */
 
 import { useState } from "react";
+import { effectiveStatus } from "../../lib/certificates.js";
 
 const EXEMPLE_CSV = `NOM;PRENOM;EMAIL;PROGRAMME;DATE_DELIVRANCE
 DIALLO;Awa;awa.diallo@example.ci;EXCEL-AVA;2026-11-02
@@ -79,10 +80,16 @@ function AdminImport(p) {
       if (vues.has(cle)) doublon = "Doublon dans le fichier";
       vues.add(cle);
 
+      /* Même règle qu'à l'attribution, et pour la même raison : seul un
+         certificat EN VIGUEUR barre la route. Un certificat révoqué ne doit
+         pas empêcher de recertifier quelqu'un, sinon une révocation par erreur
+         fermerait le programme pour toujours. L'écran refusait jusqu'ici sur la
+         simple existence d'une ligne, quel que soit son statut. */
       const titulaire = (p.db.users || []).find((u) => u.email.toLowerCase() === email);
       if (!doublon && programme && titulaire &&
-          p.db.certificates.some((c) => c.certificate_type_id === programme.id && c.user_id === titulaire.id)) {
-        doublon = "Certification déjà délivrée à ce titulaire";
+          p.db.certificates.some((c) => c.certificate_type_id === programme.id
+            && c.user_id === titulaire.id && effectiveStatus(c) === "ACTIVE")) {
+        doublon = "Certification déjà en vigueur pour ce titulaire";
       }
 
       return { ligne: i + 2, nom, prenom, email, code, date, programme, titulaire, fautes, doublon };

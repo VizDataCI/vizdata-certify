@@ -157,6 +157,18 @@ function CertifiedSpace(p) {
                     <div className="vz-certcard-ref">{c.reference}</div>
                     <div className="vz-certcard-date">Délivré le {fmtLong(c.issue_date)}</div>
 
+                    {/* Ce que le registre a mesuré au profit du titulaire. Le
+                        chiffre existait depuis le début dans la table des
+                        vérifications, sans que personne ne le voie. Zéro se dit
+                        aussi : « pas encore consulté » est une information, et
+                        masquer la ligne laisserait croire à une panne. */}
+                    <div className="vz-certcard-vus">
+                      <IconeVerification size={14} />
+                      {c.verifications > 0
+                        ? <span><strong>{c.verifications}</strong> vérification{c.verifications > 1 ? "s" : ""} depuis la délivrance</span>
+                        : <span>Pas encore consulté par un tiers</span>}
+                    </div>
+
                     {c.skills?.length > 0 && (
                       <div className="vz-certcard-skills">
                         {c.skills.slice(0, 3).map((s) => <span key={s} className="vz-chip">{s}</span>)}

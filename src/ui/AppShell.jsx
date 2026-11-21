@@ -42,7 +42,11 @@ function AppShell({ nav, current, onNav, session, go, logout, title, children, s
               <button
                 key={n.key}
                 className={current === n.key ? "on" : ""}
-                onClick={() => onNav(n.key)}
+                /* Une entrée peut mener ailleurs que dans l'espace courant :
+                   la sécurité du compte vit dans l'espace personnel, et
+                   l'administration doit pouvoir y aller sans connaître
+                   l'adresse par cœur. */
+                onClick={() => (n.aller ? go(n.aller) : onNav(n.key))}
                 aria-current={current === n.key ? "page" : undefined}
               >
                 {n.icone ? <n.icone /> : null}

@@ -2,6 +2,34 @@
 
 import { QRCode } from "../ui/QRCode.jsx";
 import { Modal } from "../ui/primitives.jsx";
+import { IconeLien } from "../ui/icones.jsx";
+
+/**
+ * L'adresse qui remplit la rubrique « Licences et certifications » de LinkedIn.
+ *
+ * Ce n'est pas un partage : partager publie un message dans un fil, qui descend
+ * et disparaît. Ceci inscrit la certification dans le profil, durablement, avec
+ * le numéro de référence et l'adresse de vérification. Un recruteur qui lit le
+ * profil six mois plus tard tombe donc sur le registre VIZDATA.
+ *
+ * Les paramètres sont ceux que LinkedIn documente pour `startTask=CERTIFICATION_NAME`.
+ * Le mois et l'année sont séparés, et LinkedIn attend des nombres.
+ */
+function adresseLinkedIn(cert, url) {
+  const date = new Date(cert.issue_date);
+  const parametres = new URLSearchParams({
+    startTask: "CERTIFICATION_NAME",
+    name: cert.certification,
+    organizationName: cert.issuer || "VIZDATA",
+    certUrl: url,
+    certId: cert.reference,
+  });
+  if (!Number.isNaN(date.getTime())) {
+    parametres.set("issueYear", String(date.getFullYear()));
+    parametres.set("issueMonth", String(date.getMonth() + 1));
+  }
+  return `https://www.linkedin.com/profile/add?${parametres.toString()}`;
+}
 
 function ShareModal({ cert, onClose, ...p }) {
   const url = p.verifyUrl(cert);
@@ -31,6 +59,29 @@ function ShareModal({ cert, onClose, ...p }) {
       <div className="vz-alert info" style={{ marginBottom: 16 }}>
         Le lien partagé pointe vers la page de vérification, jamais vers le fichier. Le statut affiché reste donc toujours à jour.
       </div>
+
+      {/* Mis en avant, et séparé des boutons de partage : ce geste-là ne publie
+          pas un message, il inscrit la certification dans le profil. C'est le
+          seul qui travaille encore dans six mois. */}
+      {cert.status === "ACTIVE" && (
+        <div className="vz-linkedin">
+          <div style={{ minWidth: 0 }}>
+            <div className="vz-label" style={{ marginBottom: 3 }}>Ajouter à mon profil LinkedIn</div>
+            <p className="vz-small vz-muted" style={{ margin: 0, lineHeight: 1.6 }}>
+              La certification s'inscrit dans vos « Licences et certifications », avec sa référence
+              et le lien de vérification. Elle reste visible en permanence, là où un message se perd.
+            </p>
+          </div>
+          <button
+            className="vz-btn vz-btn-primary"
+            style={{ flex: "0 0 auto" }}
+            onClick={() => open(adresseLinkedIn(cert, url), "linkedin_profil")}
+          >
+            <IconeLien size={16} /> Ajouter
+          </button>
+        </div>
+      )}
+
       <div className="vz-eyebrow">Message proposé</div>
       <textarea className="vz-textarea" readOnly value={msg} style={{ marginTop: 8 }} />
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 14 }}>

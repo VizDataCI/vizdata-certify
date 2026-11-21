@@ -22,7 +22,7 @@ import { AppShell } from "../../ui/AppShell.jsx";
 import {
   IconeTableau, IconeCertificats, IconeCertifies, IconeCatalogue, IconeImport,
   IconeVerification, IconeNotifications, IconeStats, IconeUtilisateurs,
-  IconeParametres, IconeCandidatures, IconeCohortes,
+  IconeParametres, IconeCandidatures, IconeCohortes, IconeVerrou,
 } from "../../ui/icones.jsx";
 import { creerActions } from "./actions.js";
 import { AdminCandidatures } from "./Candidatures.jsx";
@@ -128,6 +128,11 @@ function AdminSpace(p) {
     admin && { group: "Configuration" },
     admin && { key: "users", label: "Utilisateurs et rôles", icone: IconeUtilisateurs },
     admin && { key: "settings", label: "Paramètres", icone: IconeParametres },
+    /* La sécurité du compte vit dans l'espace personnel. Sans cette entrée,
+       elle n'était atteignable que par un lien discret en pied de barre :
+       un administrateur ne pouvait ni changer son mot de passe ni activer son
+       second facteur sans connaître l'adresse. */
+    { key: "securite", label: "Ma sécurité", icone: IconeVerrou, aller: { view: "espace", tab: "settings" } },
     { group: "Académie" },
     { key: "candidatures", label: "Candidatures", icone: IconeCandidatures },
     { key: "cohortes", label: "Cohortes", icone: IconeCohortes },

@@ -198,8 +198,18 @@ create table if not exists skills (
 -- certifié. C'est pourquoi l'application désactive un compte et ne le supprime
 -- jamais.
 --
--- Aucune contrainte d'unicité sur (user_id, certificate_type_id) : un
--- titulaire peut repasser un programme. Ce qui est unique, c'est la référence.
+-- Pas de contrainte d'unicité en base sur (user_id, certificate_type_id), mais
+-- une règle appliquée à l'attribution : un même programme ne se délivre qu'une
+-- fois à la même personne TANT QU'UN CERTIFICAT EST EN VIGUEUR. Deux
+-- certificats actifs pour le même parcours ne veulent rien dire — lequel
+-- ferait foi ?
+--
+-- La règle vit dans le code et non dans un index unique, parce qu'elle porte
+-- sur le statut : un certificat révoqué ou annulé ne barre pas la route, sinon
+-- une révocation par erreur fermerait le programme à quelqu'un pour toujours.
+-- Un index unique, lui, ne sait pas lire un statut.
+--
+-- Ce qui est unique en base, c'est la référence.
 --
 -- `expiry_date` et `score` ne sont plus renseignés depuis novembre 2026 — un
 -- certificat atteste d'un acquis, et la note relève de l'évaluation. Les

@@ -26,6 +26,7 @@
  */
 
 import { useState } from "react";
+import { effectiveStatus } from "../../lib/certificates.js";
 import { fmtShort } from "../../lib/dates.js";
 import { peut } from "../../lib/permissions.js";
 import { Field, Modal } from "../../ui/primitives.jsx";
@@ -193,6 +194,18 @@ function CertificateForm({ cert, titulaire: titulaireImpose, onClose, ...p }) {
 
   const peutAttribuer = peut(p.session, "attribuer_certificats");
 
+  /* Un même programme ne se délivre qu'une fois à la même personne tant qu'un
+     certificat est en vigueur. Le serveur le refuse ; l'écran le dit AVANT,
+     parce qu'un refus arrivé après la saisie complète d'un formulaire est une
+     impasse, pas une information. */
+  const doublon = nouveau && titulaire && programme
+    ? (p.db.certificates || []).find(
+        (c) => c.user_id === titulaire.id
+          && c.certificate_type_id === programme.id
+          && effectiveStatus(c) === "ACTIVE"
+      )
+    : null;
+
   return (
     <Modal
       title={nouveau ? "Attribuer une certification" : `Modifier — ${cert.reference}`}
@@ -201,7 +214,7 @@ function CertificateForm({ cert, titulaire: titulaireImpose, onClose, ...p }) {
       foot={
         <>
           <button className="vz-btn" onClick={onClose}>Annuler</button>
-          <button className="vz-btn vz-btn-primary" onClick={enregistrer} disabled={busy || !peutAttribuer}>
+          <button className="vz-btn vz-btn-primary" onClick={enregistrer} disabled={busy || !peutAttribuer || Boolean(doublon)}>
             {busy ? "Enregistrement…" : nouveau ? "Attribuer la certification" : "Enregistrer"}
           </button>
         </>
@@ -211,6 +224,15 @@ function CertificateForm({ cert, titulaire: titulaireImpose, onClose, ...p }) {
       {!peutAttribuer && (
         <div className="vz-alert warn" style={{ marginBottom: 14 }}>
           Votre compte n'a pas l'autorisation d'attribuer des certifications.
+        </div>
+      )}
+      {doublon && (
+        <div className="vz-alert warn" style={{ marginBottom: 14 }}>
+          <span>
+            <strong>{titulaire.first_name} {titulaire.last_name}</strong> détient déjà « {programme.name} » :
+            certificat <span className="vz-mono">{doublon.reference}</span>, en vigueur. Un même programme ne se
+            délivre qu'une fois tant que le certificat n'a pas été révoqué.
+          </span>
         </div>
       )}
 

@@ -26,7 +26,7 @@ import { Badge, BarChart, Stat, Vide } from "../../ui/primitives.jsx";
 import {
   IconeCertificats, IconeCertifies, IconeVerification,
   IconeRevoquer, IconeAuthentique, IconeHistorique,
-  IconePlus, IconeInfo, IconeDroite, IconeStats, IconeDate,
+  IconePlus, IconeInfo, IconeDroite, IconeStats, IconeDate, IconeAlerte,
 } from "../../ui/icones.jsx";
 
 const PERIODES = [
@@ -118,6 +118,12 @@ function AdminDashboard(p) {
   const notificationsRatees = (p.db.notifications || []).filter((n) => n.status === "FAILED" || n.status === "PENDING").length;
   const journal = (p.db.audit_logs || []).slice(0, 8);
 
+  /* Le compte en cours porte-t-il un second facteur ? L'instantané du registre
+     le dit depuis que la colonne y figure. En démonstration, la question n'a
+     pas de sens : aucun secret n'est gardé. */
+  const moi = (p.db.users || []).find((u) => u.id === p.session?.id);
+  const sansDoubleFacteur = p.remote && moi && !moi.totp_actif;
+
   return (
     <>
       <div className="vz-page-head">
@@ -182,6 +188,23 @@ function AdminDashboard(p) {
           Appliquer
         </button>
       </div>
+
+      {/* Un compte d'administration sans second facteur est la clé du registre
+          derrière un seul mot de passe. L'avertissement est séparé du bandeau
+          d'information et se lit comme un avertissement : il ne disparaît
+          qu'une fois la protection activée. */}
+      {sansDoubleFacteur && (
+        <div className="vz-alert warn" style={{ marginBottom: 18 }}>
+          <IconeAlerte size={17} />
+          <span>
+            Votre compte d'administration n'a pas de validation en deux étapes. Un mot de passe seul
+            ouvre le registre entier.{" "}
+            <button className="vz-linkbtn" style={{ padding: 0 }} onClick={() => p.go({ view: "espace", tab: "settings" })}>
+              L'activer maintenant
+            </button>
+          </span>
+        </div>
+      )}
 
       {(enAttente > 0 || notificationsRatees > 0) && (
         <div className="vz-alert info" style={{ marginBottom: 18 }}>

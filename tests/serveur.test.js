@@ -251,11 +251,27 @@ test("une certification est attribuée et numérotée par la base", async () => 
   jetonPublic = c.public_token;
   referenceCertificat = c.reference;
 
+  /* La numérotation suit sur le programme, pas sur la personne : le second
+     certificat va donc à quelqu'un d'autre. Un même programme ne se délivre
+     qu'une fois à la même personne tant qu'il est en vigueur. */
+  const autre = await appel("/api/titulaires", {
+    methode: "POST",
+    corps: { email: "mariam.toure@example.ci", first_name: "Mariam", last_name: "Touré" },
+  });
   const seconde = await appel("/api/certificats", {
     methode: "POST",
-    corps: { user_id: titulaireId, certificate_type_id: programme, issue_date: "2026-11-15", skills: [] },
+    corps: { user_id: autre.donnees.titulaire.id, certificate_type_id: programme, issue_date: "2026-11-15", skills: [] },
   });
   assert.equal(seconde.donnees.certificat.reference, "VIZ-2026-EXCEL-AVA-000002", "la numérotation ne suit pas");
+
+  /* Et la règle elle-même, par la route : le titulaire qui détient déjà ce
+     programme se voit refuser une seconde attribution. */
+  const refus = await appel("/api/certificats", {
+    methode: "POST",
+    corps: { user_id: titulaireId, certificate_type_id: programme, issue_date: "2026-11-16", skills: [] },
+  });
+  assert.equal(refus.statut, 409, "une seconde attribution du même programme a été acceptée");
+  assert.match(refus.donnees.error, /détient déjà/);
 });
 
 test("la vérification publique répond sans session, et sans rien exposer", async () => {
@@ -380,10 +396,17 @@ test("le gestionnaire ne touche pas au catalogue", async () => {
 
 test("le gestionnaire attribue bien, lui, puisqu'il en a le droit", async () => {
   const registre = await appel("/api/registre", { session: "gestionnaire" });
+  /* Un titulaire qui n'a pas encore ce programme : celui des tests précédents
+     le détient déjà, et la seconde attribution serait refusée pour une raison
+     qui n'a rien à voir avec les autorisations. */
+  const beneficiaire = await appel("/api/titulaires", {
+    methode: "POST",
+    corps: { email: "kouassi.yao@example.ci", first_name: "Kouassi", last_name: "Yao" },
+  });
   const { statut, donnees } = await appel("/api/certificats", {
     methode: "POST",
     corps: {
-      user_id: titulaireId,
+      user_id: beneficiaire.donnees.titulaire.id,
       certificate_type_id: registre.donnees.types[0].id,
       issue_date: "2026-11-15",
       skills: [],
@@ -408,7 +431,15 @@ test("le titulaire ne voit que ses propres certificats", async () => {
 
   const miens = await appel("/api/mes-certificats", { session: "titulaire" });
   assert.equal(miens.statut, 200);
-  assert.ok(miens.donnees.length >= 3);
+  /* Ce que le test doit prouver n'est pas un nombre mais une frontière :
+     il voit les siens, et rien que les siens. Le certificat 000002 a été
+     délivré à quelqu'un d'autre. */
+  const references = miens.donnees.map((c) => c.reference);
+  assert.ok(references.includes("VIZ-2026-EXCEL-AVA-000001"), "le titulaire ne voit pas son propre certificat");
+  assert.ok(!references.includes("VIZ-2026-EXCEL-AVA-000002"), "le titulaire voit le certificat d'un autre");
+  /* Et le compteur de consultations voyage avec, pour que son espace puisse
+     le lui montrer. */
+  assert.equal(typeof miens.donnees[0].verifications, "number");
 
   const registre = await appel("/api/registre", { session: "titulaire" });
   assert.equal(registre.statut, 403, "un titulaire a lu le registre complet");

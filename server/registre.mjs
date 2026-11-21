@@ -21,6 +21,7 @@
 
 import { uid, maintenant, jour, enTransaction, json, entier } from "./db.mjs";
 import { normaliserCompte } from "./comptes.mjs";
+import { Refus } from "./autorisations.mjs";
 import { effectiveStatus, slugify } from "../src/lib/certificates.js";
 
 /* --- helpers -------------------------------------------------------------- */
@@ -150,7 +151,26 @@ function certificatsDe(db, utilisateurId) {
   const lignes = db
     .prepare("select * from v_certificats_publics where id in (select id from certificates where user_id = ?) order by issue_date desc")
     .all(utilisateurId);
-  return lignes.map((l) => ({ ...projectionPublique(db, l), id: l.id, created_at: l.created_at }));
+  /* Le nombre de consultations publiques, en une requête plutôt qu'une par
+     certificat. Le titulaire a le droit de savoir que son diplôme travaille
+     pour lui : c'est la seule mesure que le registre produit à son profit. */
+  const compte = new Map(
+    db
+      .prepare(
+        `select certificate_id, count(*) as n from verifications
+          where certificate_id in (select id from certificates where user_id = ?)
+          group by certificate_id`
+      )
+      .all(utilisateurId)
+      .map((l) => [l.certificate_id, l.n])
+  );
+
+  return lignes.map((l) => ({
+    ...projectionPublique(db, l),
+    id: l.id,
+    created_at: l.created_at,
+    verifications: compte.get(l.id) || 0,
+  }));
 }
 
 /* --- registre d'administration -------------------------------------------- */
@@ -263,6 +283,21 @@ function creerCertificat(db, acteur, { user_id, certificate_type_id, issue_date,
     if (!programme) throw new Error("Programme de certification inconnu.");
     const titulaire = db.prepare("select id from users where id = ?").get(user_id);
     if (!titulaire) throw new Error("Titulaire inconnu.");
+
+    /* Un même programme ne se délivre qu'une fois à la même personne. Deux
+       certificats en vigueur pour le même parcours ne veulent rien dire :
+       lequel ferait foi ? Un certificat révoqué ou annulé ne barre pas la
+       route — il n'est plus en vigueur, et une révocation par erreur ne doit
+       pas fermer le programme à quelqu'un pour toujours. */
+    const deja = db
+      .prepare("select reference from certificates where user_id = ? and certificate_type_id = ? and status = 'ACTIVE' limit 1")
+      .get(user_id, certificate_type_id);
+    if (deja) {
+      throw new Refus(
+        409,
+        `Ce titulaire détient déjà « ${programme.name} » : certificat ${deja.reference}, en vigueur. Révoquez-le avant d'en délivrer un autre.`
+      );
+    }
 
     const date = issue_date || jour();
     const reference = prochaineReference(db, programme.code, date.slice(0, 4));
