@@ -12,21 +12,11 @@
  */
 
 import { montant } from "./candidature.js";
-
-const ORGANISME = {
-  nom: "VIZDATA",
-  site: "https://vizdata.ci/",
-  email: "contact@vizdata.ci",
-  /* Le numéro affiché et le numéro technique diffèrent : wa.me n'accepte que
-     les chiffres, indicatif compris, sans le « + ». */
-  whatsappAffiche: "+225 05 04 38 35 32",
-  whatsappLien: "2250504383532",
-  lieu: "Abidjan, Côte d'Ivoire",
-};
-
-/** Message pré-rempli du bouton WhatsApp. */
-const whatsappUrl = (message) =>
-  `https://wa.me/${ORGANISME.whatsappLien}?text=${encodeURIComponent(message)}`;
+/* L'identité de VIZDATA n'est pas du contenu de page de vente : les mêmes
+   coordonnées servent à l'espace du titulaire, qui n'a rien à voir avec
+   l'académie. Elles vivent donc dans lib/organisme.js, et sont réexportées
+   ici pour que la page de l'académie garde son import unique. */
+import { ORGANISME, whatsappUrl } from "../lib/organisme.js";
 
 /* --- repères affichés dans le hero --------------------------------------- */
 

@@ -14,6 +14,7 @@ import { typeCertificat } from "../../lib/certificates.js";
 import { fmtLong } from "../../lib/dates.js";
 import { CertificateModal } from "../../modals/CertificateModal.jsx";
 import { EcranSecurite } from "../compte/Securite.jsx";
+import { ContactVizdata } from "./Contact.jsx";
 import { ShareModal } from "../../modals/ShareModal.jsx";
 import { AppShell } from "../../ui/AppShell.jsx";
 import { ZoneImpression, imprimerCertificat } from "../../ui/Certificat.jsx";
@@ -111,6 +112,12 @@ function CertifiedSpace(p) {
   const total = certs?.length ?? 0;
   const valides = certs?.filter((c) => c.status === "ACTIVE").length ?? 0;
   const domaines = new Set((certs || []).map((c) => c.domain).filter(Boolean)).size;
+  /* Le total des consultations publiques, tous certificats confondus. Le
+     chiffre figurait déjà sur chaque carte, jamais en somme : le titulaire
+     devait additionner lui-même pour savoir si son dossier VIZDATA travaille
+     pour lui. C'est la seule mesure que le registre produit à SON profit, elle
+     mérite une place en tête. */
+  const vues = (certs || []).reduce((n, c) => n + (c.verifications || 0), 0);
 
   return (
     <AppShell nav={nav} current={page} onNav={setPage} session={p.session} go={p.go} logout={p.logout} onCompte={() => setPage("settings")} title="Espace certifié" sub="CERTIFY">
@@ -131,7 +138,14 @@ function CertifiedSpace(p) {
               <div className="vz-grid vz-stats" style={{ marginBottom: 22 }}>
                 <Stat label="Certifications" value={total} sub="Délivrées par VIZDATA" icone={IconeCertificats} ton="bleu" />
                 <Stat label="En vigueur" value={valides} sub="Vérifiables publiquement" icone={IconeAuthentique} ton="vert" />
-                <Stat label="Domaines" value={domaines} sub="Champs de compétence" icone={IconeCatalogue} ton="violet" />
+                <Stat label="Domaines" value={domaines} sub="Champs de compétence" icone={IconeCatalogue} ton="bleu" />
+                <Stat
+                  label="Vérifications"
+                  value={vues}
+                  sub={vues > 0 ? "Consultations par des tiers" : "Pas encore consulté"}
+                  icone={IconeVerification}
+                  ton="bleu"
+                />
               </div>
             )}
 
@@ -206,6 +220,11 @@ function CertifiedSpace(p) {
                 ))}
               </div>
             )}
+
+            {/* Posée après les certifications, et affichée même quand il n'y
+                en a aucune : c'est précisément là qu'on a une question à
+                poser. */}
+            <ContactVizdata session={p.session} />
           </>
         )}
 

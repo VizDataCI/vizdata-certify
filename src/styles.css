@@ -47,9 +47,20 @@
      Une barre latérale claire sur un fond clair ne se distingue que par un
      filet d'un pixel : à l'écran, les deux zones se confondent. En sombre, la
      séparation se voit avant d'être lue, et le regard sait immédiatement où il
-     est. La teinte descend du bleu de la marque, pas d'un gris neutre. */
-  --nuit:#102E3F;
-  --nuit-2:#0B2231;
+     est. La teinte descend du bleu de la marque, pas d'un gris neutre.
+
+     Elle descendait trop bas. À #102E3F, et plus encore au bas d'un dégradé
+     qui finissait à #0B2231, la barre virait au noir : elle pesait sur l'écran
+     et ne disait plus rien de VIZDATA — n'importe quel outil a une barre noire.
+     La voici remontée de quatre points de clarté et resaturée vers le bleu de
+     la marque : on reconnaît la maison, et le contraste du texte blanc reste
+     très au-dessus de ce qu'exige l'accessibilité (12:1 contre 4,5 exigés).
+
+     Et elle est PLATE. Un dégradé sur un aplat de 250 px de large sur toute la
+     hauteur de l'écran ne se lit pas comme une intention : il se lit comme une
+     impression sale, et il se salit encore sur les écrans à faible gamme. */
+  --nuit:#0E3A52;
+  --nuit-2:#0C3246;
   --nuit-trait:rgba(255,255,255,.09);
   --nuit-texte:rgba(255,255,255,.72);
   --nuit-titre:rgba(255,255,255,.38);
@@ -272,9 +283,9 @@
 /* --- barre latérale -------------------------------------------------------- */
 .vz-side{
   width:252px;flex:0 0 252px;
-  background:linear-gradient(180deg,var(--nuit),var(--nuit-2));
-  border-right:1px solid rgba(0,0,0,.2);
-  padding:20px 14px 14px;display:flex;flex-direction:column;
+  background:var(--nuit);
+  border-right:1px solid rgba(0,0,0,.18);
+  padding:0 14px 14px;display:flex;flex-direction:column;
   position:sticky;top:0;height:100vh;color:var(--nuit-texte);
 }
 /* Le mot de la marque est violet sur fond clair ; sur fond sombre il
@@ -282,7 +293,16 @@
 .vz-side .vz-mark-word{color:#fff}
 .vz-side .vz-mark-div{background:rgba(255,255,255,.18)}
 .vz-side .vz-mark-text{color:rgba(255,255,255,.5)}
-.vz-side-mark{padding:2px 8px 18px}
+/* La marque occupe une bande de la HAUTEUR EXACTE de la barre du haut, et son
+   filet en prolonge le trait. Sans cet alignement, l'écran s'ouvrait sur une
+   marche : un pavé sombre à gauche, une barre blanche à droite, et aucune
+   ligne commune pour les tenir. Un seul trait horizontal traverse désormais
+   toute la largeur, et c'est ce que l'œil appelle « bien fait ». */
+.vz-side-mark{
+  height:63px;flex:0 0 63px;display:flex;align-items:center;
+  margin:0 -14px 12px;padding:0 22px;
+  border-bottom:1px solid var(--nuit-trait);
+}
 .vz-nav{display:flex;flex-direction:column;gap:2px;overflow-y:auto;flex:1;margin:0 -4px;padding:0 4px}
 /* La barre de défilement par défaut est claire : sur fond sombre elle dessine
    un trait blanc le long de la navigation. Discrète et de la couleur du fond. */
@@ -332,6 +352,8 @@
 
 /* --- zone principale -------------------------------------------------------- */
 .vz-main{flex:1;min-width:0;display:flex;flex-direction:column}
+/* 62 px plus son filet font les 63 px de la bande de marque, à gauche : les
+   deux traits n'en font qu'un d'un bord à l'autre de l'écran. */
 .vz-topbar{
   height:62px;border-bottom:1px solid var(--trait);background:rgba(255,255,255,.88);
   backdrop-filter:saturate(180%) blur(12px);-webkit-backdrop-filter:saturate(180%) blur(12px);
@@ -704,9 +726,43 @@
 .vz-certcard-vus svg{color:var(--bleu);flex:0 0 auto}
 .vz-certcard-vus strong{color:var(--encre);font-weight:600;font-variant-numeric:tabular-nums}
 .vz-certcard-skills{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
-.vz-certcard-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid var(--trait)}
+/* Trois boutons posés en file débordaient de la carte et retombaient sur
+   trois rangs inégaux, « Imprimer » seul au milieu de nulle part. Une grille
+   leur donne une forme : l'action principale tient toute la largeur, les deux
+   autres se partagent le rang suivant. La hiérarchie se voit avant d'être
+   lue, et la carte garde la même silhouette quel que soit son contenu. */
+.vz-certcard-actions{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+  margin-top:18px;padding-top:16px;border-top:1px solid var(--trait);
+}
+.vz-certcard-actions .vz-btn{width:100%;justify-content:center}
+.vz-certcard-actions .vz-btn-primary{grid-column:1 / -1}
 .vz-certcard-liens{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
 .vz-certcard-liens .vz-linkbtn{padding:2px 0;font-size:12px}
+
+/* --- joindre VIZDATA ----------------------------------------------------------
+   Chaque bouton porte sa voie en gras et sa coordonnée en dessous : on sait où
+   l'on écrit AVANT de cliquer, ce qui évite d'ouvrir une messagerie pour lire
+   l'adresse. D'où des boutons à deux lignes, plus hauts que les boutons
+   ordinaires, alignés en grille plutôt qu'en file : quatre coordonnées de
+   longueurs très différentes mises bout à bout donnent une rangée bancale. */
+.vz-contact{margin-top:22px}
+.vz-contact-titre{font-size:17px;margin-top:8px}
+.vz-contact-intro{font-size:13.5px;color:var(--gris);line-height:1.65;margin-top:6px;max-width:62ch}
+.vz-contact-boutons{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));
+  gap:10px;margin-top:16px;
+}
+.vz-contact-boutons .vz-btn{
+  height:auto;padding:11px 14px;justify-content:flex-start;
+  flex-wrap:wrap;row-gap:1px;font-size:13.5px;text-align:left;
+}
+.vz-contact-detail{
+  flex:1 0 100%;padding-left:25px;font-size:11.5px;font-weight:400;
+  color:var(--gris);letter-spacing:0;word-break:break-all;
+}
+/* Sur le bouton plein, la coordonnée doit rester lisible sur le bleu. */
+.vz-contact-boutons .vz-btn-primary .vz-contact-detail{color:rgba(255,255,255,.78)}
 
 /* --- fiche d'un certifié ------------------------------------------------------ */
 .vz-fiche-tete{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
@@ -860,8 +916,8 @@
   /* Trois boutons empilés plutôt que deux sur une ligne et le troisième
      orphelin au milieu : au pouce, une cible pleine largeur se touche sans
      viser. */
-  .vz-certcard-actions{flex-direction:column}
-  .vz-certcard-actions .vz-btn{width:100%;height:40px}
+  .vz-certcard-actions{grid-template-columns:1fr}
+  .vz-certcard-actions .vz-btn{height:40px}
   .vz-certcard-liens{justify-content:space-between}
   .vz-filtres{flex-direction:column;align-items:stretch}
   .vz-filtres .vz-input,.vz-filtres .vz-select{max-width:none!important;width:100%}

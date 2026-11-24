@@ -25,6 +25,7 @@ import {
   Link2, QrCode, Ban, RotateCcw, Database, BellRing, Layers, UserPlus, LogOut,
   ClipboardList, CalendarDays, BadgeCheck, Building2, Clock, ExternalLink,
   Copy, Filter, Lock, ServerCog, HardDriveDownload, Menu, Sparkles, MapPin,
+  Globe, MessageCircle,
 } from "lucide-react";
 
 /* Les réglages communs. `strokeWidth` et `size` restent surchargeables au cas
@@ -101,6 +102,12 @@ const IconeDate = enveloppe(Calendar);
 const IconeHeure = enveloppe(Clock);
 const IconeDocument = enveloppe(FileText);
 const IconeLieu = enveloppe(MapPin);
+const IconeSite = enveloppe(Globe);
+/* WhatsApp n'a pas de glyphe chez Lucide, et mélanger un logo de marque au
+   jeu d'icônes se verrait immédiatement : épaisseur, coins, tout diffère.
+   Une bulle de message, donc — c'est le mot « WhatsApp » à côté qui porte la
+   reconnaissance, pas le dessin. */
+const IconeMessage = enveloppe(MessageCircle);
 
 export {
   IconeTableau, IconeCertificats, IconeCertifies, IconeCatalogue, IconeFormations,
@@ -114,4 +121,5 @@ export {
   IconeSucces, IconeAlerte, IconeErreur, IconeInfo, IconeTri, IconeBas, IconeHaut,
   IconeDroite, IconeGauche, IconeVerrou, IconeEclat,
   IconeCourriel, IconeTelephone, IconeDate, IconeHeure, IconeDocument, IconeLieu,
+  IconeSite, IconeMessage,
 };

@@ -231,6 +231,12 @@ function AdminDashboard(p) {
         </div>
       )}
 
+      {/* Deux couleurs sur six, et elles portent un verdict : vert pour ce
+          qui est en vigueur, rouge pour ce qui a été retiré. Les quatre autres
+          cartes comptent, elles ne jugent pas — elles sont donc du bleu de
+          l'interface. La rangée en portait six différentes, et l'œil n'y
+          trouvait plus rien : une couleur qui sert à tout ne signale plus
+          rien, c'est la règle même du système. */}
       <div className="vz-grid vz-stats vz-stats-rangee" style={{ marginBottom: 18 }}>
         <Stat
           label="Certifications"
@@ -244,7 +250,7 @@ function AdminDashboard(p) {
           value={surPeriode.length}
           sub={libellePeriode}
           icone={IconeStats}
-          ton="violet"
+          ton="bleu"
         />
         <Stat
           label="En vigueur"
@@ -265,14 +271,14 @@ function AdminDashboard(p) {
           value={titulaires.length}
           sub="Titulaires enregistrés"
           icone={IconeCertifies}
-          ton="gris"
+          ton="bleu"
         />
         <Stat
           label="Vérifications"
           value={verifsPeriode}
           sub={borne ? libellePeriode : "consultations publiques"}
           icone={IconeVerification}
-          ton="orange"
+          ton="bleu"
         />
       </div>
 

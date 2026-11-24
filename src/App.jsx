@@ -236,7 +236,16 @@ export default function App() {
          d'expiration que effective_status() côté base. */
       return rows.map((c) => ({ ...c, status: effectiveStatus(c) }));
     }
-    return db.certificates.filter((c) => c.user_id === session.id).map(toPublic);
+    /* Le compteur de consultations suit le certificat jusque dans la
+       démonstration : sans lui, l'espace du titulaire affiche « pas encore
+       consulté » sur un jeu d'essai qui contient pourtant des vérifications,
+       et l'on croit l'écran cassé. Le registre distant, lui, compte en SQL. */
+    return db.certificates
+      .filter((c) => c.user_id === session.id)
+      .map((c) => ({
+        ...toPublic(c),
+        verifications: (db.verifications || []).filter((v) => v.certificate_id === c.id).length,
+      }));
   };
 
   /** Enregistre le profil du titulaire connecté. */
