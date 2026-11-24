@@ -26,7 +26,7 @@
  */
 
 import { useState } from "react";
-import { effectiveStatus } from "../../lib/certificates.js";
+import { TYPES_CERTIFICAT, effectiveStatus, typeCertificat } from "../../lib/certificates.js";
 import { fmtShort } from "../../lib/dates.js";
 import { peut } from "../../lib/permissions.js";
 import { Field, Modal } from "../../ui/primitives.jsx";
@@ -65,6 +65,9 @@ function CertificateForm({ cert, titulaire: titulaireImpose, onClose, ...p }) {
 
   /* --- reste du certificat ---------------------------------------------- */
   const [f, setF] = useState(() => ({
+    /* Compétences par défaut : c'est ce que VIZDATA délivre le plus souvent, et
+       ce que tous les certificats antérieurs attestent. */
+    kind: cert?.kind || "COMPETENCES",
     issue_date: cert?.issue_date || new Date().toISOString().slice(0, 10),
     duration: cert?.duration ?? "",
     trainer: cert?.trainer || "Fabrice BOH",
@@ -168,6 +171,7 @@ function CertificateForm({ cert, titulaire: titulaireImpose, onClose, ...p }) {
     const champs = {
       user_id: titulaire.id,
       certificate_type_id: programme.id,
+      kind: f.kind,
       issue_date: f.issue_date,
       duration: Number(f.duration) || programme.default_duration,
       trainer: f.trainer,
@@ -181,7 +185,10 @@ function CertificateForm({ cert, titulaire: titulaireImpose, onClose, ...p }) {
         id: nouveau ? null : cert.id,
         programme,
         champs: nouveau ? champs : { ...champs, reference: cert.reference },
-        skillIds: f.skills,
+        /* Un certificat de participation n'atteste aucune compétence : le
+           registre les refuserait de toute façon, mais les envoyer laisserait
+           croire qu'elles ont été retenues. */
+        skillIds: typeDuCertificat.competences ? f.skills : [],
         notifier: nouveau && avertir,
       });
       p.notify(nouveau ? "Certification attribuée. Référence et QR code générés." : "Certificat mis à jour.");
@@ -193,6 +200,7 @@ function CertificateForm({ cert, titulaire: titulaireImpose, onClose, ...p }) {
   };
 
   const peutAttribuer = peut(p.session, "attribuer_certificats");
+  const typeDuCertificat = typeCertificat(f.kind);
 
   /* Un même programme ne se délivre qu'une fois à la même personne tant qu'un
      certificat est en vigueur. Le serveur le refuse ; l'écran le dit AVANT,
@@ -369,6 +377,31 @@ function CertificateForm({ cert, titulaire: titulaireImpose, onClose, ...p }) {
         {programme?.description && (
           <p className="vz-small vz-muted" style={{ marginTop: 10, lineHeight: 1.7 }}>{programme.description}</p>
         )}
+
+        {/* Suivre un programme et valider ce qu'il enseigne sont deux faits
+            distincts. Le choix est posé ici, avec le programme, parce qu'il
+            porte sur ce qui sera écrit en haut du document — pas sur une
+            modalité de délivrance. */}
+        <div style={{ marginTop: 18 }}>
+          <div className="vz-label" style={{ marginBottom: 9 }}>Type de certificat</div>
+          <div className="vz-typecert">
+            {Object.entries(TYPES_CERTIFICAT).map(([cle, t]) => (
+              <label key={cle} className={"vz-typecert-choix" + (f.kind === cle ? " on" : "")}>
+                <input
+                  type="radio"
+                  name="vz-type-certificat"
+                  value={cle}
+                  checked={f.kind === cle}
+                  onChange={() => setF((v) => ({ ...v, kind: cle }))}
+                />
+                <span>
+                  <span className="vz-typecert-nom">{t.label}</span>
+                  <span className="vz-small vz-muted" style={{ display: "block", marginTop: 3 }}>{t.aide}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* --- 3. la délivrance --------------------------------------------- */}
@@ -398,6 +431,17 @@ function CertificateForm({ cert, titulaire: titulaireImpose, onClose, ...p }) {
           </Field>
         </div>
 
+        {/* Les compétences ne concernent que le certificat de compétences.
+            Laisser la section visible sur un certificat de participation
+            inviterait à cocher ce que le document ne dira pas. */}
+        {!typeDuCertificat.competences ? (
+          <div className="vz-alert info" style={{ marginTop: 16 }}>
+            <span>
+              Un certificat de participation n'énumère aucune compétence : il atteste la présence au programme.
+              Pour attester des acquis, choisissez « Certificat de compétences » ci-dessus.
+            </span>
+          </div>
+        ) : (
         <div style={{ marginTop: 16 }}>
           <div className="vz-label" style={{ marginBottom: 9 }}>Compétences validées</div>
           {competences.length > 0 ? (
@@ -444,6 +488,7 @@ function CertificateForm({ cert, titulaire: titulaireImpose, onClose, ...p }) {
             Les six premières figurent sur le certificat imprimé ; toutes apparaissent sur la page de vérification.
           </p>
         </div>
+        )}
 
         {nouveau && (
           <label style={{ display: "flex", gap: 10, alignItems: "flex-start", marginTop: 18, cursor: "pointer" }}>

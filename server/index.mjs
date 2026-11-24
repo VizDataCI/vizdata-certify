@@ -600,13 +600,14 @@ route("POST", /^\/api\/comptes\/([^/]+)\/double-facteur$/, ({ params, acteur }) 
 
 route("POST", /^\/api\/certificats$/, async ({ req, acteur }) => {
   exigerAutorisation(acteur, "attribuer_certificats");
-  const { user_id, certificate_type_id, issue_date, duration, trainer, signatory, skills, notifier = true } =
+  const { user_id, certificate_type_id, issue_date, kind, duration, trainer, signatory, skills, notifier = true } =
     await corpsJson(req);
 
   const cree = R.creerCertificat(db, acteur, {
     user_id,
     certificate_type_id,
     issue_date,
+    kind,
     duration,
     trainer,
     signatory,
@@ -625,6 +626,7 @@ route("POST", /^\/api\/certificats$/, async ({ req, acteur }) => {
       certification: vue.certification,
       domaine: vue.domain,
       reference: vue.reference,
+      type: vue.kind,
     });
   }
 

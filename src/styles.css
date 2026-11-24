@@ -682,6 +682,8 @@
   border-radius:999px;padding:4px 10px;
 }
 .vz-certcard h3{font-size:16.5px;line-height:1.32}
+/* La nature du document, sous son intitulé : participation ou compétences. */
+.vz-certcard-type{font-size:12px;color:var(--gris);margin-top:6px}
 .vz-certcard-ref{font-family:var(--mono);font-size:12.5px;font-weight:500;color:var(--bleu);margin-top:12px}
 .vz-certcard-date{font-size:12.5px;color:var(--gris);margin-top:5px}
 /* L'ajout au profil LinkedIn. Sorti de la rangée des boutons de partage : il
@@ -751,6 +753,25 @@
 .vz-chip-bascule{cursor:pointer;transition:background var(--vite),border-color var(--vite),color var(--vite)}
 .vz-chip-bascule:hover{border-color:var(--gris-300);background:var(--surface)}
 .vz-chip-bascule.on{background:var(--bleu-050);border-color:var(--bleu-200);color:var(--bleu-700);font-weight:500}
+
+/* --- choix du type de certificat -------------------------------------------------
+   Deux cartes côte à côte, et non une liste déroulante : le choix change ce qui
+   sera imprimé en haut du document et ce que le certificat affirme. Il doit se
+   lire en entier avant d'être fait, avec ce que chaque option implique — une
+   liste déroulante cache l'option qu'on ne regarde pas. */
+.vz-typecert{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.vz-typecert-choix{
+  display:flex;gap:11px;align-items:flex-start;cursor:pointer;
+  padding:13px 15px;border:1px solid var(--trait);border-radius:var(--r-m);
+  background:var(--blanc);transition:background var(--vite),border-color var(--vite);
+}
+.vz-typecert-choix:hover{border-color:var(--gris-300);background:var(--surface)}
+.vz-typecert-choix.on{border-color:var(--bleu-200);background:var(--bleu-050)}
+.vz-typecert-choix input{margin-top:2px;flex:0 0 auto}
+.vz-typecert-nom{font-size:13.5px;font-weight:600;color:var(--encre)}
+@media (max-width:620px){
+  .vz-typecert{grid-template-columns:1fr}
+}
 
 /* --- barre de filtres ------------------------------------------------------------ */
 .vz-filtres{display:flex;gap:10px;flex-wrap:wrap;align-items:center}

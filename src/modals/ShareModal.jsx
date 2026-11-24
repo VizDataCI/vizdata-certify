@@ -1,5 +1,6 @@
 /* Partage : le lien pointe vers la vérification, jamais vers le fichier. */
 
+import { typeCertificat } from "../lib/certificates.js";
 import { QRCode } from "../ui/QRCode.jsx";
 import { Modal } from "../ui/primitives.jsx";
 import { IconeLien } from "../ui/icones.jsx";
@@ -19,7 +20,13 @@ function adresseLinkedIn(cert, url) {
   const date = new Date(cert.issue_date);
   const parametres = new URLSearchParams({
     startTask: "CERTIFICATION_NAME",
-    name: cert.certification,
+    /* Un certificat de participation inscrit sous le seul nom du programme se
+       lirait, sur un profil, comme une compétence validée. La mention voyage
+       donc avec l'intitulé : la page de vérification fait foi, mais personne ne
+       la rouvre une fois la ligne inscrite. */
+    name: typeCertificat(cert.kind).competences
+      ? cert.certification
+      : `${cert.certification} — participation`,
     organizationName: cert.issuer || "VIZDATA",
     certUrl: url,
     certId: cert.reference,
@@ -33,7 +40,7 @@ function adresseLinkedIn(cert, url) {
 
 function ShareModal({ cert, onClose, ...p }) {
   const url = p.verifyUrl(cert);
-  const msg = `Je suis heureux de partager ma certification VIZDATA.\n\nCertification : ${cert.certification}\nRéférence : ${cert.reference}\n\nVérifier mon certificat :\n${url}`;
+  const msg = `Je suis heureux de partager ma certification VIZDATA.\n\nCertification : ${cert.certification}\nType : ${typeCertificat(cert.kind).label}\nRéférence : ${cert.reference}\n\nVérifier mon certificat :\n${url}`;
 
   /* Le comptage passe par record_share côté base : la table shares reste
      fermée à l'écriture, seule la fonction y insère. Un échec de comptage ne

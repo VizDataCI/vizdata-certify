@@ -20,7 +20,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { STATUS_META } from "../../lib/certificates.js";
+import { STATUS_META, typeCertificat } from "../../lib/certificates.js";
 import { fmtLong } from "../../lib/dates.js";
 import { CertificateModal } from "../../modals/CertificateModal.jsx";
 import { QRCode } from "../../ui/QRCode.jsx";
@@ -162,6 +162,10 @@ function VerifyResult(p) {
           <dl className="vz-dl">
             <div className="vz-dl-row"><dt>Titulaire</dt><dd>{cert.holder_name}</dd></div>
             <div className="vz-dl-row"><dt>Certification</dt><dd>{cert.certification}</dd></div>
+            {/* Ce que le certificat atteste : la participation au programme, ou
+                la validation des compétences qu'il enseigne. Celui qui vérifie
+                a besoin de la distinction — c'est la question même qu'il pose. */}
+            <div className="vz-dl-row"><dt>Type de certificat</dt><dd>{typeCertificat(cert.kind).label}</dd></div>
             {cert.domain && <div className="vz-dl-row"><dt>Domaine</dt><dd>{cert.domain}</dd></div>}
             <div className="vz-dl-row"><dt>Organisme émetteur</dt><dd>{cert.issuer || "VIZDATA"}</dd></div>
             <div className="vz-dl-row"><dt>Date de délivrance</dt><dd>{fmtLong(cert.issue_date)}</dd></div>
@@ -190,11 +194,22 @@ function VerifyResult(p) {
               vente, ce qu'il n'est pas. */}
           {enVigueur && (
             <div className="vz-valeur">
-              <h3>Ce que cette certification atteste</h3>
-              <p>
-                Son titulaire a suivi le parcours de formation VIZDATA correspondant et satisfait aux
-                exigences de validation. Elle peut être présentée à un employeur ou à un recruteur.
-              </p>
+              <h3>Ce que ce certificat atteste</h3>
+              {/* Deux documents, deux affirmations. Écrire « satisfait aux
+                  exigences de validation » sous un certificat de participation
+                  ferait dire au registre l'inverse de ce que porte le document
+                  — et c'est ici, pas ailleurs, qu'un employeur vient lire. */}
+              {typeCertificat(cert.kind).competences ? (
+                <p>
+                  Son titulaire a suivi le parcours de formation VIZDATA correspondant et satisfait aux
+                  exigences de validation. Il peut être présenté à un employeur ou à un recruteur.
+                </p>
+              ) : (
+                <p>
+                  Son titulaire a participé au parcours de formation VIZDATA correspondant. Ce certificat
+                  atteste sa participation effective : il ne porte pas de validation de compétences.
+                </p>
+              )}
               {acquis.length > 0 ? (
                 <ul className="vz-acquis">
                   {acquis.map((s) => (

@@ -105,6 +105,12 @@ final class Courrier
         $prenom = self::e($p['prenom'] ?? '');
         $site = self::site();
 
+        /* Deux types de certificat, deux messages. Féliciter quelqu'un d'avoir
+           « validé son parcours » alors qu'il reçoit un certificat de
+           participation lui apprendrait, par le courriel, que le document dit
+           autre chose que ce qu'on lui écrit. */
+        $participation = ($p['type'] ?? '') === 'PARTICIPATION';
+
         return match ($kind) {
             'INVITATION' => [
                 'sujet' => 'Votre accès à VIZDATA CERTIFY',
@@ -130,24 +136,34 @@ final class Courrier
                message le dit, et félicite, avant de parler de références et de
                boutons. */
             'CERTIFICAT_ATTRIBUE' => [
-                'sujet' => 'Félicitations ' . ($p['prenom'] ?? '') . ', votre certification ' . ($p['certification'] ?? '') . ' est délivrée',
+                'sujet' => $participation
+                    ? 'Félicitations ' . ($p['prenom'] ?? '') . ', votre certificat de participation est délivré'
+                    : 'Félicitations ' . ($p['prenom'] ?? '') . ', votre certification ' . ($p['certification'] ?? '') . ' est délivrée',
                 'html' => self::gabarit(
                     'Félicitations' . ($prenom !== '' ? " $prenom" : '') . ' !',
-                    "Vous avez validé votre parcours, et VIZDATA a le plaisir de vous délivrer votre certification. "
-                    . "C'est l'aboutissement de votre travail et de votre assiduité : prenez le temps d'en être fier.",
+                    $participation
+                        ? "Vous avez suivi ce programme jusqu'au bout, et VIZDATA a le plaisir de vous délivrer votre "
+                          . "certificat de participation. C'est la trace de votre engagement et de votre assiduité."
+                        : "Vous avez validé votre parcours, et VIZDATA a le plaisir de vous délivrer votre certification. "
+                          . "C'est l'aboutissement de votre travail et de votre assiduité : prenez le temps d'en être fier.",
                     '<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#344054;">'
                     . 'Votre certificat est dès maintenant enregistré au registre officiel VIZDATA. '
                     . 'Il porte une référence unique et un QR code : un employeur, un partenaire ou un recruteur '
                     . 'peut en vérifier l\'authenticité à tout moment, sans passer par vous.</p>'
                     . '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #E3E6EC;border-radius:8px;">'
-                    . self::ligne('Certification', (string) ($p['certification'] ?? ''))
+                    . self::ligne('Programme', (string) ($p['certification'] ?? ''))
+                    . self::ligne('Type de certificat', $participation ? 'Certificat de participation' : 'Certificat de compétences')
                     . self::ligne('Domaine', (string) ($p['domaine'] ?? '—'))
                     . self::ligne('Référence', (string) ($p['reference'] ?? ''), true)
                     . '</table>'
                     . '<p style="margin:16px 0 0;font-size:14px;line-height:1.6;color:#344054;">'
                     . 'Depuis votre espace, vous pouvez le consulter, le télécharger en PDF, l\'imprimer '
-                    . 'et le partager. Nous vous souhaitons de belles suites avec ces compétences.</p>',
-                    ['url' => "$site/espace", 'libelle' => 'Voir ma certification']
+                    . 'et le partager. '
+                    . ($participation
+                        ? 'Nous vous souhaitons de belles suites après ce parcours.'
+                        : 'Nous vous souhaitons de belles suites avec ces compétences.')
+                    . '</p>',
+                    ['url' => "$site/espace", 'libelle' => 'Voir mon certificat']
                 ),
             ],
             'PROFIL_MODIFIE' => [

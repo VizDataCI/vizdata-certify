@@ -716,6 +716,7 @@ route('POST', '#^/certificats$#', function (array $p, array $acteur) {
             'certification' => $vue['certification'],
             'domaine' => $vue['domain'],
             'reference' => $vue['reference'],
+            'type' => $vue['kind'],
         ]);
         $avisEnvoye = $courrier['envoye'];
     }

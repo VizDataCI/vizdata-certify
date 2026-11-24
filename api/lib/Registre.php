@@ -115,6 +115,9 @@ final class Registre
             'issuer'        => $ligne['issuer'],
             'issue_date'    => $ligne['issue_date'],
             'status'        => $statut,
+            /* Participation ou compétences : c'est la nature même du document,
+               et la question que pose celui qui vérifie. */
+            'kind'          => $ligne['kind'] ?? 'COMPETENCES',
             /* Le motif n'a de sens que pour un certificat révoqué, et n'a rien
                à faire dans la réponse autrement. */
             'revoke_reason' => $statut === 'REVOKED' ? $ligne['revoke_reason'] : null,
@@ -195,6 +198,7 @@ final class Registre
                 'holder_name'   => $l['holder_name'],
                 'certification' => $l['certification'],
                 'domain'        => $l['domain'],
+                'kind'          => $l['kind'] ?? 'COMPETENCES',
                 'reference'     => $l['reference'],
                 'issue_date'    => $l['issue_date'],
                 'public_token'  => $l['public_token'],
@@ -431,12 +435,13 @@ final class Registre
             $date = $champs['issue_date'] ?? Base::jour();
             $reference = self::prochaineReference($programme['code'], substr($date, 0, 4));
             $id = Base::uid();
+            $type = self::typeCertificat($champs['kind'] ?? null);
 
             Base::ecrire(
                 'insert into certificates
                    (id, reference, public_token, user_id, certificate_type_id, issued_by, template_id,
-                    issue_date, status, duration, trainer, signatory)
-                 values (?, ?, ?, ?, ?, ?, ?, ?, \'ACTIVE\', ?, ?, ?)',
+                    issue_date, status, kind, duration, trainer, signatory)
+                 values (?, ?, ?, ?, ?, ?, ?, ?, \'ACTIVE\', ?, ?, ?, ?)',
                 [
                     $id,
                     $reference,
@@ -446,20 +451,32 @@ final class Registre
                     $acteur['id'] ?? null,
                     $programme['template_id'],
                     $date,
+                    $type,
                     (int) ($champs['duration'] ?? 0) ?: (int) $programme['default_duration'],
                     $champs['trainer'] ?? '',
                     $champs['signatory'] ?? '',
                 ]
             );
 
-            self::remplacerCompetences($id, $champs['skills'] ?? []);
+            /* Un certificat de participation n'atteste aucune compétence : il
+               n'en porte donc pas, même si l'appel en propose. Le document ne
+               les afficherait pas, mais le registre les aurait gardées — et la
+               page de vérification les aurait montrées. */
+            self::remplacerCompetences($id, $type === 'PARTICIPATION' ? [] : ($champs['skills'] ?? []));
             self::journaliser($acteur, 'CERTIFICATE_CREATED', ['entiteId' => $id, 'valeur' => $reference]);
 
             return Base::un('select * from certificates where id = ?', [$id]);
         });
     }
 
-    private const CHAMPS_CERTIFICAT = ['certificate_type_id', 'issue_date', 'duration', 'trainer', 'signatory'];
+    /** Participation ou compétences. Toute autre valeur vaut « compétences » :
+     *  c'est ce qu'attestaient tous les certificats avant la distinction. */
+    private static function typeCertificat(?string $kind): string
+    {
+        return $kind === 'PARTICIPATION' ? 'PARTICIPATION' : 'COMPETENCES';
+    }
+
+    private const CHAMPS_CERTIFICAT = ['certificate_type_id', 'issue_date', 'kind', 'duration', 'trainer', 'signatory'];
 
     public static function majCertificat(array $acteur, string $id, array $champs, ?array $skills): array
     {
@@ -470,11 +487,20 @@ final class Registre
             }
 
             $retenus = array_intersect_key($champs, array_flip(self::CHAMPS_CERTIFICAT));
+            /* Le type est normalisé plutôt que recopié : la base refuserait
+               une valeur inconnue par contrainte, mais le refus parlerait de
+               SQL à quelqu'un qui a cliqué dans un formulaire. */
+            if (array_key_exists('kind', $retenus)) {
+                $retenus['kind'] = self::typeCertificat($retenus['kind']);
+            }
             if ($retenus) {
                 $colonnes = implode(', ', array_map(fn ($c) => "$c = ?", array_keys($retenus)));
                 Base::ecrire("update certificates set $colonnes where id = ?", [...array_values($retenus), $id]);
             }
-            self::remplacerCompetences($id, $skills);
+            /* Devenu certificat de participation, il n'atteste plus de
+               compétences : celles qu'il portait s'en vont avec le type. */
+            $devenu = $retenus['kind'] ?? $existant['kind'] ?? 'COMPETENCES';
+            self::remplacerCompetences($id, $devenu === 'PARTICIPATION' ? [] : $skills);
 
             self::journaliser($acteur, 'CERTIFICATE_UPDATED', ['entiteId' => $id, 'valeur' => $existant['reference']]);
             return Base::un('select * from certificates where id = ?', [$id]);

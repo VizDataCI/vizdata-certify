@@ -94,6 +94,9 @@ function projectionPublique(db, ligne) {
     issuer: ligne.issuer,
     issue_date: ligne.issue_date,
     status: statut,
+    /* Participation ou compétences : c'est la nature même du document, et la
+       question que pose celui qui vérifie. */
+    kind: ligne.kind || "COMPETENCES",
     /* Le motif n'a de sens que pour un certificat révoqué, et n'a rien à faire
        dans la réponse autrement. */
     revoke_reason: statut === "REVOKED" ? ligne.revoke_reason : null,
@@ -129,6 +132,7 @@ function profilPublic(db, identifiant) {
       holder_name: l.holder_name,
       certification: l.certification,
       domain: l.domain,
+      kind: l.kind || "COMPETENCES",
       reference: l.reference,
       issue_date: l.issue_date,
       public_token: l.public_token,
@@ -276,8 +280,14 @@ function prochaineReference(db, code, annee) {
   return prefixe + String(suivant).padStart(6, "0");
 }
 
+/** Participation ou compétences. Toute autre valeur vaut « compétences » :
+ *  c'est ce qu'attestaient tous les certificats avant la distinction. */
+function typeCertificat(kind) {
+  return kind === "PARTICIPATION" ? "PARTICIPATION" : "COMPETENCES";
+}
+
 /** Délivre un certificat. */
-function creerCertificat(db, acteur, { user_id, certificate_type_id, issue_date, duration, trainer, signatory, skills = [] }) {
+function creerCertificat(db, acteur, { user_id, certificate_type_id, issue_date, kind, duration, trainer, signatory, skills = [] }) {
   return enTransaction(db, () => {
     const programme = db.prepare("select * from certificate_types where id = ?").get(certificate_type_id);
     if (!programme) throw new Error("Programme de certification inconnu.");
@@ -302,12 +312,13 @@ function creerCertificat(db, acteur, { user_id, certificate_type_id, issue_date,
     const date = issue_date || jour();
     const reference = prochaineReference(db, programme.code, date.slice(0, 4));
     const id = uid();
+    const type = typeCertificat(kind);
 
     db.prepare(
       `insert into certificates
          (id, reference, public_token, user_id, certificate_type_id, issued_by, template_id,
-          issue_date, status, duration, trainer, signatory)
-       values (?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?, ?, ?)`
+          issue_date, status, kind, duration, trainer, signatory)
+       values (?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?, ?, ?, ?)`
     ).run(
       id,
       reference,
@@ -317,12 +328,15 @@ function creerCertificat(db, acteur, { user_id, certificate_type_id, issue_date,
       acteur?.id ?? null,
       programme.template_id,
       date,
+      type,
       Number(duration) || programme.default_duration,
       trainer || "",
       signatory || ""
     );
 
-    remplacerCompetences(db, id, skills);
+    /* Un certificat de participation n'atteste aucune compétence : il n'en
+       porte donc pas, même si l'appel en propose. */
+    remplacerCompetences(db, id, type === "PARTICIPATION" ? [] : skills);
     journaliser(db, acteur, "CERTIFICATE_CREATED", { entiteId: id, valeur: reference });
 
     return avecStatut(db.prepare("select * from certificates where id = ?").get(id));
@@ -337,19 +351,28 @@ function remplacerCompetences(db, certificatId, skillIds) {
   for (const skill of skillIds) inserer.run(certificatId, skill);
 }
 
-const CHAMPS_CERTIFICAT = ["certificate_type_id", "issue_date", "duration", "trainer", "signatory"];
+const CHAMPS_CERTIFICAT = ["certificate_type_id", "issue_date", "kind", "duration", "trainer", "signatory"];
 
 function majCertificat(db, acteur, id, champs, skills) {
   return enTransaction(db, () => {
     const existant = db.prepare("select * from certificates where id = ?").get(id);
     if (!existant) throw new Error("Certificat introuvable.");
 
-    const retenus = Object.entries(champs).filter(([c]) => CHAMPS_CERTIFICAT.includes(c));
+    /* Le type est normalisé plutôt que recopié : la base refuserait une valeur
+       inconnue par contrainte, mais le refus parlerait de SQL à quelqu'un qui
+       a cliqué dans un formulaire. */
+    const retenus = Object.entries(champs)
+      .filter(([c]) => CHAMPS_CERTIFICAT.includes(c))
+      .map(([c, v]) => (c === "kind" ? [c, typeCertificat(v)] : [c, v]));
     if (retenus.length) {
       db.prepare(`update certificates set ${retenus.map(([c]) => `${c} = ?`).join(", ")} where id = ?`)
         .run(...retenus.map(([, v]) => v), id);
     }
-    if (skills) remplacerCompetences(db, id, skills);
+    /* Devenu certificat de participation, il n'atteste plus de compétences :
+       celles qu'il portait s'en vont avec le type. */
+    const devenu = Object.fromEntries(retenus).kind ?? existant.kind ?? "COMPETENCES";
+    if (devenu === "PARTICIPATION") remplacerCompetences(db, id, []);
+    else if (skills) remplacerCompetences(db, id, skills);
 
     journaliser(db, acteur, "CERTIFICATE_UPDATED", { entiteId: id, valeur: existant.reference });
     return avecStatut(db.prepare("select * from certificates where id = ?").get(id));

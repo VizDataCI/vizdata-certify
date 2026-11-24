@@ -7,6 +7,7 @@
    d'un compte. */
 
 import { useState, useEffect } from "react";
+import { typeCertificat } from "../../lib/certificates.js";
 import { PublicShell } from "./PublicShell.jsx";
 
 function PublicProfile(p) {
@@ -78,6 +79,9 @@ function PublicProfile(p) {
             <div style={{ fontWeight: 500, color: "var(--encre)", fontSize: 13.5 }}>{r.certification}</div>
             <div className="vz-small vz-muted" style={{ marginTop: 3 }}>
               {r.domain && <span>{r.domain} · </span>}
+              {/* Participation ou compétences : sur un profil public, ne pas le
+                  dire laisserait croire que tout y est une validation. */}
+              <span>{typeCertificat(r.kind).court} · </span>
               <span className="vz-ref">{r.reference}</span>
             </div>
           </dt>

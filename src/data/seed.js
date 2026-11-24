@@ -89,7 +89,7 @@ const rawCerts = [
   [2, 1, 8, 12, "ACTIVE", [4, 6, 5]],
   [3, 1, 11, 420, "ACTIVE", [2, 9, 10]],
   [4, 2, 3, 6, "ACTIVE", [1, 7]],
-  [5, 2, 12, 19, "ACTIVE", [5, 8]],
+  [5, 2, 12, 19, "ACTIVE", [], "PARTICIPATION"],
   [6, 3, 8, 27, "ACTIVE", [4, 6]],
   [7, 3, 4, 63, "ACTIVE", [1, 3, 7, 10]],
   [8, 3, 11, 310, "REVOKED", [2, 9]],
@@ -100,7 +100,7 @@ const rawCerts = [
   [13, 5, 2, 500, "ACTIVE", [1, 3]],
   [14, 5, 4, 150, "CANCELLED", [1]],
   [15, 2, 5, 21, "ACTIVE", [2, 5, 9]],
-  [16, 1, 10, 1, "ACTIVE", [4, 6, 10]],
+  [16, 1, 10, 1, "ACTIVE", [], "PARTICIPATION"],
   [17, 1, 5, 35, "ACTIVE", [7, 1]],
 ];
 
@@ -133,7 +133,7 @@ function buildSeed() {
     return `VIZ-${annee}-${code}-${String(n).padStart(6, "0")}`;
   };
 
-  const certificates = rawCerts.map(([id, uid, tid, jours, status, skills]) => {
+  const certificates = rawCerts.map(([id, uid, tid, jours, status, skills, kind = "COMPETENCES"]) => {
     const programme = SEED_TYPES.find((t) => t.id === tid);
     const issue = ilYA(jours);
     return {
@@ -150,6 +150,10 @@ function buildSeed() {
          certificats anciens qui en portaient une. */
       expiry_date: null,
       status,
+      /* Participation ou compétences. Deux entrées du jeu d'essai sont des
+         certificats de participation : la démonstration doit montrer les deux
+         documents, sinon le second type ne se découvre qu'en production. */
+      kind,
       score: null,
       duration: programme.default_duration,
       trainer: "Fabrice BOH",

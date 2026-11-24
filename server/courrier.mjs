@@ -108,7 +108,8 @@ function composer(kind, p = {}) {
         "Une nouvelle certification vous est attribuée",
         `Bonjour ${prenom}, VIZDATA vient de vous délivrer une certification. Elle est disponible dans votre espace personnel, où vous pouvez la consulter, la télécharger en PDF et l'imprimer.`,
         `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #E3E6EC;border-radius:8px;">
-           ${ligne("Certification", p.certification ?? "")}
+           ${ligne("Programme", p.certification ?? "")}
+           ${ligne("Type de certificat", p.type === "PARTICIPATION" ? "Certificat de participation" : "Certificat de compétences")}
            ${ligne("Domaine", p.domaine || "—")}
            ${ligne("Référence", p.reference ?? "", true)}
          </table>`,

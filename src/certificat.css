@@ -156,12 +156,36 @@
   max-width: 660px;
 }
 
+/* Ce que le document atteste, puis la formule consacrée.
+   Les deux phrases forment un seul bloc : l'italique énonce le fait certifié,
+   le romain le délivre. Mises à la même largeur que la description qu'elles
+   suivent, elles se lisent comme la suite du même paragraphe et non comme deux
+   mentions rapportées. La taille est d'un demi-point sous celle de la
+   description : la hiérarchie reste au programme, qui est l'objet du
+   document. */
+.vzc-attestation {
+  margin: 15px 0 0;
+  max-width: 700px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: #667085;
+}
+.vzc-attestation em {
+  display: block;
+  font-style: italic;
+}
+.vzc-attestation span {
+  display: block;
+  margin-top: 5px;
+  color: #475467;
+}
+
 .vzc-competences {
   display: flex;
   gap: 7px;
   flex-wrap: wrap;
   justify-content: center;
-  margin-top: 20px;
+  margin-top: 16px;
   max-width: 760px;
 }
 .vzc-competence {

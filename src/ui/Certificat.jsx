@@ -26,6 +26,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { FORMULE_DELIVRANCE, typeCertificat } from "../lib/certificates.js";
 import { fmtLong } from "../lib/dates.js";
 import { QRCode } from "./QRCode.jsx";
 import { VizdataLogo } from "./VizdataLogo.jsx";
@@ -42,6 +43,11 @@ const CACHET = "/cachet-vizdata.png";
 /* --- le document ---------------------------------------------------------- */
 
 function CertificatDocument({ cert, verifyUrl }) {
+  /* Participation ou compétences : tout ce qui change d'un type à l'autre est
+     tenu par ce seul objet — titre, phrase d'introduction, formule, et le fait
+     d'énumérer ou non les compétences. Voir lib/certificates.js. */
+  const type = typeCertificat(cert.kind);
+
   return (
     <div className="vzc" style={{ width: LARGEUR, height: HAUTEUR }}>
       {/* Bandeau de marque : trois segments pleins, pas un dégradé. Il situe
@@ -63,18 +69,29 @@ function CertificatDocument({ cert, verifyUrl }) {
         </header>
 
         <div className="vzc-centre">
-          <div className="vzc-titre">Certificat de compétences</div>
+          <div className="vzc-titre">{type.label}</div>
           <div className="vzc-filet" aria-hidden="true" />
 
           <div className="vzc-mention">VIZDATA certifie que</div>
           <h1 className="vzc-nom">{cert.holder_name}</h1>
 
-          <div className="vzc-mention">a suivi et validé avec succès le programme</div>
+          <div className="vzc-mention">{type.mention}</div>
           <div className="vzc-programme">{cert.certification}</div>
 
           {cert.description && <p className="vzc-description">{cert.description}</p>}
 
-          {cert.skills?.length > 0 && (
+          {/* Ce que le document atteste, dit en propres termes, puis la formule
+              consacrée. Les deux phrases sont posées ensemble et centrées sous
+              la description : séparées, l'une se lisait comme un commentaire du
+              programme et l'autre comme une mention de pied. L'italique de la
+              première la rattache à ce qui précède ; la seconde, en romain,
+              clôt le dispositif. */}
+          <p className="vzc-attestation">
+            <em>{type.attestation}</em>
+            <span>{FORMULE_DELIVRANCE}</span>
+          </p>
+
+          {type.competences && cert.skills?.length > 0 && (
             <div className="vzc-competences">
               {cert.skills.slice(0, 6).map((s) => (
                 <span key={s} className="vzc-competence">{s}</span>

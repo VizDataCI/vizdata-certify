@@ -25,6 +25,47 @@ const STATUS_META = {
   CANCELLED: { label: "Annulé", tone: "gris" },
 };
 
+/**
+ * Les deux types de certificat.
+ *
+ * Suivre un programme et valider les compétences qu'il enseigne sont deux
+ * faits distincts : le premier se constate, le second s'évalue. Le document ne
+ * doit donc pas dire la même chose dans les deux cas — un certificat de
+ * participation qui attesterait « la validation des compétences acquises »
+ * dirait faux, et c'est exactement le genre de phrase qu'un employeur vérifie.
+ *
+ * Tout ce qui diffère entre les deux est ici, et nulle part ailleurs : le
+ * titre imprimé, la phrase qui introduit le programme, la formule qui suit sa
+ * description, et le fait d'afficher ou non les compétences validées.
+ */
+const TYPES_CERTIFICAT = {
+  COMPETENCES: {
+    label: "Certificat de compétences",
+    court: "Compétences",
+    mention: "a suivi et validé avec succès le programme",
+    attestation: "Ce certificat atteste de la validation des compétences acquises dans le cadre du programme de formation.",
+    aide: "Le parcours a été évalué. Le certificat énumère les compétences validées.",
+    competences: true,
+  },
+  PARTICIPATION: {
+    label: "Certificat de participation",
+    court: "Participation",
+    mention: "a participé au programme",
+    attestation: "Ce certificat atteste de la participation effective du titulaire au programme de formation.",
+    aide: "La formation a été suivie, sans évaluation. Le certificat n'énumère aucune compétence.",
+    competences: false,
+  },
+};
+
+/** La formule consacrée, commune aux deux types. */
+const FORMULE_DELIVRANCE = "En foi de quoi, le présent certificat lui est délivré pour servir et valoir ce que de droit.";
+
+/** Type d'un certificat. Un type absent ou inconnu vaut « compétences » : les
+ *  certificats délivrés avant cette distinction n'en portaient pas d'autre. */
+function typeCertificat(kind) {
+  return TYPES_CERTIFICAT[kind] || TYPES_CERTIFICAT.COMPETENCES;
+}
+
 function nextReference(certificates, code, year) {
   const prefix = `VIZ-${year}-${code}-`;
   const nums = certificates.filter((c) => c.reference.startsWith(prefix)).map((c) => parseInt(c.reference.slice(prefix.length), 10) || 0);
@@ -75,6 +116,9 @@ function projectionPublique(c, { userOf, typeOf, domainOf, skills = [] }) {
     issuer: "VIZDATA",
     issue_date: c.issue_date,
     status: effectiveStatus(c),
+    /* Participation ou compétences. Le document et la page de vérification en
+       tirent leur titre et leur formule. */
+    kind: c.kind || "COMPETENCES",
     revoke_reason: c.revoke_reason,
     public_token: c.public_token,
     description: t?.description || "",
@@ -90,4 +134,13 @@ function projectionPublique(c, { userOf, typeOf, domainOf, skills = [] }) {
   };
 }
 
-export { effectiveStatus, STATUS_META, nextReference, slugify, projectionPublique };
+export {
+  effectiveStatus,
+  STATUS_META,
+  TYPES_CERTIFICAT,
+  FORMULE_DELIVRANCE,
+  typeCertificat,
+  nextReference,
+  slugify,
+  projectionPublique,
+};

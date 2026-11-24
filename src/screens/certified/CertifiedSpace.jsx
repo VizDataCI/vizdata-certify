@@ -11,6 +11,7 @@
 
 import { useState, useEffect } from "react";
 import { changePassword, isAuthConfigured, qualiteMotDePasse } from "../../lib/auth.js";
+import { typeCertificat } from "../../lib/certificates.js";
 import { fmtLong } from "../../lib/dates.js";
 import { CertificateModal } from "../../modals/CertificateModal.jsx";
 import { DoubleFacteurCarte } from "./DoubleFacteur.jsx";
@@ -154,6 +155,10 @@ function CertifiedSpace(p) {
                       <Badge status={c.status} />
                     </div>
                     <h3>{c.certification}</h3>
+                    {/* Ce que le document atteste. Le titulaire le lit sur son
+                        certificat ; il doit le lire aussi sur sa carte, sans
+                        l'ouvrir. */}
+                    <div className="vz-certcard-type">{typeCertificat(c.kind).label}</div>
                     <div className="vz-certcard-ref">{c.reference}</div>
                     <div className="vz-certcard-date">Délivré le {fmtLong(c.issue_date)}</div>
 

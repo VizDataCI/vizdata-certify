@@ -7,7 +7,7 @@
  * des mentions d'archive.
  */
 
-import { effectiveStatus } from "../../lib/certificates.js";
+import { effectiveStatus, typeCertificat } from "../../lib/certificates.js";
 import { fmtLong, fmtShort } from "../../lib/dates.js";
 import { peut } from "../../lib/permissions.js";
 import { QRCode } from "../../ui/QRCode.jsx";
@@ -64,6 +64,7 @@ function CertificateDetail({ cert, onClose, setModal, ...p }) {
 
           <dl className="vz-dl" style={{ border: "1px solid var(--trait)", borderRadius: 8 }}>
             <Rang dt="Certifié" dd={`${u.first_name} ${u.last_name}`} />
+            <Rang dt="Type de certificat" dd={typeCertificat(cert.kind).label} />
             <Rang dt="Adresse e-mail" dd={u.email} petit />
             <Rang dt="Délivré le" dd={fmtLong(cert.issue_date)} />
             <Rang dt="Durée" dd={cert.duration ? `${cert.duration} heures` : "Non précisée"} mono />
