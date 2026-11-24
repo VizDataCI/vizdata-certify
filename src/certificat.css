@@ -244,7 +244,14 @@
   justify-content: space-around;
   padding: 0 6px 2px;
 }
-.vzc-meta > div { white-space: nowrap; }
+/* La valeur est centrée sous son libellé, et non alignée à gauche : « 30
+   heures » posé sous « DURÉE DE LA FORMATION » pendait au bord d'un libellé
+   deux fois plus long, et les deux blocs du pied semblaient se fuir. */
+.vzc-meta > div { white-space: nowrap; text-align: center; }
+/* L'interlettrage du libellé ajoute un blanc APRÈS sa dernière lettre, que le
+   centrage compte comme du texte : sans cette compensation, le libellé paraît
+   décalé d'un cheveu vers la gauche par rapport à sa valeur. */
+.vzc-meta .vzc-eyebrow { text-indent: 0.16em; }
 .vzc-meta-valeur { font-size: 12.5px; font-weight: 500; margin-top: 5px; }
 
 .vzc-qr {
