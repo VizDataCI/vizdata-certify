@@ -393,14 +393,21 @@ function authentifier(db, email, motDePasse) {
  */
 function sessionsDe(db, utilisateurId, secretCourant = null) {
   const empreinte = secretCourant ? empreinteJeton(secretCourant) : "";
+  /* La liste ne montre que ce qui ouvrirait VRAIMENT la porte : une session
+     au repos depuis plus longtemps que la règle est déjà refusée, même si sa
+     ligne survit en base jusqu'à ce qu'on y touche. L'afficher comme
+     « connectée » ferait compter dix appareils à qui n'en a qu'un, et le
+     chiffre inquiéterait pour rien. */
+  const { repos } = dureesDe(db.prepare("select role from users where id = ?").get(utilisateurId)?.role);
+  const seuil = repos > 0 ? dans(-repos) : "";
   return db
     .prepare(
       `select id, token_hash, created_at, last_seen, expires_at, user_agent
          from sessions
-        where user_id = ? and expires_at > ?
+        where user_id = ? and expires_at > ? and last_seen > ?
         order by last_seen desc`
     )
-    .all(utilisateurId, maintenant())
+    .all(utilisateurId, maintenant(), seuil)
     .map((s) => ({
       id: s.id,
       courante: s.token_hash === empreinte,

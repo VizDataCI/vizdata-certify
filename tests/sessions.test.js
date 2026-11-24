@@ -320,3 +320,21 @@ test("le registre PHP annonce les mêmes valeurs que le registre Node", async ()
   assert.ok(delais, "DELAIS absent du registre PHP");
   assert.deepEqual(delais[1].split(",").map((n) => Number(n.trim())), DELAIS);
 });
+
+test("la liste ne montre que les sessions qui ouvriraient vraiment la porte", () => {
+  const { db, fermer, id } = monde();
+  try {
+    const ici = ouvrirSession(db, id, { userAgent: "Mozilla/5.0 (Windows NT 10.0) Chrome/120" });
+    assert.equal(sessionsDe(db, id, ici.secret).length, 1);
+
+    /* Une session abandonnée depuis une heure : sa ligne survit en base
+       jusqu'à ce qu'on y touche, mais elle est déjà refusée. L'afficher
+       comme « connectée » ferait compter des appareils à qui n'en a qu'un. */
+    reculerVue(db, 3600);
+    assert.equal(sessionsDe(db, id, ici.secret).length, 0);
+
+    /* Et ce n'est pas la ligne qu'on a supprimée : c'est la LISTE qui dit la
+       vérité. Le ménage de la base se fait ailleurs, à son rythme. */
+    assert.equal(db.prepare("select count(*) as n from sessions").get().n, 1);
+  } finally { fermer(); }
+});

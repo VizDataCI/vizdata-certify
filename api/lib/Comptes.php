@@ -235,12 +235,21 @@ final class Comptes
         $empreinte = ($secretCourant === null || $secretCourant === '')
             ? '' : self::empreinteJeton($secretCourant);
 
+        /* La liste ne montre que ce qui ouvrirait VRAIMENT la porte : une
+           session au repos depuis plus longtemps que la règle est déjà
+           refusée, même si sa ligne survit en base jusqu'à ce qu'on y touche.
+           L'afficher comme « connectée » ferait compter dix appareils à qui
+           n'en a qu'un, et le chiffre inquiéterait pour rien. */
+        $role = Base::un('select role from users where id = ?', [$utilisateurId])['role'] ?? null;
+        $repos = self::dureesDe($role)['repos'];
+        $seuil = $repos > 0 ? Base::dans(-$repos) : '';
+
         $lignes = Base::tous(
             'select id, token_hash, created_at, last_seen, expires_at, user_agent
                from sessions
-              where user_id = ? and expires_at > ?
+              where user_id = ? and expires_at > ? and last_seen > ?
               order by last_seen desc',
-            [$utilisateurId, Base::maintenant()]
+            [$utilisateurId, Base::maintenant(), $seuil]
         );
 
         return array_map(fn (array $s): array => [
