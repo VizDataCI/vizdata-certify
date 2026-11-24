@@ -664,3 +664,65 @@ test("trop de tentatives de connexion finissent par être bloquées", async () =
   }
   assert.ok(bloque, "la force brute n'est pas freinée");
 });
+
+test("les appareils connectés se listent et se ferment à distance", async () => {
+  /* Deux sessions pour le même compte, depuis deux « appareils » : le bocal à
+     cookies du test en tient un par nom de session. */
+  const seconde = await appel("/api/session", {
+    methode: "POST",
+    corps: { email: "direction@vizdata.ci", motDePasse: "VizData2026" },
+    session: "ailleurs",
+  });
+  assert.equal(seconde.statut, 200);
+
+  const liste = await appel("/api/mes-sessions", { session: "ailleurs" });
+  assert.equal(liste.statut, 200);
+  assert.ok(liste.donnees.sessions.length >= 2, "les deux sessions doivent apparaître");
+  assert.equal(liste.donnees.sessions.filter((s) => s.courante).length, 1);
+
+  /* Rien de ce qui sert à ouvrir la porte ne doit sortir d'ici. */
+  for (const s of liste.donnees.sessions) {
+    assert.equal(s.token_hash, undefined);
+    assert.equal(s.secret, undefined);
+  }
+
+  /* Fermer depuis « ailleurs » coupe la session d'administration, pas
+     celle-ci : c'est tout l'intérêt du geste. */
+  const coupe = await appel("/api/mes-sessions/fermer", { methode: "POST", corps: {}, session: "ailleurs" });
+  assert.equal(coupe.statut, 200);
+  assert.ok(coupe.donnees.fermees >= 1);
+
+  const toujours = await appel("/api/session", { session: "ailleurs" });
+  assert.equal(toujours.statut, 200);
+  assert.equal(toujours.donnees.email, "direction@vizdata.ci");
+
+  const coupee = await appel("/api/session", { session: "admin" });
+  assert.equal(coupee.donnees, null, "l'autre session a bien été fermée");
+
+  /* On rouvre la session « admin » : les tests suivants la supposent ouverte. */
+  const retour = await appel("/api/session", {
+    methode: "POST",
+    corps: { email: "direction@vizdata.ci", motDePasse: "VizData2026" },
+    session: "admin",
+  });
+  assert.equal(retour.statut, 200);
+});
+
+test("la connexion rend le compte des tentatives échouées", async () => {
+  /* Le COMPTAGE lui-même est éprouvé sur la base, dans sessions.test.js : il
+     se vérifie sans HTTP, et le faire ici consommerait le limiteur de débit
+     partagé par tous les tests du fichier. Ce qui se vérifie ici, et nulle
+     part ailleurs, c'est que le chiffre traverse bien la route : un compteur
+     juste qui n'arrive pas jusqu'à l'écran ne prévient personne. */
+  const entree = await appel("/api/session", {
+    methode: "POST",
+    corps: { email: "direction@vizdata.ci", motDePasse: "VizData2026" },
+    session: "admin",
+  });
+  assert.equal(entree.statut, 200);
+  assert.equal(typeof entree.donnees.tentatives_echouees, "number");
+
+  const etat = await appel("/api/mes-sessions", { session: "admin" });
+  assert.equal(etat.statut, 200);
+  assert.ok("derniere_tentative_echouee" in etat.donnees);
+});

@@ -17,4 +17,18 @@ const fmtShort = (d) => {
   return `${String(dt.getDate()).padStart(2, "0")}/${String(dt.getMonth() + 1).padStart(2, "0")}/${dt.getFullYear()}`;
 };
 
-export { TODAY, MONTHS, MONTHS_SHORT, fmtLong, fmtShort };
+/** Date ET heure, pour ce qui se lit à la minute près.
+ *
+ *  Une session ouverte « le 24/11/2026 » ne dit rien : on en ouvre plusieurs
+ *  dans la même journée, et c'est justement l'heure qui permet de reconnaître
+ *  la sienne. Le fuseau est celui du lecteur — l'horodatage est en UTC dans la
+ *  base, et doit s'afficher à l'heure d'Abidjan pour qui s'y trouve. */
+const fmtDateHeure = (d) => {
+  if (!d) return "Date inconnue";
+  const dt = new Date(d);
+  if (Number.isNaN(dt.getTime())) return "Date inconnue";
+  const heure = `${String(dt.getHours()).padStart(2, "0")}h${String(dt.getMinutes()).padStart(2, "0")}`;
+  return `${fmtShort(dt)} à ${heure}`;
+};
+
+export { TODAY, MONTHS, MONTHS_SHORT, fmtLong, fmtShort, fmtDateHeure };

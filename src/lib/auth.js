@@ -118,6 +118,21 @@ async function verifierCode(defi, code) {
   return poster("/session/code", { defi, code: saisie });
 }
 
+/** Les appareils où la session est ouverte, la plus récente d'abord.
+ *
+ *  Hors registre distant, il n'y a pas de session du tout : on le dit, plutôt
+ *  que de rendre une liste vide qu'on lirait comme « aucun appareil ». */
+async function mesSessions() {
+  if (!registreDistant) return { indisponible: true, sessions: [], derniere_tentative_echouee: null };
+  return lire("/mes-sessions");
+}
+
+/** Ferme toutes les sessions SAUF celle-ci. Le geste de quelqu'un qui doute
+ *  d'un poste laissé ouvert ailleurs : il ne doit pas le déconnecter ici. */
+async function fermerAutresSessions() {
+  return poster("/mes-sessions/fermer", {});
+}
+
 /** État du second facteur sur le compte en cours. */
 async function lireDoubleFacteur() {
   if (!registreDistant) return { actif: false, indisponible: true, codes_restants: 0 };
@@ -167,6 +182,8 @@ export {
   definirMotDePasse,
   changePassword,
   verifierCode,
+  mesSessions,
+  fermerAutresSessions,
   lireDoubleFacteur,
   preparerDoubleFacteur,
   activerDoubleFacteur,

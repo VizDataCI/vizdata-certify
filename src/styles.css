@@ -740,6 +740,46 @@
 .vz-certcard-liens{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
 .vz-certcard-liens .vz-linkbtn{padding:2px 0;font-size:12px}
 
+/* --- veille d'inactivité ------------------------------------------------------
+   Un panneau court, centré, sans croix de fermeture : il n'y a rien à fermer,
+   il y a une décision à prendre. Le compte à rebours est en chiffres à chasse
+   fixe, sans quoi il tremble à chaque seconde qui change de largeur. */
+.vz-veille{
+  background:var(--blanc);border-radius:var(--r-xl);border:1px solid var(--trait);
+  box-shadow:var(--ombre-3);max-width:420px;width:100%;margin-top:14vh;
+  padding:26px 26px 24px;text-align:center;
+  animation:vzmodal .22s cubic-bezier(.2,.7,.4,1) both;
+}
+.vz-veille-icone{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:46px;height:46px;border-radius:50%;
+  background:var(--orange-050);color:var(--orange);border:1px solid var(--orange-100);
+}
+.vz-veille h2{font-size:19px;margin-top:14px}
+.vz-veille p{font-size:13.5px;color:var(--gris);line-height:1.7;margin-top:8px}
+.vz-veille-compte{font-family:var(--mono);font-size:15px;color:var(--encre);font-variant-numeric:tabular-nums}
+.vz-veille .vz-btn{margin-top:18px}
+
+/* --- appareils connectés ------------------------------------------------------
+   Une liste, pas un tableau : trois lignes en moyenne, et la seule colonne qui
+   compte est le nom de l'appareil. La session courante est marquée, sans quoi
+   le bouton « fermer les autres » laisse craindre qu'on se coupe soi-même. */
+.vz-sessions{display:flex;flex-direction:column;gap:8px;margin-top:14px;list-style:none;padding:0}
+.vz-session{
+  display:flex;gap:11px;align-items:flex-start;
+  padding:11px 13px;border:1px solid var(--trait);border-radius:var(--r-m);
+  background:var(--blanc);
+}
+.vz-session svg{color:var(--gris-400);flex:0 0 auto;margin-top:1px}
+.vz-session.on{border-color:var(--bleu-200);background:var(--bleu-050)}
+.vz-session.on svg{color:var(--bleu)}
+.vz-session-nom{font-size:13px;font-weight:600;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.vz-session-ici{
+  font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--bleu-700);background:var(--bleu-100);border-radius:999px;padding:2px 8px;
+}
+.vz-session-date{font-size:11.5px;color:var(--gris);margin-top:3px}
+
 /* --- joindre VIZDATA ----------------------------------------------------------
    Chaque bouton porte sa voie en gras et sa coordonnée en dessous : on sait où
    l'on écrit AVANT de cliquer, ce qui évite d'ouvrir une messagerie pour lire

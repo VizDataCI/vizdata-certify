@@ -26,6 +26,7 @@ import { ForgotPassword, NewPassword } from "./screens/public/MotDePasse.jsx";
 import { PublicProfile } from "./screens/public/PublicProfile.jsx";
 import { VerifyResult } from "./screens/public/VerifyResult.jsx";
 import { VerifySearch } from "./screens/public/VerifySearch.jsx";
+import { VeilleSession } from "./ui/VeilleSession.jsx";
 
 export default function App() {
   const [db, setDb] = useState(loadDb);
@@ -123,13 +124,30 @@ export default function App() {
     const account = await signIn(email, password);
     if (account?.deuxiemeFacteur) return account;
     await ouvrirSession(account);
+    avertirDesEchecs(account);
     return null;
+  };
+
+  /* Ce qui s'est passé pendant l'absence.
+     Le registre refusait déjà les essais en masse, mais EN SILENCE : on
+     pouvait passer la nuit à essayer des mots de passe sur le compte
+     d'administration sans que personne ne l'apprenne jamais. Le chiffre est
+     annoncé à l'entrée, une fois, et seulement s'il y a quelque chose à dire —
+     un seul échec est le plus souvent une faute de frappe, et crier au loup
+     chaque fois apprendrait surtout à ne plus écouter. */
+  const avertirDesEchecs = (account) => {
+    const n = account?.tentatives_echouees ?? 0;
+    if (n < 2) return;
+    notify(
+      `${n} tentatives de connexion ont échoué sur votre compte depuis votre dernière visite. Si ce n'était pas vous, changez votre mot de passe.`
+    );
   };
 
   /** Second temps de la connexion : le code de l'application, ou un code de secours. */
   const loginCode = async (defi, code) => {
     const account = await verifierCode(defi, code);
     const profil = await ouvrirSession(account);
+    avertirDesEchecs(account);
     if (account?.secours_utilise) {
       notify(
         `Vous venez d'utiliser un code de secours. Il ne vous en reste que ${account.codes_secours_restants ?? 0} : renouvelez-les depuis Sécurité.`
@@ -142,6 +160,17 @@ export default function App() {
     await signOut();
     setSession(null);
     go({ view: "home" });
+  };
+
+  /* La déconnexion automatique ramène à l'écran de connexion, et non à
+     l'accueil : on y était pour travailler, on veut y revenir. Et elle le
+     DIT — une session qui disparaît sans un mot se lit comme une panne, et
+     l'on recommence en se demandant ce qu'on a cassé. */
+  const expirerParInactivite = async () => {
+    await signOut();
+    setSession(null);
+    go({ view: "login" });
+    notify("Session fermée après dix minutes sans activité. Reconnectez-vous pour continuer.");
   };
 
   const notify = (m) => { setToast(m); setTimeout(() => setToast(""), 2600); };
@@ -318,6 +347,10 @@ export default function App() {
   return (
     <div className="vz">
       {screen}
+      {/* Dix minutes sans un geste et la session se ferme, les deux dernières
+          annoncées. Elle n'est armée que lorsqu'une session existe vraiment :
+          sur la page publique de vérification, il n'y a rien à fermer. */}
+      <VeilleSession actif={Boolean(session)} onExpire={expirerParInactivite} notify={notify} />
       {toast && <div className="vz-toast">{toast}</div>}
     </div>
   );

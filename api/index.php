@@ -355,12 +355,30 @@ route('POST', '#^/session$#', function () {
 
     /* Deux compteurs : par adresse, pour protéger un compte visé ; par client,
        pour empêcher le balayage de nombreuses adresses depuis un même poste. */
-    limiter('conn:' . strtolower($email), 10, 900);
+    /* Ce limiteur-ci compte TOUTES les tentatives, réussies comprises, et il
+       ne sait rien du compte visé. Depuis que cinq échecs bloquent le compte
+       lui-même, c'est cette règle-là qui doit parler — elle dit quoi faire et
+       pour combien de temps. Le limiteur reste en arrière-garde, reculé assez
+       pour ne plus couvrir le message précis d'un « réessayez plus tard ». */
+    limiter('conn:' . strtolower($email), 20, 900);
     limiter('conn-ip:' . empreinteClient(), 40, 900);
 
     $resultat = Comptes::authentifier($email, (string) ($corps['motDePasse'] ?? ''));
     if (($resultat['refus'] ?? null) === 'desactive') {
         throw new Refus(403, 'Ce compte a été désactivé. Contactez VIZDATA.');
+    }
+    /* Cinq échecs ferment le compte pour un quart d'heure ; avant cela, chaque
+       échec impose une attente qui s'allonge. Le message dit COMBIEN de temps :
+       un refus sans durée se lit comme une panne, et l'on recommence aussitôt,
+       ce qui rallonge l'attente. */
+    if (($resultat['refus'] ?? null) === 'attendre') {
+        $s = (int) $resultat['secondes'];
+        throw new Refus(429, $resultat['motif'] === 'blocage'
+            ? sprintf(
+                "Trop de tentatives ont échoué sur ce compte : il est bloqué %s. Si ce n'est pas vous, votre mot de passe n'a pas été trouvé — mais changez-le par sécurité.",
+                $s >= 60 ? 'encore ' . (int) ceil($s / 60) . ' minutes' : 'encore ' . $s . ' secondes'
+            )
+            : sprintf('Patientez %d seconde%s avant de réessayer.', $s, $s > 1 ? 's' : ''));
     }
     if (isset($resultat['refus'])) {
         throw new Refus(401, 'Adresse e-mail ou mot de passe incorrect.');
@@ -384,6 +402,10 @@ route('POST', '#^/session$#', function () {
         mb_substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 200)
     );
     poserCookie($session['secret']);
+    /* Ce qui s'est passé pendant l'absence : combien de tentatives ont échoué
+       sur ce compte depuis la dernière connexion réussie. Refuser en silence
+       ne protège que de l'attaque qui réussit du premier coup. */
+    $resultat['compte']['tentatives_echouees'] = $session['echecs'];
     return $resultat['compte'];
 }, true);
 
@@ -421,12 +443,31 @@ route('POST', '#^/session/code$#', function () {
     /* Le titulaire doit savoir qu'il vient de brûler un code de secours, et
        combien il lui en reste : s'en apercevoir le jour où il n'en a plus
        serait trop tard. */
+    $compte['tentatives_echouees'] = $session['echecs'];
     $compte['secours_utilise'] = (bool) ($verdict['secours'] ?? false);
     $compte['codes_secours_restants'] = DoubleFacteur::codesSecoursRestants((string) $compte['id']);
     return $compte;
 }, true);
 
 route('GET', '#^/session$#', fn (array $p, ?array $acteur) => $acteur, true);
+
+/* Les appareils connectés. Un titulaire qui s'est connecté depuis un poste
+   partagé — et le poste est souvent partagé — n'avait aucun moyen de fermer
+   cette session à distance : il fallait changer de mot de passe, ce que
+   personne ne fait pour cette raison. */
+route('GET', '#^/mes-sessions$#', fn (array $p, array $acteur) => [
+    'sessions' => Comptes::sessionsDe((string) $acteur['id'], $_COOKIE[COOKIE] ?? null),
+    'derniere_tentative_echouee' => $acteur['last_failed_at'] ?? null,
+]);
+
+route('POST', '#^/mes-sessions/fermer$#', function (array $p, array $acteur) {
+    limiter('sessions:' . $acteur['id'], 20, 900);
+    $fermees = Comptes::fermerToutesSessions((string) $acteur['id'], $_COOKIE[COOKIE] ?? null);
+    Registre::journaliser($acteur, 'SESSIONS_FERMEES', [
+        'entite' => 'user', 'entiteId' => $acteur['id'], 'valeur' => (string) $fermees,
+    ]);
+    return ['fermees' => $fermees];
+});
 
 route('DELETE', '#^/session$#', function () {
     Comptes::fermerSession($_COOKIE[COOKIE] ?? null);

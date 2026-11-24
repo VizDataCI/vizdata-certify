@@ -17,6 +17,7 @@
 import { useState } from "react";
 import { changePassword, isAuthConfigured, qualiteMotDePasse } from "../../lib/auth.js";
 import { DoubleFacteurCarte } from "../certified/DoubleFacteur.jsx";
+import { SessionsCarte } from "./Sessions.jsx";
 import { Field } from "../../ui/primitives.jsx";
 
 function EcranSecurite({ p }) {
@@ -82,6 +83,7 @@ function EcranSecurite({ p }) {
       </div>
 
       <DoubleFacteurCarte notify={p.notify} />
+      <SessionsCarte notify={p.notify} />
     </>
   );
 }

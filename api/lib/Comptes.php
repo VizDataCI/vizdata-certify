@@ -33,6 +33,65 @@ final class Comptes
     public const DUREE_INVITATION = 7 * 24 * 3600;      // sept jours
     public const DUREE_REINITIALISATION = 3600;         // une heure
 
+    /**
+     * Combien de temps une session vit, selon ce qu'elle ouvre.
+     *
+     * Toutes les sessions duraient trente jours, de l'administrateur qui tient
+     * le registre entier au titulaire qui vient voir son diplôme deux fois par
+     * an. C'est le compte le plus puissant qui restait ouvert le plus
+     * longtemps : un cookie dérobé sur un poste partagé — et à Abidjan, le
+     * poste est souvent partagé — donnait un mois d'accès à tout le registre.
+     *
+     * Deux limites, et elles ne disent pas la même chose :
+     *   * `vie` est la durée absolue. Passée celle-ci, la session tombe, même
+     *     utilisée toutes les heures : une session éternelle n'est plus une
+     *     session, c'est un mot de passe permanent.
+     *   * `repos` coupe une session LAISSÉE ouverte. Elle ne gêne pas celui
+     *     qui travaille, elle ferme la porte derrière celui qui est parti.
+     *
+     * Un titulaire n'a pas de coupure d'inactivité : il visite rarement, son
+     * espace ne montre que ses propres certificats, et le déconnecter entre
+     * deux visites ne protégerait rien tout en lui compliquant la vie.
+     */
+    /** Inactivité tolérée avant déconnexion, et préavis donné à l'écran. */
+    public const INACTIVITE = 600;          // dix minutes
+    public const INACTIVITE_PREAVIS = 120;  // les deux dernières, annoncées
+
+    /**
+     * La marge que le serveur laisse au-delà des dix minutes.
+     *
+     * C'est l'écran qui déconnecte, parce que lui seul sait qu'on lit une page
+     * sans rien demander au serveur. Le serveur coupe un peu après, en
+     * filet : sans cette marge, il tomberait pendant que l'écran affiche son
+     * préavis, et le compte à rebours mentirait.
+     */
+    public const INACTIVITE_GRACE = 120;
+
+    public const DUREES = [
+        'ADMIN'     => ['vie' => 7 * 24 * 3600,  'repos' => self::INACTIVITE + self::INACTIVITE_GRACE],
+        'MANAGER'   => ['vie' => 7 * 24 * 3600,  'repos' => self::INACTIVITE + self::INACTIVITE_GRACE],
+        'CERTIFIED' => ['vie' => 30 * 24 * 3600, 'repos' => self::INACTIVITE + self::INACTIVITE_GRACE],
+    ];
+
+    /* --- tentatives de connexion -------------------------------------------
+       Cinq échecs ferment le compte pour un quart d'heure. Avant d'en arriver
+       là, chaque échec impose une attente qui s'allonge : une seconde, deux,
+       cinq, quinze. C'est ce qui rend l'essai en masse sans intérêt, et c'est
+       presque indolore pour qui s'est simplement trompé de touche — la
+       première faute ne coûte rien, la seconde une seconde.
+
+       L'attente est RENDUE, pas dormie : faire patienter le serveur occuperait
+       un processus PHP pendant que l'attaquant, lui, n'attend rien. */
+    public const ECHECS_MAX = 5;
+    public const BLOCAGE = 900;             // un quart d'heure
+    public const DELAIS = [0, 1, 2, 5, 15]; // par nombre d'échecs déjà commis
+
+    /** Durées applicables à un rôle. Un rôle inconnu est traité au plus strict. */
+    public static function dureesDe(?string $role): array
+    {
+        return self::DUREES[$role ?? ''] ?? self::DUREES['ADMIN'];
+    }
+
     /** Empreinte de référence, pour égaliser le temps de réponse. */
     private static ?string $leurre = null;
 
@@ -105,15 +164,25 @@ final class Comptes
      * l'empreinte, et il est donc impossible de le retrouver ensuite — y
      * compris pour nous.
      */
-    public static function ouvrirSession(string $utilisateurId, ?string $agent = null, int $duree = self::DUREE_SESSION): array
+    public static function ouvrirSession(string $utilisateurId, ?string $agent = null, ?int $duree = null): array
     {
+        $compte = Base::un('select role, failed_attempts from users where id = ?', [$utilisateurId]);
+        $duree ??= self::dureesDe($compte['role'] ?? null)['vie'];
+
         $secret = self::nouveauSecret();
         Base::ecrire(
             'insert into sessions (id, token_hash, user_id, expires_at, user_agent) values (?, ?, ?, ?, ?)',
             [Base::uid(), self::empreinteJeton($secret), $utilisateurId, Base::dans($duree), $agent]
         );
-        Base::ecrire('update users set last_login_at = ? where id = ?', [Base::maintenant(), $utilisateurId]);
-        return ['secret' => $secret, 'expire' => Base::dans($duree)];
+        /* Le compteur d'échecs est relevé AVANT d'être remis à zéro : c'est ce
+           chiffre qu'on annonce à celui qui entre. Remis à zéro ensuite, il
+           repart pour la prochaine absence. */
+        $echecs = (int) ($compte['failed_attempts'] ?? 0);
+        Base::ecrire(
+            'update users set last_login_at = ?, failed_attempts = 0 where id = ?',
+            [Base::maintenant(), $utilisateurId]
+        );
+        return ['secret' => $secret, 'expire' => Base::dans($duree), 'echecs' => $echecs];
     }
 
     /**
@@ -129,7 +198,8 @@ final class Comptes
             return null;
         }
         $ligne = Base::un(
-            'select s.id as session_id, s.expires_at as session_expire, u.*
+            'select s.id as session_id, s.expires_at as session_expire,
+                    s.last_seen as session_vue, u.*
                from sessions s join users u on u.id = s.user_id
               where s.token_hash = ?',
             [self::empreinteJeton($secret)]
@@ -137,12 +207,86 @@ final class Comptes
         if ($ligne === null) {
             return null;
         }
-        if ($ligne['session_expire'] <= Base::maintenant()) {
+        /* Deux motifs de refus, et la session est supprimée dans les deux cas :
+           un cookie qui ne vaut plus rien ne doit pas rester une ligne en base
+           que quelqu'un pourrait un jour prolonger. */
+        $repos = self::dureesDe($ligne['role'] ?? null)['repos'];
+        $abandonnee = $repos > 0
+            && (string) ($ligne['session_vue'] ?? '') < Base::dans(-$repos);
+
+        if ($ligne['session_expire'] <= Base::maintenant() || $abandonnee) {
             Base::ecrire('delete from sessions where id = ?', [$ligne['session_id']]);
             return null;
         }
         Base::ecrire('update sessions set last_seen = ? where id = ?', [Base::maintenant(), $ligne['session_id']]);
         return self::normaliser($ligne);
+    }
+
+    /**
+     * Les sessions ouvertes d'un compte, la courante d'abord.
+     *
+     * Le secret n'est jamais rendu : seulement de quoi reconnaître l'appareil
+     * — quand elle a été ouverte, quand elle a servi la dernière fois, et le
+     * navigateur annoncé. C'est assez pour repérer une session qu'on ne
+     * reconnaît pas, et trop peu pour s'en servir.
+     */
+    public static function sessionsDe(string $utilisateurId, ?string $secretCourant = null): array
+    {
+        $empreinte = ($secretCourant === null || $secretCourant === '')
+            ? '' : self::empreinteJeton($secretCourant);
+
+        $lignes = Base::tous(
+            'select id, token_hash, created_at, last_seen, expires_at, user_agent
+               from sessions
+              where user_id = ? and expires_at > ?
+              order by last_seen desc',
+            [$utilisateurId, Base::maintenant()]
+        );
+
+        return array_map(fn (array $s): array => [
+            'id'         => $s['id'],
+            'courante'   => $s['token_hash'] === $empreinte,
+            'created_at' => $s['created_at'],
+            'last_seen'  => $s['last_seen'],
+            'expires_at' => $s['expires_at'],
+            'appareil'   => self::appareil((string) ($s['user_agent'] ?? '')),
+        ], $lignes);
+    }
+
+    /**
+     * Un nom d'appareil lisible, tiré de l'agent annoncé.
+     *
+     * L'agent brut — « Mozilla/5.0 (Windows NT 10.0; Win64; x64) … » — ne dit
+     * rien à personne. Ce qu'il faut pour reconnaître SA session, c'est le
+     * système et le navigateur, et rien de plus : ni version, ni moteur de
+     * rendu, qui ne feraient qu'allonger la ligne.
+     */
+    private static function appareil(string $agent): string
+    {
+        if (trim($agent) === '') {
+            return 'Appareil inconnu';
+        }
+        $systeme = match (true) {
+            str_contains($agent, 'Android')                            => 'Android',
+            (bool) preg_match('/iPhone|iPad|iPod/', $agent)            => 'iPhone ou iPad',
+            str_contains($agent, 'Windows')                            => 'Windows',
+            str_contains($agent, 'Mac OS X')                           => 'Mac',
+            (bool) preg_match('/Linux|X11/', $agent)                   => 'Linux',
+            default                                                    => 'Appareil inconnu',
+        };
+        /* L'ordre compte : Chrome, Edge et Opera s'annoncent tous « Chrome »,
+           et Safari est annoncé par Chrome aussi. On teste du plus précis au
+           plus général. */
+        $navigateur = match (true) {
+            str_contains($agent, 'Edg/')                               => 'Edge',
+            (bool) preg_match('/OPR\/|Opera/', $agent)                 => 'Opera',
+            str_contains($agent, 'SamsungBrowser')                     => 'Samsung Internet',
+            str_contains($agent, 'Firefox')                            => 'Firefox',
+            str_contains($agent, 'Chrome')                             => 'Chrome',
+            str_contains($agent, 'Safari')                             => 'Safari',
+            default                                                    => '',
+        };
+        return $navigateur === '' ? $systeme : "$navigateur sur $systeme";
     }
 
     public static function fermerSession(?string $secret): int
@@ -244,7 +388,11 @@ final class Comptes
             return null;
         }
         $empreinte = $ligne['password_hash'] ?? null;
-        unset($ligne['password_hash'], $ligne['session_id'], $ligne['session_expire'], $ligne['token_hash']);
+        unset(
+            $ligne['password_hash'], $ligne['session_id'], $ligne['session_expire'],
+            $ligne['session_vue'], $ligne['token_hash']
+        );
+        $ligne['failed_attempts'] = (int) ($ligne['failed_attempts'] ?? 0);
 
         $ligne['public_profile'] = Base::bool($ligne['public_profile'] ?? 0);
         $ligne['must_change_password'] = Base::bool($ligne['must_change_password'] ?? 0);
@@ -279,9 +427,62 @@ final class Comptes
      *
      * @return array ['compte' => array] ou ['refus' => 'identifiants'|'desactive']
      */
+    /**
+     * Combien de secondes ce compte doit encore attendre, et pourquoi.
+     *
+     * Rend null quand la porte est ouverte. Le compteur se périme de lui-même :
+     * un quart d'heure sans la moindre tentative et l'ardoise est effacée,
+     * sans quoi cinq fautes de frappe étalées sur un mois finiraient par
+     * bloquer quelqu'un qui n'a rien fait de mal.
+     */
+    public static function attenteAvantEssai(?array $ligne): ?array
+    {
+        if ($ligne === null) {
+            return null;
+        }
+        $echecs = (int) ($ligne['failed_attempts'] ?? 0);
+        if ($echecs === 0) {
+            return null;
+        }
+        $depuis = strtotime((string) ($ligne['last_failed_at'] ?? '')) ?: 0;
+        $ecoule = time() - $depuis;
+
+        if ($echecs >= self::ECHECS_MAX) {
+            /* Le blocage court depuis le DERNIER échec : s'acharner le
+               prolonge, ce qui est exactement le but. */
+            if ($ecoule < self::BLOCAGE) {
+                return ['motif' => 'blocage', 'secondes' => self::BLOCAGE - $ecoule];
+            }
+            return null;
+        }
+
+        $delai = self::DELAIS[$echecs] ?? end(self::DELAIS);
+        if ($ecoule < $delai) {
+            return ['motif' => 'delai', 'secondes' => $delai - $ecoule];
+        }
+        return null;
+    }
+
     public static function authentifier(?string $email, ?string $motDePasse): array
     {
         $ligne = Base::un('select * from users where email = ? collate nocase', [trim((string) $email)]);
+
+        /* L'attente est vérifiée AVANT de comparer le mot de passe : un compte
+           bloqué ne doit pas pouvoir être ouvert par quelqu'un qui finit par
+           tomber juste, et la comparaison elle-même coûte du temps de calcul
+           qu'on ne va pas offrir à un attaquant. */
+        $attente = self::attenteAvantEssai($ligne);
+        if ($attente !== null) {
+            return ['refus' => 'attendre'] + $attente;
+        }
+
+        /* Un quart d'heure sans rien tenter : l'ardoise est effacée. */
+        if ($ligne !== null
+            && (int) ($ligne['failed_attempts'] ?? 0) > 0
+            && time() - (strtotime((string) ($ligne['last_failed_at'] ?? '')) ?: 0) >= self::BLOCAGE) {
+            Base::ecrire('update users set failed_attempts = 0 where id = ?', [$ligne['id']]);
+            $ligne['failed_attempts'] = 0;
+        }
 
         if (self::$leurre === null) {
             self::$leurre = self::hacherMotDePasse('leurre-pour-egaliser-les-temps-de-reponse');
@@ -290,6 +491,17 @@ final class Comptes
         $correct = self::verifierMotDePasse((string) $motDePasse, $empreinte);
 
         if ($ligne === null || ($ligne['password_hash'] ?? null) === null || !$correct) {
+            /* L'échec est compté sur le COMPTE VISÉ, quand il existe. Compter
+               aussi les adresses inconnues remplirait la base de lignes créées
+               par l'extérieur, et dirait surtout à l'attaquant, par le temps
+               de réponse, quelles adresses existent. Le compte visé, lui,
+               apprendra à sa prochaine connexion qu'on s'est acharné sur lui. */
+            if ($ligne !== null) {
+                Base::ecrire(
+                    'update users set failed_attempts = failed_attempts + 1, last_failed_at = ? where id = ?',
+                    [Base::maintenant(), $ligne['id']]
+                );
+            }
             return ['refus' => 'identifiants'];
         }
         if ($ligne['account_status'] === 'DISABLED') {

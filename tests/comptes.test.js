@@ -98,8 +98,18 @@ test("un compte sans mot de passe ne se connecte pas", () => {
   const { db, fermer } = baseNeuve();
   try {
     compte(db, { email: "invite@vizdata.ci", empreinte: null });
-    assert.equal(authentifier(db, "invite@vizdata.ci", "").refus, "identifiants");
-    assert.equal(authentifier(db, "invite@vizdata.ci", "VizData2026").refus, "identifiants");
+
+    const vide = authentifier(db, "invite@vizdata.ci", "");
+    assert.equal(vide.refus, "identifiants");
+    assert.equal(vide.compte, undefined);
+
+    /* Le second essai vient aussitôt après le premier : il tombe désormais
+       sous le délai progressif, qui s'allonge à chaque échec. Le refus n'est
+       plus le même — mais ce que le test tient est inchangé, et c'est le seul
+       point qui compte : le compte ne s'ouvre d'aucune façon. */
+    const ensuite = authentifier(db, "invite@vizdata.ci", "VizData2026");
+    assert.ok(["identifiants", "attendre"].includes(ensuite.refus), ensuite.refus);
+    assert.equal(ensuite.compte, undefined);
   } finally {
     fermer();
   }

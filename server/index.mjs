@@ -46,6 +46,7 @@ import {
 import {
   authentifier,
   ouvrirSession,
+  sessionsDe,
   sessionDepuisSecret,
   fermerSession,
   fermerToutesSessions,
@@ -254,11 +255,29 @@ route(
 
     /* Deux compteurs : par adresse, pour protéger un compte visé ; par client,
        pour empêcher le balayage de nombreuses adresses depuis un même poste. */
-    limiter("conn:" + String(email || "").toLowerCase(), { max: 10, fenetre: 15 * 60_000 });
+    /* Ce limiteur-ci compte TOUTES les tentatives, réussies comprises, et il
+       ne sait rien du compte visé. Depuis que cinq échecs bloquent le compte
+       lui-même, c'est cette règle-là qui doit parler — elle dit quoi faire et
+       pour combien de temps. Le limiteur reste en arrière-garde, reculé assez
+       pour ne plus couvrir le message précis d'un « réessayez plus tard ». */
+    limiter("conn:" + String(email || "").toLowerCase(), { max: 20, fenetre: 15 * 60_000 });
     limiter("conn-ip:" + empreinteClient(req), { max: 40, fenetre: 15 * 60_000 });
 
     const resultat = authentifier(db, email, motDePasse);
     if (resultat.refus === "desactive") throw new Refus(403, "Ce compte a été désactivé. Contactez VIZDATA.");
+    /* Cinq échecs ferment le compte pour un quart d'heure ; avant cela, chaque
+       échec impose une attente qui s'allonge. Le message dit COMBIEN de temps :
+       un refus sans durée se lit comme une panne, et l'on recommence aussitôt,
+       ce qui rallonge l'attente. */
+    if (resultat.refus === "attendre") {
+      const n = resultat.secondes;
+      throw new Refus(
+        429,
+        resultat.motif === "blocage"
+          ? `Trop de tentatives ont échoué sur ce compte : il est bloqué encore ${n >= 60 ? `${Math.ceil(n / 60)} minutes` : `${n} secondes`}. Si ce n'est pas vous, votre mot de passe n'a pas été trouvé — mais changez-le par sécurité.`
+          : `Patientez ${n} seconde${n > 1 ? "s" : ""} avant de réessayer.`
+      );
+    }
     if (resultat.refus) throw new Refus(401, "Adresse e-mail ou mot de passe incorrect.");
 
     /* Second facteur : aucune session n'est ouverte ici. On rend un défi,
@@ -270,11 +289,14 @@ route(
       return { deuxiemeFacteur: true, defi: DF.ouvrirDefi(db, resultat.compte.id) };
     }
 
-    const { secret } = ouvrirSession(db, resultat.compte.id, {
+    const { secret, echecs } = ouvrirSession(db, resultat.compte.id, {
       userAgent: String(req.headers["user-agent"] || "").slice(0, 200),
     });
     res.setHeader("Set-Cookie", cookieSession(secret));
-    return resultat.compte;
+    /* Ce qui s'est passé pendant l'absence : combien de tentatives ont échoué
+       sur ce compte depuis la dernière connexion réussie. Refuser en silence
+       ne protège que de l'attaque qui réussit du premier coup. */
+    return { ...resultat.compte, tentatives_echouees: echecs };
   },
   { publique: true }
 );
@@ -304,7 +326,7 @@ route(
       throw new Refus(403, "Ce compte a été désactivé. Contactez VIZDATA.");
     }
 
-    const { secret } = ouvrirSession(db, compte.id, {
+    const { secret, echecs } = ouvrirSession(db, compte.id, {
       userAgent: String(req.headers["user-agent"] || "").slice(0, 200),
     });
     res.setHeader("Set-Cookie", cookieSession(secret));
@@ -313,6 +335,7 @@ route(
        combien il lui en reste. */
     return {
       ...compte,
+      tentatives_echouees: echecs,
       secours_utilise: Boolean(verdict.secours),
       codes_secours_restants: DF.codesSecoursRestants(db, compte.id),
     };
@@ -321,6 +344,23 @@ route(
 );
 
 route("GET", /^\/api\/session$/, ({ acteur }) => acteur ?? null, { publique: true });
+
+/* Les appareils connectés. Un titulaire qui s'est connecté depuis un poste
+   partagé n'avait aucun moyen de fermer cette session à distance : il fallait
+   changer de mot de passe, ce que personne ne fait pour cette raison. */
+route("GET", /^\/api\/mes-sessions$/, ({ req, acteur }) => ({
+  sessions: sessionsDe(db, acteur.id, req.secretSession),
+  derniere_tentative_echouee: acteur.last_failed_at ?? null,
+}));
+
+route("POST", /^\/api\/mes-sessions\/fermer$/, ({ req, acteur }) => {
+  limiter("sessions:" + acteur.id, { max: 20, fenetre: 15 * 60_000 });
+  const fermees = fermerToutesSessions(db, acteur.id, { sauf: req.secretSession });
+  R.journaliser(db, acteur, "SESSIONS_FERMEES", {
+    entite: "user", entiteId: acteur.id, valeur: String(fermees),
+  });
+  return { fermees };
+});
 
 route(
   "DELETE",

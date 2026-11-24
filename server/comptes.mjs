@@ -96,21 +96,104 @@ const empreinteJeton = (jeton) => createHash("sha256").update(jeton).digest("bas
 const DUREE_SESSION = 30 * 24 * 3600; // trente jours
 
 /**
+ * Combien de temps une session vit, selon ce qu'elle ouvre.
+ *
+ * Toutes duraient trente jours, de l'administrateur qui tient le registre
+ * entier au titulaire qui vient voir son diplôme deux fois par an. C'est le
+ * compte le plus puissant qui restait ouvert le plus longtemps : un cookie
+ * dérobé sur un poste partagé — et le poste est souvent partagé — donnait un
+ * mois d'accès à tout le registre.
+ *
+ * `vie` est la durée absolue : passée celle-ci la session tombe, même
+ * utilisée toutes les heures. `repos` coupe une session LAISSÉE ouverte :
+ * elle ne gêne pas celui qui travaille, elle ferme la porte derrière celui qui
+ * est parti. Un titulaire n'a pas de coupure d'inactivité — il visite
+ * rarement, et son espace ne montre que ses propres certificats.
+ */
+/** Inactivité tolérée avant déconnexion, et préavis donné à l'écran. */
+const INACTIVITE = 600;          // dix minutes
+const INACTIVITE_PREAVIS = 120;  // les deux dernières, annoncées
+
+/**
+ * La marge que le serveur laisse au-delà des dix minutes.
+ *
+ * C'est l'écran qui déconnecte, parce que lui seul sait qu'on lit une page
+ * sans rien demander au serveur. Le serveur coupe un peu après, en filet :
+ * sans cette marge, il tomberait pendant que l'écran affiche son préavis, et
+ * le compte à rebours mentirait.
+ */
+const INACTIVITE_GRACE = 120;
+
+const DUREES = {
+  ADMIN: { vie: 7 * 24 * 3600, repos: INACTIVITE + INACTIVITE_GRACE },
+  MANAGER: { vie: 7 * 24 * 3600, repos: INACTIVITE + INACTIVITE_GRACE },
+  CERTIFIED: { vie: 30 * 24 * 3600, repos: INACTIVITE + INACTIVITE_GRACE },
+};
+
+/* --- tentatives de connexion -----------------------------------------------
+   Cinq échecs ferment le compte pour un quart d'heure. Avant d'en arriver là,
+   chaque échec impose une attente qui s'allonge : une seconde, deux, cinq,
+   quinze. C'est ce qui rend l'essai en masse sans intérêt, et c'est presque
+   indolore pour qui s'est trompé de touche — la première faute ne coûte rien.
+
+   L'attente est RENDUE, pas dormie : faire patienter le serveur occuperait un
+   processus pendant que l'attaquant, lui, n'attend rien. */
+const ECHECS_MAX = 5;
+const BLOCAGE = 900;             // un quart d'heure
+const DELAIS = [0, 1, 2, 5, 15]; // par nombre d'échecs déjà commis
+
+/**
+ * Combien de secondes ce compte doit encore attendre, et pourquoi.
+ *
+ * Rend null quand la porte est ouverte. Le compteur se périme de lui-même :
+ * un quart d'heure sans la moindre tentative et l'ardoise est effacée, sans
+ * quoi cinq fautes de frappe étalées sur un mois finiraient par bloquer
+ * quelqu'un qui n'a rien fait de mal.
+ */
+function attenteAvantEssai(ligne) {
+  if (!ligne) return null;
+  const echecs = ligne.failed_attempts || 0;
+  if (echecs === 0) return null;
+
+  const depuis = Date.parse(ligne.last_failed_at || "") || 0;
+  const ecoule = Math.floor((Date.now() - depuis) / 1000);
+
+  if (echecs >= ECHECS_MAX) {
+    /* Le blocage court depuis le DERNIER échec : s'acharner le prolonge, ce
+       qui est exactement le but. */
+    return ecoule < BLOCAGE ? { motif: "blocage", secondes: BLOCAGE - ecoule } : null;
+  }
+
+  const delai = DELAIS[echecs] ?? DELAIS[DELAIS.length - 1];
+  return ecoule < delai ? { motif: "delai", secondes: delai - ecoule } : null;
+}
+
+/** Durées applicables à un rôle. Un rôle inconnu est traité au plus strict. */
+const dureesDe = (role) => DUREES[role] || DUREES.ADMIN;
+
+/**
  * Ouvre une session et renvoie le secret à poser dans le cookie.
  *
  * Le secret n'est renvoyé qu'ici, une seule fois : la base n'en garde que
  * l'empreinte, et il est donc impossible de le retrouver ensuite — y compris
  * pour nous.
  */
-function ouvrirSession(db, utilisateurId, { userAgent = null, duree = DUREE_SESSION } = {}) {
+function ouvrirSession(db, utilisateurId, { userAgent = null, duree = null } = {}) {
+  const compte = db.prepare("select role, failed_attempts from users where id = ?").get(utilisateurId);
+  const vie = duree ?? dureesDe(compte?.role).vie;
+
   const secret = nouveauSecret();
   db.prepare(
     `insert into sessions (id, token_hash, user_id, expires_at, user_agent)
      values (?, ?, ?, ?, ?)`
-  ).run(uid(), empreinteJeton(secret), utilisateurId, dans(duree), userAgent);
+  ).run(uid(), empreinteJeton(secret), utilisateurId, dans(vie), userAgent);
 
-  db.prepare("update users set last_login_at = ? where id = ?").run(maintenant(), utilisateurId);
-  return { secret, expire: dans(duree) };
+  /* Le compteur d'échecs est relevé AVANT d'être remis à zéro : c'est ce
+     chiffre qu'on annonce à celui qui entre. */
+  const echecs = compte?.failed_attempts ?? 0;
+  db.prepare("update users set last_login_at = ?, failed_attempts = 0 where id = ?")
+    .run(maintenant(), utilisateurId);
+  return { secret, expire: dans(vie), echecs };
 }
 
 /**
@@ -125,7 +208,7 @@ function sessionDepuisSecret(db, secret) {
 
   const ligne = db
     .prepare(
-      `select s.id as session_id, s.expires_at, u.*
+      `select s.id as session_id, s.expires_at, s.last_seen as session_vue, u.*
          from sessions s
          join users u on u.id = s.user_id
         where s.token_hash = ?`
@@ -133,7 +216,13 @@ function sessionDepuisSecret(db, secret) {
     .get(empreinteJeton(secret));
 
   if (!ligne) return null;
-  if (ligne.expires_at <= maintenant()) {
+
+  /* Deux motifs de refus, et la session est supprimée dans les deux cas : un
+     cookie qui ne vaut plus rien ne doit pas rester une ligne en base. */
+  const { repos } = dureesDe(ligne.role);
+  const abandonnee = repos > 0 && String(ligne.session_vue || "") < dans(-repos);
+
+  if (ligne.expires_at <= maintenant() || abandonnee) {
     db.prepare("delete from sessions where id = ?").run(ligne.session_id);
     return null;
   }
@@ -223,6 +312,7 @@ function normaliserCompte(ligne) {
     password_hash: _empreinte,
     session_id: _session,
     expires_at: _expiration,
+    session_vue: _vue,
     token_hash: _jeton,
     ...reste
   } = ligne;
@@ -259,13 +349,92 @@ const EMPREINTE_LEURRE = hacherMotDePasse("leurre-pour-egaliser-les-temps-de-rep
 
 function authentifier(db, email, motDePasse) {
   const ligne = db.prepare("select * from users where email = ? collate nocase").get(String(email || "").trim());
+
+  /* L'attente est vérifiée AVANT de comparer le mot de passe : un compte
+     bloqué ne doit pas pouvoir être ouvert par quelqu'un qui finit par tomber
+     juste, et la comparaison coûte un temps de calcul qu'on ne va pas offrir
+     à un attaquant. */
+  const attente = attenteAvantEssai(ligne);
+  if (attente) return { refus: "attendre", ...attente };
+
+  /* Un quart d'heure sans rien tenter : l'ardoise est effacée. */
+  if (ligne?.failed_attempts > 0
+      && Date.now() - (Date.parse(ligne.last_failed_at || "") || 0) >= BLOCAGE * 1000) {
+    db.prepare("update users set failed_attempts = 0 where id = ?").run(ligne.id);
+    ligne.failed_attempts = 0;
+  }
+
   const empreinte = ligne?.password_hash || EMPREINTE_LEURRE;
   const correct = verifierMotDePasse(String(motDePasse || ""), empreinte);
 
-  if (!ligne || !ligne.password_hash || !correct) return { refus: "identifiants" };
+  if (!ligne || !ligne.password_hash || !correct) {
+    /* L'échec est compté sur le COMPTE VISÉ, quand il existe. Compter aussi
+       les adresses inconnues remplirait la base de lignes créées par
+       l'extérieur, et dirait à l'attaquant lesquelles existent. Le compte
+       visé, lui, apprendra à sa prochaine connexion qu'on s'est acharné. */
+    if (ligne) {
+      db.prepare("update users set failed_attempts = failed_attempts + 1, last_failed_at = ? where id = ?")
+        .run(maintenant(), ligne.id);
+    }
+    return { refus: "identifiants" };
+  }
   if (ligne.account_status === "DISABLED") return { refus: "desactive" };
 
   return { compte: normaliserCompte(ligne) };
+}
+
+/**
+ * Les sessions ouvertes d'un compte, la plus récemment vue d'abord.
+ *
+ * Le secret n'est jamais renvoyé : seulement de quoi reconnaître l'appareil —
+ * quand la session a été ouverte, quand elle a servi, et le navigateur
+ * annoncé. Assez pour repérer une session qu'on ne reconnaît pas, trop peu
+ * pour s'en servir.
+ */
+function sessionsDe(db, utilisateurId, secretCourant = null) {
+  const empreinte = secretCourant ? empreinteJeton(secretCourant) : "";
+  return db
+    .prepare(
+      `select id, token_hash, created_at, last_seen, expires_at, user_agent
+         from sessions
+        where user_id = ? and expires_at > ?
+        order by last_seen desc`
+    )
+    .all(utilisateurId, maintenant())
+    .map((s) => ({
+      id: s.id,
+      courante: s.token_hash === empreinte,
+      created_at: s.created_at,
+      last_seen: s.last_seen,
+      expires_at: s.expires_at,
+      appareil: appareil(s.user_agent || ""),
+    }));
+}
+
+/**
+ * Un nom d'appareil lisible, tiré de l'agent annoncé.
+ *
+ * L'agent brut ne dit rien à personne. Ce qu'il faut pour reconnaître SA
+ * session, c'est le système et le navigateur, et rien de plus.
+ */
+function appareil(agent) {
+  if (!String(agent).trim()) return "Appareil inconnu";
+  const systeme = /Android/.test(agent) ? "Android"
+    : /iPhone|iPad|iPod/.test(agent) ? "iPhone ou iPad"
+    : /Windows/.test(agent) ? "Windows"
+    : /Mac OS X/.test(agent) ? "Mac"
+    : /Linux|X11/.test(agent) ? "Linux"
+    : "Appareil inconnu";
+  /* L'ordre compte : Edge et Opera s'annoncent aussi « Chrome », et Chrome
+     s'annonce aussi « Safari ». Du plus précis au plus général. */
+  const navigateur = /Edg\//.test(agent) ? "Edge"
+    : /OPR\/|Opera/.test(agent) ? "Opera"
+    : /SamsungBrowser/.test(agent) ? "Samsung Internet"
+    : /Firefox/.test(agent) ? "Firefox"
+    : /Chrome/.test(agent) ? "Chrome"
+    : /Safari/.test(agent) ? "Safari"
+    : "";
+  return navigateur ? `${navigateur} sur ${systeme}` : systeme;
 }
 
 /** Écrit un nouveau mot de passe et clôt les autres sessions. */
@@ -291,6 +460,14 @@ export {
   sessionDepuisSecret,
   fermerSession,
   fermerToutesSessions,
+  sessionsDe,
+  dureesDe,
+  attenteAvantEssai,
+  INACTIVITE,
+  INACTIVITE_PREAVIS,
+  ECHECS_MAX,
+  BLOCAGE,
+  DELAIS,
   menage,
   creerJeton,
   consommerJeton,
