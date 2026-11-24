@@ -24,6 +24,7 @@
  * la vérité.
  */
 
+import { execFileSync } from "node:child_process";
 import {
   cpSync, mkdirSync, rmSync, writeFileSync, readFileSync, existsSync, statSync, readdirSync,
 } from "node:fs";
@@ -311,6 +312,57 @@ function verifier(chemin) {
   return null;
 }
 
+/**
+ * Retire du paquet les migrations que le dépôt ne connaît pas encore.
+ *
+ * Une migration s'applique UNE FOIS et se marque appliquée, par son nom de
+ * fichier. Un brouillon emporté par mégarde crée donc ses tables en
+ * production, définitivement — et la vraie version, livrée plus tard sous le
+ * même nom, ne sera jamais exécutée. Il n'y a pas de marche arrière.
+ *
+ * Le critère est le dépôt, pas une liste d'exceptions : un fichier non suivi
+ * par git est un travail en cours, de quiconque, et le travail en cours ne se
+ * déploie pas. Rien n'est touché dans le dossier de travail : on n'élague que
+ * la copie déjà posée dans le paquet.
+ *
+ * Si git ne peut pas répondre, on s'arrête. Continuer « au cas où » est
+ * exactement ce qui a failli emporter une migration de quelqu'un d'autre.
+ *
+ * Rend la liste des fichiers écartés, ou null si le contrôle n'a pas pu se
+ * faire.
+ */
+function elaguerSchema() {
+  const dossier = join(ETAPE, "api", "schema");
+  if (!existsSync(dossier)) return [];
+
+  let suivis;
+  try {
+    suivis = new Set(
+      execFileSync("git", ["ls-files", "--", "server/schema"], { cwd: RACINE, encoding: "utf8" })
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean)
+        .map((l) => l.slice(l.lastIndexOf("/") + 1))
+    );
+  } catch (e) {
+    console.error(`\n  Impossible de demander à git quelles migrations sont commitées : ${e.message}`);
+    console.error("  Le paquet n'est pas construit : une migration en brouillon ne se rattrape pas.\n");
+    return null;
+  }
+  if (suivis.size === 0) {
+    console.error("\n  git ne connaît aucune migration dans server/schema/ : contrôle impossible.\n");
+    return null;
+  }
+
+  const ecarte = [];
+  for (const nom of readdirSync(dossier)) {
+    if (!nom.endsWith(".sql") || suivis.has(nom)) continue;
+    rmSync(join(dossier, nom), { force: true });
+    ecarte.push(nom);
+  }
+  return ecarte;
+}
+
 /** Poids total d'un dossier, pour dire ce qu'on s'apprête à téléverser. */
 function poids(chemin) {
   const infos = statSync(chemin);
@@ -341,6 +393,12 @@ function construire() {
     const cible = destination === "." ? ETAPE : join(ETAPE, destination);
     mkdirSync(destination === "." ? cible : join(cible, ".."), { recursive: true });
     cpSync(origine, cible, { recursive: true });
+  }
+
+  const ecarte = elaguerSchema();
+  if (ecarte === null) return 1;
+  for (const nom of ecarte) {
+    console.log(`  Écarté  : api/schema/${nom} — migration non commitée, elle n'a rien à faire en production`);
   }
 
   writeFileSync(join(ETAPE, "LISEZ-MOI-DEPLOIEMENT.md"), LISEZMOI);
