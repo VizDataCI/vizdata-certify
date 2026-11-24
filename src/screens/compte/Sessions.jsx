@@ -127,7 +127,9 @@ function SessionsCarte({ notify }) {
             ? "Fermeture…"
             : autres === 0
               ? "Aucune autre session ouverte"
-              : `Fermer les ${autres} autre${autres > 1 ? "s" : ""} session${autres > 1 ? "s" : ""}`}
+              : autres === 1
+                ? "Fermer l'autre session"
+                : `Fermer les ${autres} autres sessions`}
         </button>
       </div>
     </section>
