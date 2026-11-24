@@ -199,7 +199,10 @@ function AdminDashboard(p) {
           <span>
             Votre compte d'administration n'a pas de validation en deux étapes. Un mot de passe seul
             ouvre le registre entier.{" "}
-            <button className="vz-linkbtn" style={{ padding: 0 }} onClick={() => p.go({ view: "dashboard", tab: "settings" })}>
+            {/* L'écran de sécurité est ici, dans l'administration : ce lien
+                change d'écran, il ne quitte pas l'espace. Il envoyait sur
+                /espace, et l'on croyait à une page cassée. */}
+            <button className="vz-linkbtn" style={{ padding: 0 }} onClick={() => p.setPage("securite")}>
               L'activer maintenant
             </button>
           </span>

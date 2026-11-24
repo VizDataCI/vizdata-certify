@@ -18,6 +18,7 @@ import { projectionPublique } from "../../lib/certificates.js";
 import { estAdmin, estAdministration, peut } from "../../lib/permissions.js";
 import { CertificateModal } from "../../modals/CertificateModal.jsx";
 import { ShareModal } from "../../modals/ShareModal.jsx";
+import { EcranSecurite } from "../compte/Securite.jsx";
 import { AppShell } from "../../ui/AppShell.jsx";
 import {
   IconeTableau, IconeCertificats, IconeCertifies, IconeCatalogue, IconeImport,
@@ -47,6 +48,12 @@ import { AdminVerifications } from "./Verifications.jsx";
     chargent leurs propres données et n'attendent pas le registre. */
 const PAGES_ACADEMIE = ["candidatures", "cohortes"];
 
+/** Écrans qui ne dépendent pas du registre : ils ne doivent donc ni attendre
+    son chargement, ni afficher son erreur. La sécurité du compte en fait
+    partie — un registre indisponible ne doit pas empêcher d'activer son
+    second facteur. */
+const PAGES_SANS_REGISTRE = [...PAGES_ACADEMIE, "securite"];
+
 function AdminSpace(p) {
   const [page, setPage] = useState(p.route.page || "dashboard");
   const [modal, setModal] = useState(null);
@@ -63,7 +70,7 @@ function AdminSpace(p) {
   }, []);
 
   const db = isAuthConfigured ? registry : p.db;
-  const pageAcademie = PAGES_ACADEMIE.includes(page);
+  const sansRegistre = PAGES_SANS_REGISTRE.includes(page);
 
   /* `dbRef` sert aux actions : elles sont asynchrones, et un `db` capturé à la
      construction serait périmé dès la première écriture. */
@@ -128,11 +135,12 @@ function AdminSpace(p) {
     admin && { group: "Configuration" },
     admin && { key: "users", label: "Utilisateurs et rôles", icone: IconeUtilisateurs },
     admin && { key: "settings", label: "Paramètres", icone: IconeParametres },
-    /* La sécurité du compte vit dans l'espace personnel. Sans cette entrée,
-       elle n'était atteignable que par un lien discret en pied de barre :
-       un administrateur ne pouvait ni changer son mot de passe ni activer son
-       second facteur sans connaître l'adresse. */
-    { key: "securite", label: "Ma sécurité", icone: IconeVerrou, aller: { view: "dashboard", tab: "settings" } },
+    /* La sécurité du compte s'affiche ICI, dans l'administration.
+       L'entrée renvoyait vers l'espace personnel : cliquer dans la
+       configuration du registre faisait sortir de l'administration et
+       atterrir sur /espace, avec une autre barre et un autre titre. Le même
+       écran sert aux deux espaces — voir screens/compte/Securite.jsx. */
+    { key: "securite", label: "Ma sécurité", icone: IconeVerrou },
     { group: "Académie" },
     { key: "candidatures", label: "Candidatures", icone: IconeCandidatures },
     { key: "cohortes", label: "Cohortes", icone: IconeCohortes },
@@ -176,15 +184,17 @@ function AdminSpace(p) {
       session={p.session}
       go={p.go}
       logout={p.logout}
+      onCompte={() => setPage("securite")}
       title={admin ? "Administration du registre" : "Gestion du registre"}
       sub="CERTIFY"
     >
       <div className="vz-page">
-        {err && !pageAcademie && <div className="vz-alert err" style={{ marginBottom: 14 }}>{err}</div>}
-        {!shared && !err && !pageAcademie && <div className="vz-card"><div className="vz-empty">Chargement du registre…</div></div>}
+        {err && !sansRegistre && <div className="vz-alert err" style={{ marginBottom: 14 }}>{err}</div>}
+        {!shared && !err && !sansRegistre && <div className="vz-card"><div className="vz-empty">Chargement du registre…</div></div>}
 
         {pageCourante === "candidatures" && <AdminCandidatures {...p} setPage={setPage} />}
         {pageCourante === "cohortes" && <AdminCohortes {...p} setPage={setPage} />}
+        {pageCourante === "securite" && <EcranSecurite p={p} />}
         {shared && pageCourante === "dashboard" && <AdminDashboard {...shared} />}
         {shared && pageCourante === "certificates" && <AdminCertificates {...shared} />}
         {shared && pageCourante === "certified" && <AdminCertified {...shared} />}

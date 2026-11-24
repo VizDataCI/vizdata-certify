@@ -24,7 +24,7 @@ function initiales(session) {
   return (a + b).toUpperCase() || (session.email || "?")[0].toUpperCase();
 }
 
-function AppShell({ nav, current, onNav, session, go, logout, title, children, sub, accent }) {
+function AppShell({ nav, current, onNav, session, go, logout, title, children, sub, accent, onCompte }) {
   const onglets = nav.filter((n) => n.key);
 
   return (
@@ -42,11 +42,14 @@ function AppShell({ nav, current, onNav, session, go, logout, title, children, s
               <button
                 key={n.key}
                 className={current === n.key ? "on" : ""}
-                /* Une entrée peut mener ailleurs que dans l'espace courant :
-                   la sécurité du compte vit dans l'espace personnel, et
-                   l'administration doit pouvoir y aller sans connaître
-                   l'adresse par cœur. */
-                onClick={() => (n.aller ? go(n.aller) : onNav(n.key))}
+                /* Une entrée de navigation change d'écran DANS l'espace
+                   courant, sans exception. Une entrée a un temps pu mener
+                   ailleurs — « Ma sécurité » renvoyait de l'administration
+                   vers /espace — et c'était faux deux fois : on quittait
+                   l'espace sans l'avoir demandé, et la navigation horizontale
+                   du téléphone, qui ne connaît que `onNav`, n'affichait rien
+                   du tout. Chaque espace héberge donc ses propres écrans. */
+                onClick={() => onNav(n.key)}
                 aria-current={current === n.key ? "page" : undefined}
               >
                 {n.icone ? <n.icone /> : null}
@@ -63,14 +66,15 @@ function AppShell({ nav, current, onNav, session, go, logout, title, children, s
               {session.first_name} {session.last_name}
             </div>
             <div style={{ display: "flex", gap: 12, alignItems: "center", whiteSpace: "nowrap" }}>
-              {/* Mot de passe et validation en deux étapes vivent dans l'espace
-                  personnel. L'administration n'y menait par aucun lien : un
-                  administrateur ne pouvait ni changer son mot de passe ni
-                  activer sa protection sans connaître l'adresse par cœur. */}
+              {/* Mot de passe et validation en deux étapes. Chaque espace
+                  affiche l'écran chez lui et dit par où y aller : ce bouton ne
+                  navigue donc pas, il change d'écran. Il menait auparavant à
+                  l'espace du certifié, ce qui faisait sortir l'administrateur
+                  de l'administration — barre, titre et adresse compris. */}
               <button
                 className="vz-linkbtn"
                 style={{ padding: 0, color: "var(--gris)", fontSize: 12 }}
-                onClick={() => go({ view: "dashboard", tab: "settings" })}
+                onClick={onCompte}
               >
                 Mon compte
               </button>

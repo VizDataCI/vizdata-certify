@@ -10,11 +10,10 @@
  */
 
 import { useState, useEffect } from "react";
-import { changePassword, isAuthConfigured, qualiteMotDePasse } from "../../lib/auth.js";
 import { typeCertificat } from "../../lib/certificates.js";
 import { fmtLong } from "../../lib/dates.js";
 import { CertificateModal } from "../../modals/CertificateModal.jsx";
-import { DoubleFacteurCarte } from "./DoubleFacteur.jsx";
+import { EcranSecurite } from "../compte/Securite.jsx";
 import { ShareModal } from "../../modals/ShareModal.jsx";
 import { AppShell } from "../../ui/AppShell.jsx";
 import { ZoneImpression, imprimerCertificat } from "../../ui/Certificat.jsx";
@@ -26,8 +25,9 @@ import {
 } from "../../ui/icones.jsx";
 
 function CertifiedSpace(p) {
-  /* L'onglet peut être demandé par la route : « Mon compte », depuis
-     l'administration, ouvre directement la sécurité. */
+  /* L'onglet peut être demandé par la route, pour qu'un lien ouvre
+     directement le bon écran. L'administration ne passe plus par là : elle
+     affiche la sécurité du compte chez elle. */
   const [page, setPage] = useState(() => p.route?.tab || "certs");
   const [modal, setModal] = useState(null);
   const [me, setMe] = useState(p.session);
@@ -113,7 +113,7 @@ function CertifiedSpace(p) {
   const domaines = new Set((certs || []).map((c) => c.domain).filter(Boolean)).size;
 
   return (
-    <AppShell nav={nav} current={page} onNav={setPage} session={p.session} go={p.go} logout={p.logout} title="Espace certifié" sub="CERTIFY">
+    <AppShell nav={nav} current={page} onNav={setPage} session={p.session} go={p.go} logout={p.logout} onCompte={() => setPage("settings")} title="Espace certifié" sub="CERTIFY">
       <div className="vz-page">
         {page === "certs" && (
           <>
@@ -250,7 +250,7 @@ function CertifiedSpace(p) {
           </>
         )}
 
-        {page === "settings" && <Securite p={p} />}
+        {page === "settings" && <EcranSecurite p={p} />}
       </div>
 
       {/* Monté hors de toute modale : imprimer depuis une carte n'ouvre rien. */}
@@ -272,75 +272,6 @@ function Patienter({ texte }) {
         </div>
       </div>
     </div>
-  );
-}
-
-/* --- sécurité : changement de mot de passe ------------------------------- */
-
-function Securite({ p }) {
-  const [ancien, setAncien] = useState("");
-  const [nouveau, setNouveau] = useState("");
-  const [confirmation, setConfirmation] = useState("");
-  const [err, setErr] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [fait, setFait] = useState(false);
-
-  const changer = async () => {
-    if (busy) return;
-    const souci = qualiteMotDePasse(nouveau);
-    if (souci) { setErr(souci); return; }
-    if (nouveau !== confirmation) { setErr("Les deux mots de passe ne correspondent pas."); return; }
-
-    setBusy(true);
-    setErr("");
-    try {
-      await changePassword(p.session.email, ancien, nouveau);
-      setFait(true);
-      setAncien(""); setNouveau(""); setConfirmation("");
-      p.notify("Mot de passe modifié.");
-    } catch (e) {
-      setErr(e.message);
-    }
-    setBusy(false);
-  };
-
-  return (
-    <>
-      <div className="vz-page-head"><h1>Sécurité</h1></div>
-      <div className="vz-card" style={{ maxWidth: 560 }}>
-        <div className="vz-card-head"><h3 style={{ fontSize: 14 }}>Mot de passe</h3></div>
-        <div className="vz-card-body" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {fait && <div className="vz-alert ok">Votre mot de passe a été modifié. Il est actif dès maintenant.</div>}
-          {!isAuthConfigured && (
-            <div className="vz-alert warn">
-              Registre de démonstration : aucun mot de passe n'est réellement enregistré.
-            </div>
-          )}
-          {/* Le mot de passe actuel est exigé, ici comme au serveur, qui le
-              revérifie : sans ce contrôle, un poste laissé déverrouillé une
-              minute suffirait à prendre le compte. */}
-          <Field label="Mot de passe actuel">
-            <input className="vz-input" type="password" value={ancien} onChange={(e) => { setAncien(e.target.value); setErr(""); setFait(false); }} autoComplete="current-password" />
-          </Field>
-          <Field label="Nouveau mot de passe" hint="Huit caractères au minimum, dont une lettre et un chiffre.">
-            <input className="vz-input" type="password" value={nouveau} onChange={(e) => { setNouveau(e.target.value); setErr(""); }} autoComplete="new-password" />
-          </Field>
-          <Field label="Confirmer le nouveau mot de passe">
-            <input className="vz-input" type="password" value={confirmation} onChange={(e) => { setConfirmation(e.target.value); setErr(""); }} onKeyDown={(e) => e.key === "Enter" && changer()} autoComplete="new-password" />
-          </Field>
-          {err && <div className="vz-alert err">{err}</div>}
-          <button className="vz-btn vz-btn-primary vz-btn-form" onClick={changer} disabled={busy}>
-            {busy ? "Modification…" : "Modifier mon mot de passe"}
-          </button>
-          <p className="vz-small vz-muted" style={{ lineHeight: 1.7, borderTop: "1px solid var(--trait)", paddingTop: 14, margin: 0 }}>
-            Mot de passe perdu ? Déconnectez-vous et utilisez « Mot de passe oublié » sur la page de
-            connexion : un lien valable une heure vous sera envoyé.
-          </p>
-        </div>
-      </div>
-
-      <DoubleFacteurCarte notify={p.notify} />
-    </>
   );
 }
 
