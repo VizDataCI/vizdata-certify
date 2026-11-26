@@ -444,12 +444,39 @@
 .vz-main{flex:1;min-width:0;display:flex;flex-direction:column}
 /* 62 px plus son filet font les 63 px de la bande de marque, à gauche : les
    deux traits n'en font qu'un d'un bord à l'autre de l'écran. */
+/* La barre du haut est SOMBRE, comme la barre latérale.
+ *
+ * Elle était blanche. Le résultat était une marche en haut de l'écran : un
+ * pavé sombre à gauche jusqu'à 252 px, une bande blanche sur tout le reste, et
+ * deux plans qui se disputaient la même ligne. Les aligner au pixel, comme on
+ * l'a fait, n'y changeait rien : deux surfaces alignées mais de valeurs
+ * opposées restent deux surfaces.
+ *
+ * Désormais la navigation est d'un seul tenant : une bande de nuit en haut et
+ * à gauche, le travail sur fond clair dedans. C'est la distinction que
+ * demandait le cahier des charges, et c'est aussi ce qui fait qu'un outil se
+ * lit d'un coup d'œil : on sait toujours ce qui est le menu et ce qui est la
+ * page.
+ *
+ * Plus de flou d'arrière-plan : un `backdrop-filter` sur une barre opaque ne
+ * sert à rien, et c'est un coût de composition sur chaque image. */
 .vz-topbar{
-  height:62px;border-bottom:1px solid var(--trait);background:rgba(255,255,255,.88);
-  backdrop-filter:saturate(180%) blur(12px);-webkit-backdrop-filter:saturate(180%) blur(12px);
+  height:62px;border-bottom:1px solid rgba(255,255,255,.09);
+  background:var(--nuit);color:#fff;
   display:flex;align-items:center;justify-content:space-between;padding:0 24px;gap:14px;
   position:sticky;top:0;z-index:20;
 }
+.vz-topbar .vz-eyebrow{color:rgba(255,255,255,.58)}
+/* Les boutons de la barre : un contour translucide, pas une carte blanche
+   découpée au ciseau sur du bleu nuit. */
+.vz-topbar .vz-btn{
+  background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.22);
+  color:#fff;box-shadow:none;
+}
+.vz-topbar .vz-btn:hover{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.4);color:#fff}
+.vz-topbar .vz-btn svg{color:rgba(255,255,255,.75)}
+.vz-topbar .vz-btn:hover svg{color:#fff}
+.vz-topbar :focus-visible{outline-color:#fff}
 /* Le contenu est centré dans l'espace qui reste à droite de la barre sombre,
    et ne la touche jamais : la gouttière sépare le menu du travail, comme sur
    le CRM VIZDATA. Collé au bord, le tableau de bord donnait l'impression de
@@ -633,12 +660,27 @@
   min-height:100vh;display:flex;flex-direction:column;
   background:var(--papier);
 }
+/* La barre publique est sombre elle aussi, pour la même raison que celle de
+   l'application : la navigation est une surface, la page en est une autre. Et
+   sur ces pages-ci, elle fait un second travail : un registre officiel
+   s'annonce par un bandeau, pas par une ligne de liens flottant sur du blanc.
+   Au-dessus d'une scène elle disparaît, puisque la scène est déjà sombre. */
 .vz-public-bar{
-  height:62px;background:rgba(255,255,255,.88);border-bottom:1px solid var(--trait);
-  backdrop-filter:saturate(180%) blur(12px);-webkit-backdrop-filter:saturate(180%) blur(12px);
+  height:62px;background:var(--nuit);border-bottom:1px solid rgba(255,255,255,.09);
+  color:#fff;
   display:flex;align-items:center;justify-content:space-between;padding:0 22px;
   position:sticky;top:0;z-index:20;
 }
+.vz-public-bar .vz-mark-word{color:#fff}
+.vz-public-bar .vz-mark-div{background:rgba(255,255,255,.22)}
+.vz-public-bar .vz-mark-text{color:rgba(255,255,255,.58)}
+.vz-public-bar .vz-linkbtn{color:rgba(255,255,255,.80)}
+.vz-public-bar .vz-linkbtn:hover{color:#fff;background:rgba(255,255,255,.12)}
+.vz-public-bar .vz-btn{
+  background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.26);color:#fff;box-shadow:none;
+}
+.vz-public-bar .vz-btn:hover{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.44);color:#fff}
+.vz-public-bar :focus-visible{outline-color:#fff}
 .vz-public-nav{display:flex;gap:4px;align-items:center}
 .vz-public-nav .vz-linkbtn{padding:7px 11px;border-radius:var(--r-s);white-space:nowrap}
 /* Sous 420 px, « À propos » se coupait en deux lignes et désalignait la barre.
@@ -680,7 +722,26 @@
 
 /* Le verdict : un bandeau teinté selon la réponse, lisible avant toute
    lecture. Le dégradé reste très pâle, il porte l'information sans crier. */
-.vz-verdict{padding:26px 26px 22px;display:flex;gap:16px;align-items:flex-start;border-bottom:1px solid var(--trait)}
+/* --- l'alignement, et sa règle -----------------------------------------------
+   Une page mélange deux natures de texte, et chacune a son axe :
+
+   - ce qui se LIT (une prose, des faits, les lignes d'un document) s'aligne à
+     gauche. L'œil revient toujours au même point en changeant de ligne, et
+     c'est ce qui rend un paragraphe lisible. Centrer un paragraphe de cinq
+     lignes oblige à chercher le début de chacune.
+   - ce qui ANNONCE (un verdict, un état vide, un écran de chargement, un
+     formulaire à un seul but) se centre. Il n'y a qu'une chose à lire, elle
+     tient en deux lignes, et le centre est l'endroit où l'on regarde d'abord.
+
+   L'encart de verdict relevait de la seconde nature et suivait la première :
+   une icône à gauche, un titre à côté, et deux boutons centrés en dessous.
+   Trois axes sur un panneau de quatre lignes. Il est centré maintenant, et
+   l'icône passe au-dessus du titre, à sa place. */
+.vz-verdict{
+  padding:34px 26px 26px;display:flex;flex-direction:column;align-items:center;
+  gap:14px;text-align:center;border-bottom:1px solid var(--trait);
+}
+.vz-verdict > div{max-width:46ch}
 .vz-verdict.ok{background:linear-gradient(180deg,var(--vert-050),var(--blanc))}
 .vz-verdict.ko{background:linear-gradient(180deg,var(--rouge-050),var(--blanc))}
 .vz-verdict.attente{background:linear-gradient(180deg,var(--orange-050),var(--blanc))}
@@ -1200,6 +1261,33 @@
    goutte donne l'impression d'une page lente.
    ========================================================================= */
 
+/* --- l'entrée d'une page -------------------------------------------------
+   Un fondu de 240 ms et six pixels de montée. C'est tout, et c'est voulu : on
+   ne met pas une page en scène, on la pose. Ce que ce mouvement apporte n'est
+   pas décoratif : il dit que la page a CHANGÉ. Sans lui, passer d'un écran à
+   l'autre dans l'administration ne produit qu'un clignotement de contenu dans
+   un cadre immobile, et l'on doute d'avoir cliqué.
+
+   Aucune clé React n'est nécessaire : à chaque changement de route, le
+   conteneur est un nœud neuf, et une animation CSS rejoue toujours à la pose
+   du nœud. Les barres, elles, ne bougent pas : elles n'ont pas changé.
+
+   Six pixels, pas vingt. Au-delà, le mouvement se voit au lieu de se sentir,
+   et l'on attend la fin de l'animation pour lire. */
+@keyframes vzpage{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.vz-page,
+.vz-public-body,
+.vz-points{animation:vzpage .24s cubic-bezier(.2,.7,.4,1) both}
+
+/* La scène est le seul endroit qui mérite une séquence : quatre temps de
+   60 ms, dans l'ordre de lecture. Le champ de vérification arrive AVANT les
+   boutons secondaires, parce que c'est lui qu'on vient chercher. */
+.vz-scene-eyebrow{animation:vzpage .5s cubic-bezier(.2,.7,.4,1) both}
+.vz-scene-titre{animation:vzpage .5s cubic-bezier(.2,.7,.4,1) .06s both}
+.vz-scene-chapeau{animation:vzpage .5s cubic-bezier(.2,.7,.4,1) .12s both}
+.vz-scene-recherche{animation:vzpage .5s cubic-bezier(.2,.7,.4,1) .18s both}
+.vz-scene-actions{animation:vzpage .5s cubic-bezier(.2,.7,.4,1) .24s both}
+
 .vz-apparait{animation:vzrise .34s cubic-bezier(.2,.7,.4,1) both}
 .vz-apparait:nth-child(2){animation-delay:.05s}
 .vz-apparait:nth-child(3){animation-delay:.1s}
@@ -1209,6 +1297,11 @@
 @media (prefers-reduced-motion:reduce){
   .vz *,.vz *::before,.vz *::after{
     animation-duration:.001ms!important;animation-iteration-count:1!important;
+    /* Le DÉLAI compte autant que la durée. Les cinq temps de la scène sont
+       échelonnés jusqu'à 240 ms : sans cette ligne, quelqu'un qui a demandé
+       moins d'animations verrait quand même les éléments apparaître l'un
+       après l'autre, simplement sans la transition. */
+    animation-delay:0s!important;
     transition-duration:.001ms!important;scroll-behavior:auto!important;
   }
   .vz-certcard:hover,.vz-stat:hover{transform:none}
