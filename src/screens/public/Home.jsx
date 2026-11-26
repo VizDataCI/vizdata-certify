@@ -169,7 +169,7 @@ function Home(p) {
       <section className="vz-points">
         {POINTS.map((x) => (
           <article key={x.titre} className="vz-point">
-            <span className="vz-point-icone"><x.icone size={18} /></span>
+            <span className="vz-point-icone"><x.icone size={26} /></span>
             <h3>{x.titre}</h3>
             <p>{x.texte}</p>
           </article>

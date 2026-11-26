@@ -623,16 +623,24 @@
   width:100%;max-width:1180px;margin:0 auto;padding:60px 32px 84px;
   display:grid;grid-template-columns:repeat(3,1fr);gap:0;
 }
-.vz-point{padding:0 34px;border-left:1px solid var(--trait)}
+/* Les trois faits sont centrés, et l'icône est passée de 34 à 52 px. À 34 px
+   avec un glyphe de 18, elle se lisait comme une puce décorative : trop
+   petite pour qu'on identifie la forme, trop présente pour qu'on l'ignore.
+   Agrandie, elle redevient ce qu'elle doit être, un repère qu'on reconnaît
+   sans lire le titre. */
+.vz-point{padding:0 34px;border-left:1px solid var(--trait);text-align:center}
 .vz-point:first-child{padding-left:0;border-left:0}
 .vz-point:last-child{padding-right:0}
 .vz-point-icone{
   display:flex;align-items:center;justify-content:center;
-  width:34px;height:34px;border-radius:var(--r-s);margin-bottom:14px;
+  width:52px;height:52px;border-radius:var(--r-m);margin:0 auto 16px;
   background:var(--bleu-050);color:var(--bleu);
 }
 .vz-point h3{font-size:15.5px;margin-bottom:8px}
-.vz-point p{font-size:13.5px;color:var(--gris);line-height:1.65;max-width:38ch}
+/* `margin:0 auto` est ce qui centre vraiment le paragraphe : `text-align`
+   centre les lignes DANS le bloc, mais un bloc de 38ch dans une colonne plus
+   large reste collé à gauche, et le texte paraîtrait centré de travers. */
+.vz-point p{font-size:13.5px;color:var(--gris);line-height:1.65;max-width:38ch;margin:0 auto}
 @media (max-width:860px){
   .vz-points{grid-template-columns:1fr;gap:26px;padding:44px 20px 60px}
   .vz-point{padding:0;border-left:0;border-top:1px solid var(--trait);padding-top:26px}
@@ -776,9 +784,13 @@
    Le champ est seul, grand, à chasse fixe : une référence est une suite de
    signes qu'on recopie, et le monospace est ce qui permet de la relire. */
 .vz-verif{width:100%;max-width:540px;margin:0 auto;padding:12px 4px 0}
-.vz-verif-tete{margin-bottom:28px}
+/* L'entête est centrée, le champ qui suit reste aligné à gauche avec son
+   libellé : on centre une annonce, pas un formulaire. Un libellé centré
+   au-dessus d'un champ pleine largeur flotte sans point d'ancrage, et l'œil
+   perd le lien entre les deux. */
+.vz-verif-tete{margin-bottom:28px;text-align:center}
 .vz-verif-tete h1{margin-top:12px}
-.vz-verif-tete .vz-chapeau{margin-top:12px}
+.vz-verif-tete .vz-chapeau{margin:12px auto 0}
 
 .vz-verif-champ{
   background:var(--blanc);border:1px solid var(--trait);border-radius:var(--r-l);
@@ -918,41 +930,81 @@
   }
 }
 
-/* Le voile, en deux couches qui ne font pas le même travail :
-   - un dégradé horizontal, dense à gauche où se pose le texte, presque nul à
-     droite, pour ne pas éteindre l'image qu'on a pris la peine de mettre ;
-   - une base très légère sur toute la surface, qui garantit le contraste même
-     si l'image déposée est claire. Sans elle, une photo surexposée rendrait le
-     titre illisible, et personne ne s'en apercevrait avant la mise en ligne. */
+/* Le voile, en deux couches, et UNE SEULE RÈGLE pour toutes les largeurs.
+   Il y en avait deux tant que le texte vivait à gauche : un dégradé
+   horizontal sur grand écran, qui devait redevenir uniforme sous 860 px parce
+   que le texte y prenait toute la largeur et se retrouvait là où le voile
+   s'éclaircissait. Le texte centré supprime le problème à la racine : il
+   occupe désormais le même axe quelle que soit la largeur, donc le voile n'a
+   plus de raison de pencher d'un côté.
+
+   - une base uniforme, qui porte le contraste ;
+   - un dégradé vertical, dense en haut et en bas, presque nul au milieu. Il
+     garde un sens que l'horizontal n'avait pas : le ciel est en haut, le sol
+     en bas, et c'est à la hauteur du regard que l'image a le plus à montrer.
+
+   Les valeurs ne sont pas choisies à l'œil. Elles sont les plus CLAIRES qui
+   tiennent le seuil AA de 4,5:1 sur les cinq textes de la scène, mesurées sur
+   cinq images du plan et sur les rectangles des glyphes, de 375 à 1920 px.
+   Les alourdir éteindrait l'image pour rien ; les alléger rendrait le chapeau
+   illisible sur le ciel. */
 .vz-scene-voile{
   position:absolute;inset:0;z-index:-1;
   background:
-    linear-gradient(90deg, rgba(8,32,46,.90) 0%, rgba(8,32,46,.74) 38%, rgba(8,32,46,.26) 72%, rgba(8,32,46,.12) 100%),
-    linear-gradient(180deg, rgba(8,32,46,.30) 0%, rgba(8,32,46,.08) 32%, rgba(8,32,46,.42) 100%);
+    linear-gradient(90deg, rgba(8,32,46,.50) 0%, rgba(8,32,46,.50) 100%),
+    linear-gradient(180deg, rgba(8,32,46,.30) 0%, rgba(8,32,46,.08) 34%, rgba(8,32,46,.44) 100%);
 }
 
+/* Tout est centré, et c'est la scène qui le commande. Le plan a son sujet au
+   milieu : des bras levés, pris de face. Un texte rangé à gauche obligeait à
+   noircir ce tiers-là, donc à éteindre la moitié de ce qu'on était allé
+   chercher. Centré, le texte se pose sur l'axe de l'image, le voile peut
+   s'alléger partout, et les silhouettes restent lisibles de part et d'autre. */
 .vz-scene-contenu{
   position:relative;width:100%;max-width:1180px;margin:0 auto;padding:0 32px;
-  color:#fff;
+  color:#fff;text-align:center;
 }
+/* Les quatre textes secondaires sont moins pâles qu'avant : surtitre 62 à 72 %,
+   chapeau 80 à 86 %, libellé 70 à 76 %, aide 58 à 68 %. Leurs valeurs d'origine
+   avaient été réglées sur un aplat de nuit, où un blanc à 58 % reste parfaitement
+   net ; sur une photographie il se dissout.
+
+   C'EST CE RELÈVEMENT QUI PAIE L'IMAGE. Mesuré à 1366 px, il permet de passer le
+   voile de 62 % à 50 % tout en FAISANT MONTER le pire contraste de 4,52 à 4,76.
+   Autrement dit : douze points de voile en moins, donc beaucoup plus de ciel et
+   de silhouettes visibles, et malgré cela un texte plus lisible qu'avant. Le
+   réflexe inverse, alourdir le voile pour sauver un texte pâle, éteint l'image
+   partout pour corriger un défaut qui tient en quatre valeurs d'opacité. */
 .vz-scene-eyebrow{
   font-size:11px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;
-  color:rgba(255,255,255,.62);
+  /* 82 % et non 72 % : à 768 px le surtitre tombait à 4,45:1, juste sous le
+     seuil. Onze pixels capitalisés et interlettrés offrent très peu de matière
+     à l'œil, donc ils demandent plus d'opacité que leur taille ne le laisse
+     croire. Dix points ici valaient mieux que d'assombrir toute la scène pour
+     une seule ligne. */
+  color:rgba(255,255,255,.82);
 }
-.vz-scene-titre{max-width:17ch;margin-top:18px;color:#fff}
-.vz-scene-chapeau{margin-top:16px;color:rgba(255,255,255,.80);max-width:52ch}
+/* Deux lignes, pas trois : « Vos compétences / méritent d'être reconnues. »
+   La largeur est donnée en `ch`, donc elle suit la taille du titre, qui est
+   elle-même fluide. Une valeur en pixels aurait tenu à 1366 px et cassé
+   ailleurs. */
+.vz-scene-titre{max-width:24ch;margin:18px auto 0;color:#fff}
+/* Le chapeau tient sur une ligne tant que la place existe : aucune largeur
+   maximale ne vient le couper avant le bord. Sous 860 px il se replie tout
+   seul, ce qui est le comportement voulu et non un défaut. */
+.vz-scene-chapeau{margin:16px auto 0;color:rgba(255,255,255,.86);max-width:none}
 
 /* Le champ de vérification, posé dans la scène plutôt qu'en dessous : c'est
    l'action la plus urgente de la page, et la faire descendre sous la ligne de
    flottaison reviendrait à la cacher derrière une belle image. */
-.vz-scene-recherche{margin-top:32px;max-width:520px}
+.vz-scene-recherche{margin:32px auto 0;max-width:520px}
 .vz-scene-label{
   display:block;font-size:12px;font-weight:600;letter-spacing:.06em;
-  text-transform:uppercase;color:rgba(255,255,255,.70);margin-bottom:9px;
+  text-transform:uppercase;color:rgba(255,255,255,.76);margin-bottom:9px;
 }
-.vz-scene-aide{margin-top:10px;font-size:12.5px;color:rgba(255,255,255,.58);line-height:1.5}
+.vz-scene-aide{margin-top:10px;font-size:12.5px;color:rgba(255,255,255,.68);line-height:1.5}
 .vz-scene-aide .vz-mono{color:rgba(255,255,255,.78)}
-.vz-scene-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}
+.vz-scene-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px;justify-content:center}
 
 .vz-searchbox{display:flex;gap:9px}
 .vz-searchbox .vz-input{
@@ -964,20 +1016,6 @@
 /* Sur téléphone, le champ et son bouton s'empilent : côte à côte, le bouton
    mange la moitié de la largeur et il ne reste plus la place d'une référence
    de vingt-cinq signes. */
-/* Le voile asymétrique suppose que le texte tient dans le tiers gauche. Sous
-   860 px il occupe toute la largeur : le dégradé horizontal l'abandonne alors
-   là où il s'éclaircit, et les textes secondaires (62 % à 80 % de blanc)
-   tombent à 3,0:1 sur le ciel. Mesuré, pas supposé. Le voile redevient donc
-   uniforme, et la densité repart dans la couche verticale, qui elle garde son
-   sens : le ciel est en haut, le sol en bas. */
-@media (max-width:860px){
-  .vz-scene-voile{
-    background:
-      linear-gradient(90deg, rgba(8,32,46,.70) 0%, rgba(8,32,46,.70) 100%),
-      linear-gradient(180deg, rgba(8,32,46,.25) 0%, rgba(8,32,46,.10) 32%, rgba(8,32,46,.40) 100%);
-  }
-}
-
 @media (max-width:620px){
   .vz-scene{min-height:0;padding:84px 0 48px}
   .vz-scene-contenu{padding:0 20px}
