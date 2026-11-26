@@ -107,15 +107,15 @@ function CertificatDocument({ cert, verifyUrl }) {
                 deux ne se séparent pas. */}
             <img className="vzc-cachet" src={CACHET} alt="" aria-hidden="true" />
             <div className="vzc-signature-trait" />
+            {/* Une seule ligne sous le trait, et c'est le signataire.
+                Il y en avait deux : « Direction VIZDATA » puis « VIZDATA,
+                Côte d'Ivoire ». La seconde répétait la première et situait un
+                document qui n'a pas besoin d'être situé : il est cacheté,
+                signé, et il porte une adresse de vérification qui dit d'où il
+                vient mieux qu'une mention de pays. Une ligne de moins sous le
+                trait, c'est une ligne de plus de silence autour de la
+                signature, et c'est ce silence qui fait l'autorité. */}
             <div className="vzc-signature-nom">{cert.signatory || "Direction VIZDATA"}</div>
-            {/* « VIZDATA », et rien de plus. Le pays figurait sous la
-                signature, hérité d'une époque où le document voulait se
-                situer. Il n'a rien à y faire : le certificat est déjà signé
-                par la Direction, cacheté, et il porte une adresse de
-                vérification qui dit d'où il vient mieux qu'une mention de
-                pays. Une ligne de moins sous le trait, c'est une ligne de
-                plus de silence autour de la signature. */}
-            <div className="vzc-signature-role">VIZDATA</div>
           </div>
 
           <div className="vzc-meta">

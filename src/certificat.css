@@ -231,7 +231,6 @@
   margin-bottom: 8px;
 }
 .vzc-signature-nom { font-size: 13px; font-weight: 600; }
-.vzc-signature-role { font-size: 11px; color: #8a91a0; margin-top: 2px; }
 
 /* Les quatre blocs du pied (cachet, date, durée, QR code) se répartissent la
    largeur à intervalles comparables. Groupées au centre d'un espace très large,
