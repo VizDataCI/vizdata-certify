@@ -11,33 +11,21 @@
    portés par aucune des classes `vz-`, et réciproquement.
    ========================================================================= */
 
-/* Le plateau : le gris sur lequel le document est posé, À L'ÉCRAN SEULEMENT.
-   Le portail d'impression rend `CertificatDocument` sans passer par le cadre,
-   donc rien de ce qui est écrit ici ne peut atteindre la feuille.
+/* Le plateau sur lequel le document est posé et l'ombre qui l'en détache sont
+   dans `styles.css`, et non ici, bien qu'ils portent le préfixe `vzc-`.
 
-   Un certificat blanc sur un fond blanc n'a pas de bord : on ne voit pas où il
-   commence, et la page entière semble être le document. Posé sur un gris, il
-   redevient un objet qu'on pourrait prendre en main, et le filet intérieur qui
-   lui tient lieu de cadre se met enfin à se voir. */
-.vzc-plateau {
-  background: #e9edf2;
-  padding: 22px;
-  border-radius: 12px;
-}
+   La raison tient en une règle que ce fichier ne doit jamais enfreindre : il
+   n'utilise AUCUN jeton d'interface, de sorte que le document imprimé ne bouge
+   pas d'un cheveu quand l'interface change de couleur. Or le plateau doit
+   suivre le bleu des barres, qui est un jeton. Le recopier en dur ici aurait
+   créé une couleur à maintenir en deux endroits, et elle aurait divergé.
+
+   Ce qui reste ci-dessous est de la géométrie pure, sans couleur : le cadre
+   qui mesure la place disponible et l'échelle qui y réduit le gabarit. */
 .vzc-cadre {
   width: 100%;
   overflow: hidden;
   position: relative;
-}
-/* L'ombre porte le document au-dessus du gris. Elle est posée sous
-   `.vzc-echelle`, donc elle ne touche que l'exemplaire affiché : celui de
-   l'impression, rendu ailleurs, ne la reçoit jamais. Les trois ombres
-   intérieures sont reprises telles quelles, sans quoi la règle les écraserait
-   et le document perdrait son filet. */
-.vzc-echelle .vzc {
-  box-shadow:
-    inset 0 0 0 1px #e3e6ec, inset 0 0 0 10px #ffffff, inset 0 0 0 11px #eef0f4,
-    0 4px 14px rgba(16, 26, 43, 0.13);
 }
 .vzc-echelle {
   transform-origin: top left;

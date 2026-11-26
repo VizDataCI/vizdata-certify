@@ -1064,6 +1064,36 @@
 @keyframes vzmodal{from{opacity:0;transform:translateY(-8px) scale(.99)}to{opacity:1;transform:none}}
 .vz-modal-head{padding:17px 22px;border-bottom:1px solid var(--trait);display:flex;align-items:center;justify-content:space-between;gap:12px}
 .vz-modal-body{padding:22px}
+
+/* Le plateau du certificat : le bleu nuit sur lequel le document est posé.
+   C'est celui des barres, par le jeton et non par une copie de sa valeur, donc
+   les deux ne peuvent pas diverger.
+
+   Pourquoi ces deux règles sont ICI et non dans `certificat.css` : ce dernier
+   n'utilise aucun jeton d'interface, ce qui garantit que le document imprimé
+   ne bouge jamais quand l'interface change. Le plateau, lui, n'est pas
+   imprimé : le portail d'impression rend le document sans passer par le cadre,
+   donc rien de ce qui est écrit ici ne peut atteindre la feuille.
+
+   Un certificat blanc sur un fond blanc n'a pas de bord : on ne voit pas où il
+   commence, et la modale entière semble être le document. Posé sur le bleu, il
+   redevient un objet qu'on pourrait prendre en main. */
+.vzc-plateau{background:var(--nuit);padding:22px;border-radius:var(--r-l)}
+/* Le filet clair et l'ombre sont portés par le CADRE, et c'est tout l'enjeu :
+   le document lui-même vit sous `.vzc-echelle`, qui le réduit par un
+   `transform: scale()`. Or une transformation réduit aussi les ombres. Un
+   filet d'un pixel posé sur le document devenait un demi-pixel à l'écran,
+   c'est-à-dire rien. Le cadre, lui, a déjà les dimensions du document réduit
+   et ne subit aucune transformation : un pixel y reste un pixel.
+
+   Le filet n'est pas une coquetterie. Le certificat commence en haut par son
+   bandeau de marque, dont le premier segment est bleu : posé à même le bleu
+   nuit du plateau, il s'y fondait et le bandeau perdait son bord. Les ombres
+   intérieures du document, elles, restent dans `certificat.css` : elles font
+   partie du document et doivent s'imprimer. */
+.vzc-plateau .vzc-cadre{
+  box-shadow: 0 0 0 1px rgba(255,255,255,.26), 0 6px 20px rgba(4,16,26,.38);
+}
 .vz-modal-foot{padding:15px 22px;border-top:1px solid var(--trait);display:flex;justify-content:flex-end;gap:10px;background:var(--surface);border-radius:0 0 var(--r-xl) var(--r-xl)}
 .vz-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 
