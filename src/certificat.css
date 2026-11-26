@@ -51,7 +51,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 46px 72px 42px;
+  padding: 38px 72px 34px;
   min-height: 0;
 }
 
@@ -95,6 +95,22 @@
 }
 
 /* --- centre : la mention qui fait le document --- */
+/* LA RÉSERVE DU DOCUMENT
+ *
+ * Le gabarit est fixe : 1123 x 794 px, une feuille A4 en paysage. Ce qui est
+ * posé dedans, lui, ne l'est pas. Un nom ivoirien complet tient sur deux
+ * lignes de 52 px, un intitulé de programme long sur deux lignes de 25 px, et
+ * une description de deux cents signes sur trois lignes. Mesuré dans ce cas :
+ * il ne restait plus que CINQ pixels avant que le centre ne touche le pied.
+ *
+ * Rien ne débordait, parce que `.vzc` masque ce qui dépasse. Mais un
+ * document officiel qui se coupe plutôt que de se paginer est la pire des
+ * deux issues : personne ne voit qu'il manque une ligne.
+ *
+ * Une vingtaine de pixels ont donc été repris sur les espacements fixes, et
+ * nulle part sur le texte : le filet, le nom et ce padding. Invisible à
+ * l'oeil, et c'est trois lignes de plus de réserve pour le jour où un
+ * programme s'appellera plus long que les autres. */
 .vzc-centre {
   flex: 1;
   display: flex;
@@ -102,7 +118,7 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 10px 0 6px;
+  padding: 4px 0 2px;
   min-height: 0;
 }
 
@@ -118,7 +134,7 @@
   width: 54px;
   height: 2px;
   background: #f28c28;
-  margin: 16px 0 26px;
+  margin: 13px 0 20px;
   border-radius: 1px;
 }
 
@@ -129,7 +145,7 @@
 }
 
 .vzc-nom {
-  margin: 12px 0 20px;
+  margin: 10px 0 16px;
   font-size: 52px;
   font-weight: 600;
   letter-spacing: -0.03em;
@@ -139,7 +155,7 @@
 }
 
 .vzc-programme {
-  margin-top: 9px;
+  margin-top: 7px;
   font-size: 25px;
   font-weight: 600;
   letter-spacing: -0.015em;
@@ -149,7 +165,7 @@
 }
 
 .vzc-description {
-  margin: 16px 0 0;
+  margin: 12px 0 0;
   font-size: 13px;
   line-height: 1.65;
   color: #667085;
@@ -164,7 +180,7 @@
    description : la hiérarchie reste au programme, qui est l'objet du
    document. */
 .vzc-attestation {
-  margin: 15px 0 0;
+  margin: 12px 0 0;
   max-width: 700px;
   font-size: 12.5px;
   line-height: 1.6;
@@ -185,7 +201,7 @@
   gap: 7px;
   flex-wrap: wrap;
   justify-content: center;
-  margin-top: 16px;
+  margin-top: 13px;
   max-width: 760px;
 }
 .vzc-competence {
@@ -205,7 +221,7 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 32px;
-  padding-top: 26px;
+  padding-top: 20px;
   border-top: 1px solid #eef0f4;
 }
 
