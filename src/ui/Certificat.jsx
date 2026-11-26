@@ -135,15 +135,21 @@ function CertificatDocument({ cert, verifyUrl }) {
                 Le champ reste saisi et conservé au registre. */}
           </div>
 
+          {/* Le QR code au-dessus, sa légende dessous, et cette légende est
+              bâtie comme les deux blocs qui la précèdent : un libellé en
+              capitales interlettrées, une valeur en dessous. Les trois blocs
+              du pied suivent dès lors la même grammaire, au lieu que le QR
+              code soit un objet à part avec sa propre typographie.
+
+              La légende est imprimée : elle doit désigner un chemin qui
+              existe. Elle a un temps indiqué /verify, disparu lors du passage
+              aux adresses françaises : un certificat imprimé alors renvoyait
+              vers une page introuvable. */}
           <div className="vzc-qr">
-            <QRCode value={verifyUrl} size={104} />
-            {/* La légende est imprimée : elle doit désigner un chemin qui
-                existe. Elle a un temps indiqué /verify, disparu lors du passage
-                aux adresses françaises : un certificat imprimé alors renvoyait
-                vers une page introuvable. */}
+            <QRCode value={verifyUrl} size={84} />
             <div className="vzc-qr-legende">
-              Vérifier l'authenticité<br />
-              <strong>certify.vizdata.ci/verifier</strong>
+              <div className="vzc-eyebrow">Vérifier l'authenticité</div>
+              <div className="vzc-qr-url">certify.vizdata.ci/verifier</div>
             </div>
           </div>
         </footer>
@@ -185,13 +191,20 @@ function Certificat({ cert, verifyUrl }) {
   }, []);
 
   return (
-    <div
-      ref={cadre}
-      className="vzc-cadre"
-      style={{ height: HAUTEUR * echelle }}
-    >
-      <div className="vzc-echelle" style={{ transform: `scale(${echelle})` }}>
-        <CertificatDocument cert={cert} verifyUrl={verifyUrl} />
+    /* Le plateau gris porte la marge autour du document, et le cadre n'en a
+       aucune. Ce n'est pas un détail de goût : l'échelle se calcule sur
+       `clientWidth`, qui INCLUT le remplissage. Un `padding` posé sur le cadre
+       aurait donc fait calculer le facteur sur une largeur plus grande que
+       celle offerte au document, qui aurait débordé puis été rogné. */
+    <div className="vzc-plateau">
+      <div
+        ref={cadre}
+        className="vzc-cadre"
+        style={{ height: HAUTEUR * echelle }}
+      >
+        <div className="vzc-echelle" style={{ transform: `scale(${echelle})` }}>
+          <CertificatDocument cert={cert} verifyUrl={verifyUrl} />
+        </div>
       </div>
     </div>
   );

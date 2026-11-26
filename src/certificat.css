@@ -11,10 +11,33 @@
    portés par aucune des classes `vz-`, et réciproquement.
    ========================================================================= */
 
+/* Le plateau : le gris sur lequel le document est posé, À L'ÉCRAN SEULEMENT.
+   Le portail d'impression rend `CertificatDocument` sans passer par le cadre,
+   donc rien de ce qui est écrit ici ne peut atteindre la feuille.
+
+   Un certificat blanc sur un fond blanc n'a pas de bord : on ne voit pas où il
+   commence, et la page entière semble être le document. Posé sur un gris, il
+   redevient un objet qu'on pourrait prendre en main, et le filet intérieur qui
+   lui tient lieu de cadre se met enfin à se voir. */
+.vzc-plateau {
+  background: #e9edf2;
+  padding: 22px;
+  border-radius: 12px;
+}
 .vzc-cadre {
   width: 100%;
   overflow: hidden;
   position: relative;
+}
+/* L'ombre porte le document au-dessus du gris. Elle est posée sous
+   `.vzc-echelle`, donc elle ne touche que l'exemplaire affiché : celui de
+   l'impression, rendu ailleurs, ne la reçoit jamais. Les trois ombres
+   intérieures sont reprises telles quelles, sans quoi la règle les écraserait
+   et le document perdrait son filet. */
+.vzc-echelle .vzc {
+  box-shadow:
+    inset 0 0 0 1px #e3e6ec, inset 0 0 0 10px #ffffff, inset 0 0 0 11px #eef0f4,
+    0 4px 14px rgba(16, 26, 43, 0.13);
 }
 .vzc-echelle {
   transform-origin: top left;
@@ -51,7 +74,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 38px 72px 34px;
+  padding: 38px 72px 30px;
   min-height: 0;
 }
 
@@ -134,7 +157,7 @@
   width: 54px;
   height: 2px;
   background: #f28c28;
-  margin: 13px 0 20px;
+  margin: 11px 0 17px;
   border-radius: 1px;
 }
 
@@ -145,7 +168,7 @@
 }
 
 .vzc-nom {
-  margin: 10px 0 16px;
+  margin: 9px 0 14px;
   font-size: 52px;
   font-weight: 600;
   letter-spacing: -0.03em;
@@ -165,7 +188,7 @@
 }
 
 .vzc-description {
-  margin: 12px 0 0;
+  margin: 10px 0 0;
   font-size: 13px;
   line-height: 1.65;
   color: #667085;
@@ -180,7 +203,7 @@
    description : la hiérarchie reste au programme, qui est l'objet du
    document. */
 .vzc-attestation {
-  margin: 12px 0 0;
+  margin: 10px 0 0;
   max-width: 700px;
   font-size: 12.5px;
   line-height: 1.6;
@@ -201,7 +224,7 @@
   gap: 7px;
   flex-wrap: wrap;
   justify-content: center;
-  margin-top: 13px;
+  margin-top: 11px;
   max-width: 760px;
 }
 .vzc-competence {
@@ -221,7 +244,7 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 32px;
-  padding-top: 20px;
+  padding-top: 15px;
   border-top: 1px solid #eef0f4;
 }
 
@@ -240,13 +263,17 @@
   mix-blend-mode: multiply;
   pointer-events: none;
 }
+/* Trois pixels, et non huit, entre le trait et le nom. Une signature se pose
+   SUR la ligne, elle ne flotte pas en dessous : huit pixels détachaient
+   « Direction VIZDATA » du trait au point qu'on ne lisait plus les deux comme
+   un seul geste. Trois pixels suffisent à ne pas toucher la ligne. */
 .vzc-signature-trait {
   width: 128px;
   height: 1px;
   background: #101a2b;
-  margin-bottom: 8px;
+  margin-bottom: 3px;
 }
-.vzc-signature-nom { font-size: 13px; font-weight: 600; }
+.vzc-signature-nom { font-size: 12.5px; font-weight: 600; }
 
 /* Les quatre blocs du pied (cachet, date, durée, QR code) se répartissent la
    largeur à intervalles comparables. Groupées au centre d'un espace très large,
@@ -267,27 +294,44 @@
    centrage compte comme du texte : sans cette compensation, le libellé paraît
    décalé d'un cheveu vers la gauche par rapport à sa valeur. */
 .vzc-meta .vzc-eyebrow { text-indent: 0.16em; }
-.vzc-meta-valeur { font-size: 12.5px; font-weight: 500; margin-top: 5px; }
+.vzc-meta-valeur { font-size: 12.5px; font-weight: 500; margin-top: 4px; }
 
+/* Le QR code au-dessus, sa légende dessous, et la légende bâtie comme les
+   blocs « Délivré le » et « Durée » : libellé en capitales interlettrées,
+   valeur en dessous, le même écart de 5 px entre les deux. Les trois blocs du
+   pied partagent dès lors une seule grammaire.
+
+   LE CODE PASSE DE 104 À 84 px, ET CE N'EST PAS UN ARBITRAGE ESTHÉTIQUE.
+   Empilé, il grandit d'une trentaine de pixels en hauteur, et cette hauteur
+   est prise sur la réserve du document : mesurée sur un cas dense, nom
+   ivoirien sur deux lignes, programme sur deux lignes, description de deux
+   cents signes, elle était tombée à 11 px. Le gabarit masquant ce qui
+   dépasse, une ligne aurait disparu sans que personne le voie.
+
+   Pourquoi 84 et pas moins : le code fait 41 modules, zone de silence
+   comprise. À 96 ppp, 84 px donnent 0,54 mm par module, au-dessus du plancher
+   de 0,5 mm en deçà duquel un appareil photo de téléphone décroche sur du
+   papier. 80 px tombaient pile dessus, et un certificat dont le QR ne se lit
+   pas ne vaut rien. Le reste des pixels manquants a donc été repris sur les
+   espacements fixes, pas sur le code. */
 .vzc-qr {
   flex: 0 0 auto;
   display: flex;
-  align-items: flex-end;
-  gap: 11px;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
 }
-.vzc-qr-legende {
-  font-size: 8.5px;
-  line-height: 1.5;
-  color: #8a91a0;
-  text-align: right;
-  max-width: 96px;
-  padding-bottom: 3px;
-}
-.vzc-qr-legende strong {
+.vzc-qr-legende { text-align: center; }
+/* Même compensation que dans le pied : l'interlettrage ajoute un blanc après
+   la dernière lettre, que le centrage compte comme du texte. */
+.vzc-qr-legende .vzc-eyebrow { text-indent: 0.16em; }
+.vzc-qr-url {
   font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  font-size: 10.5px;
   font-weight: 500;
   color: #667085;
   letter-spacing: -0.01em;
+  margin-top: 4px;
 }
 
 /* ===========================================================================
