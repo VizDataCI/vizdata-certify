@@ -1,0 +1,136 @@
+# Configuration Apache de certify.vizdata.ci.
+#
+# Ce fichier est dans public/ : Vite le recopie tel quel à la racine de dist/
+# au moment de la construction. C'est donc lui qui part sur l'hébergement.
+#
+# Trois choses s'y jouent, dans cet ordre d'importance :
+#
+#   1. /api/* doit atteindre le registre PHP, et surtout PAS le repli SPA.
+#   2. Tout autre chemin inconnu doit retomber sur index.html, faute de quoi
+#      /verifier/{jeton}, l'adresse imprimée dans les QR codes, répondrait
+#      404 au rechargement.
+#   3. Les en-têtes de sécurité, sur toutes les réponses.
+
+# --- Le registre ------------------------------------------------------------
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteBase /
+
+# Les appels au registre passent par api/index.php, qui lit le chemin complet
+# dans REQUEST_URI. La condition sur le fichier réel laisse servir les éventuels
+# fichiers statiques d'api/ sans les intercepter.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^api/ api/index.php [L,QSA]
+
+# --- Repli SPA --------------------------------------------------------------
+# Placé APRÈS la règle /api : l'inverse enverrait les appels du registre vers
+# index.html, et l'application recevrait du HTML là où elle attend du JSON,
+# une panne déroutante, parce que tout « répond ».
+#
+# PAS de condition « !-d », et c'est important. Le site contient un dossier
+# « academie/ », où sont déposés les portraits des formateurs. Avec la
+# condition, l'adresse /academie désignait ce DOSSIER plutôt que la page de
+# l'académie : Apache y ajoutait une barre finale, n'y trouvait pas d'index,
+# et répondait 403, la page de vente devenue inaccessible, sans que rien dans
+# l'application ne soit en cause. Le même piège attend toute adresse qui
+# porterait le nom d'un dossier réel.
+#
+# La condition « !-f » suffit : /academie/portrait.jpg est un fichier, il est
+# servi ; /academie n'en est pas un, il va à l'application.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.html [L]
+</IfModule>
+
+# Pas de directive « Options » ici : elle demande AllowOverride Options, que
+# tous les hébergements n'accordent pas, et une directive refusée fait
+# répondre 500 au site ENTIER. Le listage de dossier n'est de toute façon plus
+# atteignable : le repli ci-dessus envoie /academie/ à l'application avant que
+# mod_autoindex ne soit consulté.
+
+# --- Ce qui ne doit jamais être servi ---------------------------------------
+# La base vit hors du dossier web ; ces règles sont une seconde barrière, pour
+# le jour où quelqu'un déposerait une copie au mauvais endroit.
+<FilesMatch "\.(db|db-wal|db-shm|sqlite|sqlite3|chiffre|log|sql)$">
+Require all denied
+</FilesMatch>
+
+# La configuration du registre porte la clé de chiffrement des sauvegardes.
+# PHP ne la sert pas (il l'exécute), mais une erreur de configuration du
+# serveur la rendrait lisible d'un coup.
+<FilesMatch "^(config|config\.exemple)\.php$">
+Require all denied
+</FilesMatch>
+
+# Un dossier .git servi par le web, c'est l'historique ENTIER du dépôt
+# téléchargeable par n'importe qui : chaque version de chaque fichier, et donc
+# toute clé qui y aurait séjourné un jour, même retirée depuis. Les dépôts
+# exposés de cette manière se trouvent par balayage automatique, en quelques
+# heures.
+#
+# La règle n'a rien d'hypothétique ici : selon le mode choisi, le déploiement
+# par Git de Plesk dépose son dossier .git dans la racine du site. FilesMatch
+# ne suffirait pas, il ne voit que des fichiers et pas le dossier qui les
+# porte ; RedirectMatch tranche avant, sur le chemin.
+<IfModule mod_alias.c>
+RedirectMatch 404 /\.git
+RedirectMatch 404 /\.env
+</IfModule>
+
+# --- En-têtes de sécurité, sur toutes les réponses --------------------------
+<IfModule mod_headers.c>
+Header always set X-Frame-Options "DENY"
+Header always set X-Content-Type-Options "nosniff"
+Header always set X-DNS-Prefetch-Control "on"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
+Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+Header always set Cross-Origin-Opener-Policy "same-origin"
+Header always set Cross-Origin-Resource-Policy "same-origin"
+# connect-src 'self' suffit désormais : plus aucun domaine tiers n'est contacté
+# par l'application. Le registre est servi par la même origine qu'elle.
+Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+</IfModule>
+
+# Images de marque partageables (og:image, favicon, icônes) : CORP ouverte,
+# cache d'un jour.
+<FilesMatch "^(og\.png|favicon\.svg|icons\.svg|apple-touch-icon\.png)$">
+<IfModule mod_headers.c>
+Header always set Cross-Origin-Resource-Policy "cross-origin"
+Header always set Cache-Control "public, max-age=86400"
+</IfModule>
+</FilesMatch>
+
+# La scène de l'accueil : 832 Ko de vidéo et son affiche. Ces deux fichiers ne
+# portent pas d'empreinte dans leur nom, donc pas de cache « immutable » : s'ils
+# étaient remplacés, les visiteurs garderaient l'ancien plan pendant un an. Une
+# semaine est le bon compromis : le visiteur qui revient ne retélécharge rien,
+# et un changement de plan se propage en sept jours au pire. Pour l'imposer tout
+# de suite, il suffit de renommer les deux fichiers et la référence dans le code.
+<FilesMatch "^accueil-graduation\.(mp4|jpg)$">
+<IfModule mod_headers.c>
+Header always set Cache-Control "public, max-age=604800"
+</IfModule>
+</FilesMatch>
+
+# index.html n'est JAMAIS gardé en cache, et ce n'est pas un détail : c'est lui
+# qui nomme les fichiers d'interface, dont l'empreinte change à chaque mise à
+# jour. Gardé en cache, il continue de réclamer l'ancien paquet, et le site
+# reste à la version précédente alors que les fichiers neufs sont en place.
+# Constaté en ligne : après un déploiement vérifié, le navigateur servait
+# encore la page d'avant.
+<FilesMatch "^index.html$">
+<IfModule mod_headers.c>
+Header always set Cache-Control "no-cache, must-revalidate"
+</IfModule>
+</FilesMatch>
+
+# Fichiers de /assets/ : leur nom porte une empreinte, ils ne changent jamais.
+<IfModule mod_setenvif.c>
+SetEnvIf Request_URI "^/assets/" IS_VITE_ASSET
+</IfModule>
+<IfModule mod_headers.c>
+Header always set Cache-Control "public, max-age=31536000, immutable" env=IS_VITE_ASSET
+# Le registre répond du JSON qui ne doit jamais être mis en cache.
+SetEnvIf Request_URI "^/api/" IS_API
+Header always set Cache-Control "no-store" env=IS_API
+</IfModule>

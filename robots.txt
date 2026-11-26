@@ -1,0 +1,17 @@
+# VIZDATA : registre des certifications et académie.
+#
+# Les pages indexables sont la page de vente de l'académie et les pages
+# publiques du registre. Tout ce qui mène à un dossier nominatif reste hors
+# index : un verdict de vérification porte le nom d'un titulaire, et une URL
+# de vérification n'a pas à se retrouver dans un moteur de recherche.
+
+User-agent: *
+Allow: /
+Disallow: /administration
+Disallow: /espace
+Disallow: /connexion
+Disallow: /verifier/
+Disallow: /u/
+Disallow: /api/
+
+Sitemap: https://certify.vizdata.ci/sitemap.xml

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>VIZDATA CERTIFY · Registre officiel des certifications</title>
+    <meta
+      name="description"
+      content="Vérifiez l'authenticité d'un certificat délivré par VIZDATA à partir de sa référence ou du QR code qui y figure. Gratuit, sans compte."
+    />
+    <meta name="theme-color" content="#1578A6" />
+
+    <!--
+      Aperçus de partage. Ces balises sont statiques : un lien vers un certificat
+      précis affichera donc la carte générique du registre, pas le nom du
+      titulaire. Un aperçu par certificat suppose un rendu côté serveur, les
+      robots de LinkedIn et WhatsApp n'exécutant pas le JavaScript.
+    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="VIZDATA CERTIFY" />
+    <meta property="og:title" content="VIZDATA CERTIFY · Registre officiel des certifications" />
+    <meta
+      property="og:description"
+      content="Vérifiez l'authenticité d'un certificat délivré par VIZDATA. Le statut affiché fait foi."
+    />
+    <meta property="og:url" content="https://certify.vizdata.ci" />
+    <meta name="twitter:card" content="summary" />
+    <script type="module" crossorigin src="/assets/index-Cu5wunub.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BpRrOxMu.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    <!--
+      Zone d'impression. Vide et masquée à l'écran ; à l'impression, c'est
+      l'inverse : #root disparaît et ce conteneur seul est imprimé. Le
+      certificat y est rendu une seconde fois, par un portail React, à son
+      échelle naturelle : 1123 × 794 px, soit exactement une feuille A4 en
+      paysage. C'est ce qui garantit une page et une seule, et une mise en
+      page identique à l'écran, en PDF et sur le papier. Voir certificat.css.
+    -->
+    <div id="impression" aria-hidden="true"></div>
+  </body>
+</html>
