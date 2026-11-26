@@ -108,7 +108,14 @@ function CertificatDocument({ cert, verifyUrl }) {
             <img className="vzc-cachet" src={CACHET} alt="" aria-hidden="true" />
             <div className="vzc-signature-trait" />
             <div className="vzc-signature-nom">{cert.signatory || "Direction VIZDATA"}</div>
-            <div className="vzc-signature-role">VIZDATA, Côte d'Ivoire</div>
+            {/* « VIZDATA », et rien de plus. Le pays figurait sous la
+                signature, hérité d'une époque où le document voulait se
+                situer. Il n'a rien à y faire : le certificat est déjà signé
+                par la Direction, cacheté, et il porte une adresse de
+                vérification qui dit d'où il vient mieux qu'une mention de
+                pays. Une ligne de moins sous le trait, c'est une ligne de
+                plus de silence autour de la signature. */}
+            <div className="vzc-signature-role">VIZDATA</div>
           </div>
 
           <div className="vzc-meta">
