@@ -124,7 +124,18 @@ function Modal({ title, onClose, children, foot, wide, taille }) {
 
   return (
     <div className="vz-modal-bg" onClick={onClose}>
-      <div className="vz-modal" style={{ maxWidth: largeur }} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+      {/* La taille nomme aussi la modale : « certificat » devient
+          `vz-modal-certificat`, qui permet d'habiller cette fenêtre-là sans
+          toucher aux vingt autres. Sans ce crochet, la seule façon de
+          distinguer la fenêtre du certificat aurait été une largeur en ligne,
+          qu'aucune feuille de style ne peut viser. */}
+      <div
+        className={"vz-modal" + (taille ? " vz-modal-" + taille : "")}
+        style={{ maxWidth: largeur }}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+      >
         <div className="vz-modal-head">
           <h3>{title}</h3>
           <button className="vz-btn vz-btn-ghost vz-btn-sm" onClick={onClose} aria-label="Fermer">

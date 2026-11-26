@@ -1065,9 +1065,56 @@
 .vz-modal-head{padding:17px 22px;border-bottom:1px solid var(--trait);display:flex;align-items:center;justify-content:space-between;gap:12px}
 .vz-modal-body{padding:22px}
 
-/* Le plateau du certificat : le bleu nuit sur lequel le document est posé.
-   C'est celui des barres, par le jeton et non par une copie de sa valeur, donc
-   les deux ne peuvent pas diverger.
+/* ---------------------------------------------------------------------------
+   LA FENÊTRE DU CERTIFICAT
+
+   Elle prend le bleu nuit des barres, par le jeton et non par une copie de sa
+   valeur, de sorte que les deux ne peuvent pas diverger. C'est la fenêtre qui
+   l'adopte, pas le fond sous le document : essayé sous le document, le bleu
+   entrait en concurrence avec le bandeau de marque du certificat, dont le
+   premier segment est bleu, et faisait du papier une vignette sur fond coloré.
+   Porté par la fenêtre, il encadre sans rien disputer, et le certificat reste
+   la seule chose claire de l'écran.
+
+   Rien de tout ceci n'atteint la feuille : le portail d'impression rend le
+   document hors de la modale, dans `#impression`. */
+.vz-modal-certificat{background:var(--nuit);border-color:rgba(255,255,255,.14)}
+.vz-modal-certificat .vz-modal-head{
+  border-bottom-color:var(--nuit-trait);
+  border-radius:var(--r-xl) var(--r-xl) 0 0;
+}
+.vz-modal-certificat .vz-modal-head h3{color:#fff}
+/* Le bouton de fermeture : un contour translucide, comme dans les barres. Une
+   pastille blanche découpée sur du bleu nuit ferait une tache. */
+.vz-modal-certificat .vz-modal-head .vz-btn{
+  background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.22);color:#fff;box-shadow:none;
+}
+.vz-modal-certificat .vz-modal-head .vz-btn:hover{
+  background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.4);
+}
+.vz-modal-certificat .vz-modal-head .vz-btn svg{color:rgba(255,255,255,.8)}
+.vz-modal-certificat .vz-modal-head .vz-btn:hover svg{color:#fff}
+/* Le pied porte les actions : il reste sur le bleu, avec les mêmes boutons
+   translucides, pour que la fenêtre soit d'un seul tenant. Le bouton primaire
+   garde sa couleur : c'est l'action, elle doit se voir. */
+.vz-modal-certificat .vz-modal-foot{
+  background:var(--nuit-2);border-top-color:var(--nuit-trait);
+}
+.vz-modal-certificat .vz-modal-foot .vz-btn:not(.vz-btn-primary){
+  background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.22);color:#fff;box-shadow:none;
+}
+.vz-modal-certificat .vz-modal-foot .vz-btn:not(.vz-btn-primary):hover{
+  background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.4);
+}
+/* Le texte sous le document, lui aussi sur le bleu. */
+.vz-modal-certificat .vz-modal-body > .vz-small{color:rgba(255,255,255,.72)}
+.vz-modal-certificat :focus-visible{outline-color:#fff}
+
+/* Le plateau du certificat : le gris sur lequel le document est posé. Le bleu
+   nuit est allé à la fenêtre, pas ici. Essayé dans les deux sens : sous le
+   document, il entrait en concurrence avec le bandeau de marque du certificat,
+   dont le premier segment est bleu, et il faisait du papier une vignette sur
+   fond coloré. Autour de la fenêtre, il encadre sans rien disputer.
 
    Pourquoi ces deux règles sont ICI et non dans `certificat.css` : ce dernier
    n'utilise aucun jeton d'interface, ce qui garantit que le document imprimé
@@ -1076,23 +1123,20 @@
    donc rien de ce qui est écrit ici ne peut atteindre la feuille.
 
    Un certificat blanc sur un fond blanc n'a pas de bord : on ne voit pas où il
-   commence, et la modale entière semble être le document. Posé sur le bleu, il
+   commence, et la modale entière semble être le document. Posé sur le gris, il
    redevient un objet qu'on pourrait prendre en main. */
-.vzc-plateau{background:var(--nuit);padding:22px;border-radius:var(--r-l)}
-/* Le filet clair et l'ombre sont portés par le CADRE, et c'est tout l'enjeu :
-   le document lui-même vit sous `.vzc-echelle`, qui le réduit par un
+.vzc-plateau{background:#E9EDF2;padding:22px;border-radius:var(--r-l)}
+/* Le filet et l'ombre sont portés par le CADRE, et c'est tout l'enjeu : le
+   document lui-même vit sous `.vzc-echelle`, qui le réduit par un
    `transform: scale()`. Or une transformation réduit aussi les ombres. Un
    filet d'un pixel posé sur le document devenait un demi-pixel à l'écran,
    c'est-à-dire rien. Le cadre, lui, a déjà les dimensions du document réduit
    et ne subit aucune transformation : un pixel y reste un pixel.
 
-   Le filet n'est pas une coquetterie. Le certificat commence en haut par son
-   bandeau de marque, dont le premier segment est bleu : posé à même le bleu
-   nuit du plateau, il s'y fondait et le bandeau perdait son bord. Les ombres
-   intérieures du document, elles, restent dans `certificat.css` : elles font
-   partie du document et doivent s'imprimer. */
+   Les ombres intérieures du document, elles, restent dans `certificat.css` :
+   elles font partie du document et doivent s'imprimer. */
 .vzc-plateau .vzc-cadre{
-  box-shadow: 0 0 0 1px rgba(255,255,255,.26), 0 6px 20px rgba(4,16,26,.38);
+  box-shadow: 0 0 0 1px rgba(16,26,43,.10), 0 4px 14px rgba(16,26,43,.13);
 }
 .vz-modal-foot{padding:15px 22px;border-top:1px solid var(--trait);display:flex;justify-content:flex-end;gap:10px;background:var(--surface);border-radius:0 0 var(--r-xl) var(--r-xl)}
 .vz-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
