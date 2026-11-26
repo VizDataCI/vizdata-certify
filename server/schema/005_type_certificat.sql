@@ -4,10 +4,10 @@
 -- Une formation ne produit pas toujours la même attestation. Suivre un
 -- programme et valider les compétences qu'il enseigne sont deux faits
 -- distincts : le premier se constate, le second s'évalue. Les confondre sous
--- un seul document ferait dire au certificat plus qu'il ne sait — et un
+-- un seul document ferait dire au certificat plus qu'il ne sait, et un
 -- employeur qui le lit mérite de savoir ce qui a été vérifié.
 --
--- D'où une colonne, et non deux tables : tout le reste est identique — même
+-- D'où une colonne, et non deux tables : tout le reste est identique : même
 -- référence, même registre, même QR code, même page de vérification. Seuls
 -- changent le titre du document, la formule qui l'accompagne et la présence
 -- des compétences validées.

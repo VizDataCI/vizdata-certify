@@ -7,7 +7,7 @@
  * Une base SQLite dont le fichier principal a été remplacé pendant que son
  * journal WAL vivait encore se retrouve mélangée : les pages des deux
  * versions cohabitent. `pragma integrity_check` le dit, et la base reste
- * LISIBLE — c'est le piège. On peut continuer à s'en servir des semaines,
+ * LISIBLE : c'est le piège. On peut continuer à s'en servir des semaines,
  * jusqu'au jour où une page abîmée est enfin touchée.
  *
  * La seule issue propre est de repartir d'un fichier neuf : on crée une base
@@ -109,7 +109,7 @@ function recuperer(source, destination) {
     for (const ligne of lignes) {
       try {
         /* Chaque ligne est posée seule, hors transaction : une ligne orpheline
-           — et la base abîmée en portait — ne doit pas emporter les autres. */
+           (et la base abîmée en portait) ne doit pas emporter les autres. */
         ecrites += inserer.run(...communes.map((c) => ligne[c] ?? null)).changes;
       } catch (e) {
         refusees.push(`${ligne.id ?? "?"} (${e.message})`);
@@ -129,13 +129,13 @@ function recuperer(source, destination) {
   console.log(`\n  Récupération de ${source}\n  vers ${destination}\n`);
   for (const b of bilan) {
     const etat = b.ecrites === b.lues ? "  " : "! ";
-    console.log(`  ${etat}${String(b.ecrites).padStart(4)}/${String(b.lues).padEnd(4)} ${b.table}${b.note ? "  — " + b.note : ""}`);
+    console.log(`  ${etat}${String(b.ecrites).padStart(4)}/${String(b.lues).padEnd(4)} ${b.table}${b.note ? "  : " + b.note : ""}`);
   }
   const perdues = bilan.reduce((n, b) => n + (b.lues - b.ecrites), 0);
   console.log(
     perdues === 0
       ? "\n  Tout ce qui était lisible a été repris.\n"
-      : `\n  ${perdues} ligne(s) n'ont pas pu être reprises — voir ci-dessus.\n`
+      : `\n  ${perdues} ligne(s) n'ont pas pu être reprises : voir ci-dessus.\n`
   );
   console.log("  Les sessions ne sont pas recopiées : reconnectez-vous.\n");
   return 0;

@@ -15,7 +15,7 @@
  * 2. LA PROJECTION PUBLIQUE EST UNIQUE. Elle passe par la vue
  *    `v_certificats_publics`, qui ne contient ni adresse e-mail, ni score, ni
  *    date d'expiration. Une colonne privée ne peut apparaître sur la page de
- *    vérification que si quelqu'un l'ajoute à la vue — ce qui se voit en
+ *    vérification que si quelqu'un l'ajoute à la vue : ce qui se voit en
  *    relecture.
  */
 
@@ -460,7 +460,7 @@ final class Registre
 
             /* Un certificat de participation n'atteste aucune compétence : il
                n'en porte donc pas, même si l'appel en propose. Le document ne
-               les afficherait pas, mais le registre les aurait gardées — et la
+               les afficherait pas, mais le registre les aurait gardées, et la
                page de vérification les aurait montrées. */
             self::remplacerCompetences($id, $type === 'PARTICIPATION' ? [] : ($champs['skills'] ?? []));
             self::journaliser($acteur, 'CERTIFICATE_CREATED', ['entiteId' => $id, 'valeur' => $reference]);
@@ -613,7 +613,7 @@ final class Registre
      *
      * Le référentiel des compétences est propre à VIZDATA : rien n'y entre
      * automatiquement. Il alimente les cases à cocher de l'attribution, et
-     * c'est la seule source possible — un certificat ne peut porter qu'un
+     * c'est la seule source possible : un certificat ne peut porter qu'un
      * acquis qui existe ici.
      *
      * Aucune suppression. Une compétence effacée disparaîtrait des certificats

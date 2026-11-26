@@ -1,4 +1,4 @@
-/* Attribution d'une certification — et modification d'un certificat délivré.
+/* Attribution d'une certification, et modification d'un certificat délivré.
  *
  * Un certificat ne peut jamais exister sans titulaire : c'est la première
  * règle, et elle est tenue par la base, où `certificates.user_id` est NOT NULL
@@ -7,7 +7,7 @@
  *
  * Deux façons de le désigner, et une seule contrainte
  * --------------------------------------------------
- * On cherche d'abord parmi les titulaires enregistrés — par nom ou par
+ * On cherche d'abord parmi les titulaires enregistrés : par nom ou par
  * adresse. S'il n'existe pas, on le crée ici même, sans quitter le formulaire :
  * son compte d'accès est ouvert et son invitation partie avant que la
  * certification ne lui soit attribuée. L'ancien écran demandait d'aller créer
@@ -216,7 +216,7 @@ function CertificateForm({ cert, titulaire: titulaireImpose, onClose, ...p }) {
 
   return (
     <Modal
-      title={nouveau ? "Attribuer une certification" : `Modifier — ${cert.reference}`}
+      title={nouveau ? "Attribuer une certification" : `Modifier le certificat ${cert.reference}`}
       onClose={onClose}
       wide
       foot={
@@ -380,7 +380,7 @@ function CertificateForm({ cert, titulaire: titulaireImpose, onClose, ...p }) {
 
         {/* Suivre un programme et valider ce qu'il enseigne sont deux faits
             distincts. Le choix est posé ici, avec le programme, parce qu'il
-            porte sur ce qui sera écrit en haut du document — pas sur une
+            porte sur ce qui sera écrit en haut du document : pas sur une
             modalité de délivrance. */}
         <div style={{ marginTop: 18 }}>
           <div className="vz-label" style={{ marginBottom: 9 }}>Type de certificat</div>

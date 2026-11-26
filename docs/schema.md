@@ -1,7 +1,7 @@
-# Schéma de la base — VIZDATA CERTIFY
+# Schéma de la base, VIZDATA CERTIFY
 
 La base est un fichier SQLite. Son schéma est `server/schema/001_socle.sql`, appliqué
-automatiquement à l'ouverture — par `server/db.mjs` dans l'implémentation Node, par
+automatiquement à l'ouverture : par `server/db.mjs` dans l'implémentation Node, par
 `api/lib/Base.php` dans celle en PHP. **Un seul fichier de schéma pour les deux** : du
 SQLite standard, sans rien de propre à un langage. Deux copies d'un schéma finissent
 toujours par diverger, et c'est la base qui fait autorité, pas le code au-dessus.
@@ -17,20 +17,20 @@ toujours par diverger, et c'est la base qui fait autorité, pas le code au-dessu
 | | Ce que c'était | Ce que c'est |
 | --- | --- | --- |
 | Hébergement | projet chez un tiers | un fichier sur le serveur VIZDATA |
-| Disparition possible | oui — c'est arrivé | non, sauf à effacer le fichier |
+| Disparition possible | oui : c'est arrivé | non, sauf à effacer le fichier |
 | Sauvegarde | formule payante | `npm run sauvegarde`, à chaud |
-| Démon à tenir | — | aucun |
+| Démon à tenir |, | aucun |
 | Limite de connexions | oui | aucune |
 | Autorisation | RLS, dans la base | l'API, et elle est testée |
 
-Pour la charge d'un organisme de formation — quelques centaines de certificats par an,
-des vérifications en lecture — SQLite est très largement dimensionné. Le mode WAL permet
+Pour la charge d'un organisme de formation : quelques centaines de certificats par an,
+des vérifications en lecture, SQLite est très largement dimensionné. Le mode WAL permet
 aux lectures et aux écritures de ne pas s'attendre.
 
 **Ce que le passage fait perdre :** l'autorisation ne vit plus dans la base. Postgres la
 tenait par RLS, `security definer` et `has_perm()` ; elle remonte dans
 `server/autorisations.mjs` et `api/lib/Autorisations.php`. C'est un recul en défense en
-profondeur, assumé — et un
+profondeur, assumé, et un
 progrès en vérifiabilité : les politiques RLS n'ont jamais pu être éprouvées faute de
 projet vivant, alors que ce module est couvert par 31 tests, plus 35 tests d'intégration
 qui vérifient qu'il est bien câblé sur chaque route.
@@ -49,14 +49,14 @@ perdre d'essentiel :
 | --- | --- |
 | identifiant | `TEXT` portant un uuid v4 (`crypto.randomUUID`) |
 | booléen | `INTEGER` 0 / 1, borné par un CHECK |
-| horodatage | `TEXT` ISO-8601 UTC — se trie dans l'ordre chronologique |
+| horodatage | `TEXT` ISO-8601 UTC : se trie dans l'ordre chronologique |
 | date | `TEXT` `'AAAA-MM-JJ'`, validée par `date(x) is not null` |
 | énuméré | `TEXT` + `CHECK ... IN (...)` |
 | json | `TEXT` + `CHECK json_valid(x)` |
 
 ## Les pragmas, qui ne sont pas des réglages d'optimisation
 
-Posés à **chaque** ouverture, par `server/db.mjs` comme par `api/lib/Base.php` — ils ne
+Posés à **chaque** ouverture, par `server/db.mjs` comme par `api/lib/Base.php` : ils ne
 sont pas stockés dans le
 fichier :
 
@@ -74,21 +74,21 @@ référentielle refuse de démarrer.
 
 ### Comptes
 
-**users** — une seule table là où il y en avait deux (`auth.users` pour l'identité,
+**users** : une seule table là où il y en avait deux (`auth.users` pour l'identité,
 `public.users` pour le profil). La séparation imposait une fonction privilégiée pour
 créer le moindre titulaire ; ici, le mot de passe est une colonne.
 
 ```
 id                   text (uuid)
 email                text unique, collate nocase
-password_hash        text          scrypt$N$r$p$sel$empreinte — null tant qu'il n'est pas choisi
+password_hash        text          scrypt$N$r$p$sel$empreinte : null tant qu'il n'est pas choisi
 first_name, last_name, phone, avatar_url, linkedin_url
 username             text unique, collate nocase
 public_profile       0 / 1
 role                 ADMIN | MANAGER | CERTIFIED
 account_status       ACTIVE | DISABLED
 must_change_password 0 / 1
-permissions          json — creer_titulaires, attribuer_certificats,
+permissions          json : creer_titulaires, attribuer_certificats,
                             revoquer_certificats, exporter_donnees
 invited_at, activated_at, last_login_at, created_by, created_at, updated_at
 ```
@@ -96,8 +96,8 @@ invited_at, activated_at, last_login_at, created_by, created_at, updated_at
 `password_hash` est nul tant que la personne n'a pas choisi son mot de passe : un compte
 invité existe avant d'en avoir un, et ne peut pas se connecter.
 
-**sessions** — `token_hash`, `user_id`, `expires_at`, `user_agent`, `last_seen`.
-**jetons** — liens à usage unique : `token_hash`, `kind` (INVITATION | REINITIALISATION),
+**sessions**, `token_hash`, `user_id`, `expires_at`, `user_agent`, `last_seen`.
+**jetons** : liens à usage unique : `token_hash`, `kind` (INVITATION | REINITIALISATION),
 `expires_at`, `used_at`.
 
 Dans les deux cas, **seule l'empreinte du secret est stockée**. Le fichier de base est
@@ -106,19 +106,19 @@ copié pour les sauvegardes : s'il contenait des jetons utilisables, toute sauve
 
 ### Catalogue
 
-**certification_domains** — `code`, `name`, `description`, `status`, `sort_order`.
+**certification_domains**, `code`, `name`, `description`, `status`, `sort_order`.
 
-**certificate_types** — les **programmes**. `domain_id`, `template_id`, `code` (unique,
+**certificate_types** : les **programmes**. `domain_id`, `template_id`, `code` (unique,
 entre dans la référence), `name` (l'intitulé exact imprimé), `description`,
 `default_duration`, `sort_order`, `status`.
 
 La table garde le nom qu'elle portait sous Postgres : c'est la même chose, et la
 continuité facilite la lecture des deux schémas côte à côte.
 
-**certificate_templates** — `code`, `name`, `orientation`, `layout` (json libre : la mise
+**certificate_templates**, `code`, `name`, `orientation`, `layout` (json libre : la mise
 en page vit dans l'application, la base n'a pas à connaître des millimètres).
 
-**skills** — `name` unique.
+**skills**, `name` unique.
 
 ### Certificats
 
@@ -129,7 +129,7 @@ certificate_type_id  → certificate_types(id)  ON DELETE RESTRICT
 issued_by            → users(id)              ON DELETE SET NULL
 template_id          → certificate_templates(id)
 issue_date, status, duration, trainer, signatory, revoke_reason
-expiry_date, score   conservés pour une reprise de données — plus renseignés, plus exposés
+expiry_date, score   conservés pour une reprise de données : plus renseignés, plus exposés
 ```
 
 Deux contraintes valent d'être connues :
@@ -144,7 +144,7 @@ Deux contraintes valent d'être connues :
 Aucune unicité sur `(user_id, certificate_type_id)` : un titulaire peut repasser un
 programme. Ce qui est unique, c'est la référence.
 
-**certificate_skills** — jointure, cascade des deux côtés.
+**certificate_skills** : jointure, cascade des deux côtés.
 
 ### Mesure et traces
 
@@ -155,12 +155,12 @@ Postgres, seul l'identifiant était conservé : un compte supprimé laissait des
 auteur lisible, et un journal qui perd le nom de qui a agi perd sa valeur de preuve.
 
 `notifications.status` vaut `SENT`, `PENDING` ou `FAILED`. Un envoi d'e-mail échoue en
-silence — quota, domaine non vérifié, fournisseur absent ; sans cette trace, VIZDATA
+silence : quota, domaine non vérifié, fournisseur absent ; sans cette trace, VIZDATA
 croirait avoir prévenu quelqu'un qui n'a jamais rien reçu.
 
 ### Académie
 
-**cohortes** et **candidatures**, dans la même base — une seconde base serait une
+**cohortes** et **candidatures**, dans la même base : une seconde base serait une
 seconde chose à sauvegarder, et à perdre.
 
 `candidatures_engagements` exige `disponible = 1 and consent_contact = 1` : un appel
@@ -172,18 +172,18 @@ contact.
 `v_certificats_publics` est la projection unique du chemin public. Elle ne contient ni
 adresse e-mail, ni téléphone, ni identifiant de compte, ni score, ni date d'expiration.
 
-Ce n'est pas une barrière — SQLite n'en offre pas — mais une **définition** : si une
+Ce n'est pas une barrière (SQLite n'en offre pas) mais une **définition** : si une
 colonne privée devait apparaître sur la page de vérification, il faudrait l'ajouter ici,
 ce qui se voit en relecture et casse un test.
 
 Le statut **effectif** n'y est pas calculé : il l'est en JavaScript, par
-`effectiveStatus()`. Sous Postgres la règle était dédoublée — une fois en SQL, une fois
-dans le navigateur — et les deux pouvaient diverger.
+`effectiveStatus()`. Sous Postgres la règle était dédoublée : une fois en SQL, une fois
+dans le navigateur, et les deux pouvaient diverger.
 
 ## Déclencheurs
 
 Sept déclencheurs `after update` tiennent `updated_at`. SQLite n'a pas de `before
-update` : la garde `when new.updated_at = old.updated_at` évite la récursion — sans
+update` : la garde `when new.updated_at = old.updated_at` évite la récursion : sans
 elle, la mise à jour déclenchée relancerait le déclencheur indéfiniment.
 
 ## Migrations
@@ -191,11 +191,11 @@ elle, la mise à jour déclenchée relancerait le déclencheur indéfiniment.
 `server/schema/*.sql`, appliqués dans l'ordre des noms et enregistrés dans la table
 `migrations`. Chaque fichier est joué dans une transaction : s'il échoue à mi-parcours,
 la base reste dans l'état d'avant et n'est pas marquée comme migrée. **Une migration à
-moitié appliquée est la pire des situations** — elle ne se rejoue pas, et elle ne
+moitié appliquée est la pire des situations** : elle ne se rejoue pas, et elle ne
 fonctionne pas.
 
 Pour en ajouter une : créez `server/schema/002_quelque-chose.sql`. Elle sera appliquée au
-prochain démarrage — et, en production, au premier appel suivant le téléversement du
+prochain démarrage : et, en production, au premier appel suivant le téléversement du
 paquet, qui recopie `server/schema/` dans `api/schema/`.
 
 ## L'ancienne base

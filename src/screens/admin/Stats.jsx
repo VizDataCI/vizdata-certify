@@ -2,7 +2,7 @@
  *
  * Le tableau de bord répond à « où en est-on cette semaine ». Cet écran répond
  * à « que vaut le registre depuis son ouverture » : les totaux, les
- * répartitions complètes, et la mesure de l'usage public — vérifications,
+ * répartitions complètes, et la mesure de l'usage public : vérifications,
  * partages, téléchargements.
  */
 

@@ -26,7 +26,7 @@ function adresseLinkedIn(cert, url) {
        la rouvre une fois la ligne inscrite. */
     name: typeCertificat(cert.kind).competences
       ? cert.certification
-      : `${cert.certification} — participation`,
+      : `${cert.certification} (participation)`,
     organizationName: cert.issuer || "VIZDATA",
     certUrl: url,
     certId: cert.reference,

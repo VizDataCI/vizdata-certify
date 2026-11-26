@@ -1,7 +1,7 @@
 /* La validation en deux étapes.
  *
  * Le cœur est un algorithme publié : TOTP, RFC 6238. On le vérifie d'abord
- * contre les vecteurs d'essai de la norme — c'est la seule façon d'être sûr
+ * contre les vecteurs d'essai de la norme : c'est la seule façon d'être sûr
  * que ce que produit ce code est bien ce qu'attend Google Authenticator, sans
  * avoir à sortir un téléphone. Le reste éprouve ce qui entoure l'algorithme :
  * la fenêtre de tolérance, le rejeu, les codes de secours, le plafond

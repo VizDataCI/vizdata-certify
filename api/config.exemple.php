@@ -1,5 +1,5 @@
 <?php
-/* Configuration du registre — MODÈLE.
+/* Configuration du registre, MODÈLE.
  *
  * Copiez ce fichier en `config.php` sur le serveur et renseignez les valeurs.
  * `config.php` n'est PAS dans le dépôt : il porte la clé de chiffrement des
@@ -17,12 +17,12 @@ declare(strict_types=1);
 
    Le chemin est DÉDUIT plutôt qu'écrit en dur. Ce fichier est dans
    `<dossier du site>/api/`, donc deux niveaux au-dessus se trouve la racine du
-   compte d'hébergement — un endroit inscriptible qu'aucun domaine ne sert.
+   compte d'hébergement : un endroit inscriptible qu'aucun domaine ne sert.
    Déduire évite la faute la plus coûteuse de ce déploiement : un chemin absolu
    mal recopié, qui fait écrire la base là où un visiteur peut la télécharger.
 
    Si votre hébergement est organisé autrement, remplacez cette ligne par un
-   chemin absolu — mais vérifiez d'abord, dans un navigateur, que le dossier
+   chemin absolu, mais vérifiez d'abord, dans un navigateur, que le dossier
    choisi n'est accessible par aucune adresse. */
 define('VZ_HORS_WEB', dirname(__DIR__, 2) . '/certify-registre');
 
@@ -38,7 +38,7 @@ final class Config
 
     /* --- courrier ------------------------------------------------------------
        Sans RESEND_API_KEY, les messages partent par la fonction mail() du
-       serveur — qui ne dit pas si la remise a eu lieu. Avec, le fournisseur
+       serveur : qui ne dit pas si la remise a eu lieu. Avec, le fournisseur
        rend un verdict, et les échecs apparaissent dans l'écran Notifications. */
     public const COURRIER_ACTIF = true;
     public const RESEND_API_KEY = '';
@@ -49,7 +49,7 @@ final class Config
 
     /* --- sauvegardes ---------------------------------------------------------
        CONSERVEZ CETTE CLÉ AILLEURS QUE SUR CE SERVEUR. Sans elle, les
-       sauvegardes sont des octets aléatoires — c'est exactement ce qu'on
+       sauvegardes sont des octets aléatoires : c'est exactement ce qu'on
        demande au chiffrement, et c'est sans appel.
        Pour en produire une : openssl rand -base64 32 */
     public const SAUVEGARDE_CLE = '';

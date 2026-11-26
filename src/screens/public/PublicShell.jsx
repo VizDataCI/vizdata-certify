@@ -4,7 +4,7 @@
  * fond sombre : elle y deviendrait une bande claire en travers de l'image, et
  * couperait en deux ce qui doit se lire d'un bloc. Au-dessus d'une scène, elle
  * se pose donc par-dessus, sans fond, et ne reprend son filet qu'au défilement
- * — c'est l'écran qui le demande, par la classe `transparent`.
+ * - c'est l'écran qui le demande, par la classe `transparent`.
  */
 
 import { estAdministration } from "../../lib/permissions.js";

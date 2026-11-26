@@ -3,15 +3,15 @@
 Il y a **deux déploiements possibles**, et ce qui tranche n'est pas une préférence
 d'architecture : c'est ce que l'hébergement sait exécuter.
 
-| | Voie 1 — PHP | Voie 2 — Node |
+| | Voie 1, PHP | Voie 2, Node |
 | --- | --- | --- |
 | Hébergement | mutualisé, panneau seul | serveur à soi, accès SSH |
 | Ce qui tourne | PHP 8.4 + SQLite | un service Node + SQLite |
 | Installation | déposer une archive | une commande |
-| **Celle de VIZDATA** | **oui** | — |
+| **Celle de VIZDATA** | **oui** |, |
 
-Les deux servent le **même schéma** — `server/schema/001_socle.sql`, du SQLite standard —
-et exposent les **mêmes routes** — à deux près : la voie PHP ajoute
+Les deux servent le **même schéma**, `server/schema/001_socle.sql`, du SQLite standard
+et exposent les **mêmes routes** : à deux près : la voie PHP ajoute
 `POST /api/sauvegarde` et `GET /api/sauvegardes`, pour sauvegarder sans ligne de
 commande. Sur la voie Node, c'est `npm run sauvegarde` et une tâche cron, ce qui vaut
 mieux. L'interface ne sait pas laquelle elle a en face ; la carte « Sauvegardes » de
@@ -23,11 +23,11 @@ l'administration n'apparaît que là où ces deux routes existent.
 vérifiés sur la machine plutôt que lus dans une documentation :
 
 - **pas d'extension Node.js** dans le panneau ;
-- **accès SSH refusé** — « Forbidden » sur ce compte ;
+- **accès SSH refusé** : « Forbidden » sur ce compte ;
 - **PHP 8.4.27** en fpm-fcgi, avec `pdo_sqlite`, SQLite 3.40.1, `openssl`, `curl`, et un
   dossier **inscriptible hors du dossier web**.
 
-Un serveur Node avait été écrit et éprouvé — il reste dans `server/`, utilisable sur la
+Un serveur Node avait été écrit et éprouvé : il reste dans `server/`, utilisable sur la
 voie 2. Il ne peut pas tourner là. **Un registre qui fonctionne sur l'hébergement qu'on a
 vaut mieux qu'un registre parfait sur une machine qu'on n'a pas.**
 
@@ -45,7 +45,7 @@ La base est **au-dessus** du dossier web. Ce n'est pas un détail d'organisation
 par erreur, elle livrerait d'un coup toutes les adresses, tous les téléphones et toutes
 les empreintes de mots de passe du registre.
 
-## Voie 1 — PHP sur un hébergement mutualisé
+## Voie 1, PHP sur un hébergement mutualisé
 
 Aucune dépendance à installer sur le serveur : ni composer, ni `node_modules`. Le registre
 n'utilise que ce que PHP a déjà.
@@ -56,19 +56,19 @@ n'utilise que ce que PHP a déjà.
 npm run paquet
 ```
 
-Produit `paquet/vizdata-certify.zip` — environ 190 ko. La commande enchaîne trois choses,
+Produit `paquet/vizdata-certify.zip` : environ 190 ko. La commande enchaîne trois choses,
 et **s'arrête à la première qui ne va pas** :
 
-1. `npm run php` — contrôle de surface des fichiers PHP : délimiteurs équilibrés, chaînes
+1. `npm run php` : contrôle de surface des fichiers PHP : délimiteurs équilibrés, chaînes
    fermées, aucun `?>` final. Il n'y a pas d'interpréteur PHP sur la machine de
    développement, donc pas de `php -l` ; ce contrôle attrape la classe d'erreurs la plus
    fréquente quand on écrit sans interpréteur, et il ne prétend pas faire plus.
-2. `npm run build` — l'interface, dont le `.htaccess`.
+2. `npm run build` : l'interface, dont le `.htaccess`.
 3. l'archive, **relue** après écriture : noms à barres obliques, fichiers indispensables
    présents, `.htaccess` compris.
 
 Ce dernier point vient d'une panne réelle : `Compress-Archive` écrit des **antislashes**
-dans les noms. Décompressée sur le serveur — Linux —, l'archive donne des fichiers nommés
+dans les noms. Décompressée sur le serveur (Linux), l'archive donne des fichiers nommés
 `api\lib\Base.php` à la racine, le site répond 404 partout, et rien n'indique pourquoi.
 L'archive avait « réussi ». Le paquet écrit donc son zip lui-même, et le relit.
 
@@ -78,7 +78,7 @@ donnée personnelle.
 
 ### 2. Déposer et décompresser
 
-Dans **Gestionnaire de fichiers**, ouvrez le dossier du domaine — là où se trouvent
+Dans **Gestionnaire de fichiers**, ouvrez le dossier du domaine : là où se trouvent
 `index.html` et `assets/`. Téléversez l'archive, puis « Extraire les fichiers » en
 autorisant le remplacement.
 
@@ -93,7 +93,7 @@ n'importe qui**.
 
 ### 3. Le dossier de la base, hors du dossier web
 
-Remontez d'un niveau — au-dessus de `certify.vizdata.ci` — et créez `certify-registre`.
+Remontez d'un niveau (au-dessus de `certify.vizdata.ci`) et créez `certify-registre`.
 C'est tout : les sous-dossiers et le fichier de base sont créés au premier appel.
 
 ### 4. `config.php`
@@ -105,7 +105,7 @@ Copiez `api/config.exemple.php` en `api/config.php` et renseignez :
 | `CHEMIN_BASE` | `…/certify-registre/certify.db` |
 | `DOSSIER_SAUVEGARDES` | `…/certify-registre/sauvegardes` |
 | `SITE_URL` | `https://certify.vizdata.ci`, sans barre finale |
-| `SAUVEGARDE_CLE` | une longue valeur aléatoire — **copie à conserver ailleurs** |
+| `SAUVEGARDE_CLE` | une longue valeur aléatoire, **copie à conserver ailleurs** |
 | `JETON_SAUVEGARDE` | pour la tâche planifiée de l'étape 7 |
 | `JETON_INSTALLATION` | le temps de l'étape 5, puis vidé |
 | `RESEND_API_KEY` | facultatif ; sans lui, les courriers partent par `mail()` |
@@ -131,7 +131,7 @@ curl.exe -X POST https://certify.vizdata.ci/api/installation -H "Content-Type: a
 ```
 
 La réponse contient un **lien d'activation** : suivez-le pour choisir votre mot de passe.
-Aucun mot de passe permanent n'est produit, ni envoyé en clair — jamais, nulle part dans
+Aucun mot de passe permanent n'est produit, ni envoyé en clair : jamais, nulle part dans
 cette application.
 
 Le point d'installation refuse dès qu'un compte existe. **Videz quand même
@@ -156,19 +156,19 @@ vérifiée : `/api/sante` dit seulement que PHP répond et que la base s'ouvre.
 ### 7. Les sauvegardes
 
 **Il n'y a rien à mettre en place.** Le registre se sauvegarde lui-même, une fois par
-jour, à la première requête venue — et APRÈS y avoir répondu : `fastcgi_finish_request()`
+jour, à la première requête venue, et APRÈS y avoir répondu : `fastcgi_finish_request()`
 rend la main au visiteur, puis PHP continue. Personne n'attend.
 
 Pourquoi ainsi plutôt qu'une tâche planifiée : le panneau de cet hébergement n'en offre
 **aucune** à cet abonnement. Ni cron, ni « récupérer une URL ». Compter dessus serait
-n'avoir aucune sauvegarde tout en croyant en avoir une — exactement ce qui a coûté le
+n'avoir aucune sauvegarde tout en croyant en avoir une : exactement ce qui a coûté le
 registre précédent.
 
 Ce que cela suppose, et qu'il faut savoir : **un site sans aucune visite ne se sauvegarde
 pas.** L'écran **Administration → Paramètres** affiche la date de la dernière, et signale
 celles qui dépassent 48 h.
 
-Si votre hébergement, lui, propose des tâches planifiées, la route reste là — type
+Si votre hébergement, lui, propose des tâches planifiées, la route reste là : type
 « Récupérer une URL », tous les jours à 3 h :
 
 ```
@@ -179,8 +179,8 @@ C'est un **GET**, et ce n'est pas un détail : la tâche de Plesk ne sait faire 
 Une route en POST seulement aurait répondu 405 chaque nuit, dans un journal que personne
 ne lit.
 
-La copie est prise à chaud par `VACUUM INTO` — jamais par une copie de fichier, qui
-donnerait une base à moitié écrite —, **vérifiée** par `pragma integrity_check`, chiffrée
+La copie est prise à chaud par `VACUUM INTO` : jamais par une copie de fichier, qui
+donnerait une base à moitié écrite , **vérifiée** par `pragma integrity_check`, chiffrée
 en AES-256-GCM, et déposée dans `certify-registre/sauvegardes`. Les trente dernières sont
 gardées.
 
@@ -202,7 +202,7 @@ avant une manipulation délicate.
 
 `npm run paquet`, déposer, extraire en remplaçant. `config.php` n'est pas dans l'archive :
 il survit. Les migrations du schéma s'appliquent au premier appel suivant, dans une
-transaction — une migration à moitié appliquée serait la pire des situations, elle ne se
+transaction : une migration à moitié appliquée serait la pire des situations, elle ne se
 rejoue pas et elle ne fonctionne pas.
 
 Prenez une sauvegarde **avant**, par le bouton de l'administration.
@@ -211,15 +211,15 @@ Prenez une sauvegarde **avant**, par le bouton de l'administration.
 
 | Symptôme | Cause habituelle |
 | --- | --- |
-| `/api/sante` renvoie du **HTML** | la règle `/api` du `.htaccess` n'est pas appliquée : `mod_rewrite` inactif pour ce domaine, ou `.htaccess` absent — c'est un fichier caché, le gestionnaire de fichiers le masque parfois |
+| `/api/sante` renvoie du **HTML** | la règle `/api` du `.htaccess` n'est pas appliquée : `mod_rewrite` inactif pour ce domaine, ou `.htaccess` absent : c'est un fichier caché, le gestionnaire de fichiers le masque parfois |
 | « Une erreur interne est survenue » | passez `DEBOGUAGE` à `true` dans `config.php`, relancez l'appel, **remettez-le à `false`** |
 | erreur sur la base au premier appel | `certify-registre` n'existe pas, ou n'est pas inscriptible par PHP |
-| `/verifier/{jeton}` répond 404 au rechargement | le repli SPA du `.htaccess` ne s'applique pas — même cause que la première ligne |
+| `/verifier/{jeton}` répond 404 au rechargement | le repli SPA du `.htaccess` ne s'applique pas : même cause que la première ligne |
 | la session ne tient pas | le site est atteint tantôt en HTTP, tantôt en HTTPS : le cookie `Secure` n'est renvoyé que sur l'une des deux. Forcez HTTPS dans Plesk |
 | les courriers ne partent pas | sans `RESEND_API_KEY`, `mail()` ne rend aucun verdict. L'écran **Notifications** montre ce qui n'est pas parti, avec le lien d'invitation en clair pour le transmettre à la main |
 | « database is locked » | deux écritures simultanées au-delà des 5 secondes d'attente ; sur ce volume, cela signale plutôt une sauvegarde lancée en boucle |
 
-## Deuxième voie — Node sur un serveur à soi
+## Deuxième voie, Node sur un serveur à soi
 
 Tout ce qui suit concerne un serveur dont on a la main : un VPS, une machine Scaleway, un
 Plesk avec accès SSH. Rien n'y est nécessaire pour `certify.vizdata.ci`, qui est sur la
@@ -273,7 +273,7 @@ Node peut tourner derrière nginx de Plesk. Deux choses décident de tout.
 
 **La version de Node du panneau ne compte pas.** L'extension Node.js de Plesk gère ses
 propres applications avec sa propre version ; le registre, lui, tourne en service système
-et demande un **Node 22 ou plus installé à l'échelle du serveur** — `node:sqlite` en
+et demande un **Node 22 ou plus installé à l'échelle du serveur**, `node:sqlite` en
 dépend, et c'est la seule exigence non contournable de cette voie.
 ```bash
 node --version    # doit répondre v22 ou plus
@@ -307,7 +307,7 @@ location / {
 
 Puis **décochez « Servir les fichiers statiques directement par nginx »**. C'est le
 réglage qu'on oublie : laissé coché, nginx cherche un fichier pour `/verifier/{jeton}`,
-n'en trouve pas, et répond 404 — précisément sur l'adresse imprimée dans les QR codes.
+n'en trouve pas, et répond 404 : précisément sur l'adresse imprimée dans les QR codes.
 
 `X-Forwarded-For` n'est pas décoratif : c'est ce que le registre utilise pour limiter les
 tentatives de connexion. Sans cet en-tête, toutes les requêtes semblent venir de nginx, et
@@ -356,7 +356,7 @@ sudo -u vizdata env VIZDATA_DB=/var/lib/vizdata-certify/certify.db \
 
 La commande imprime un lien valable sept jours et une seule fois. **Aucun mot de passe
 n'est produit** : la personne choisit le sien en suivant le lien. Transmettez-le par un
-canal sûr — il ouvre le compte.
+canal sûr : il ouvre le compte.
 
 C'est le seul compte que l'application ne peut pas créer elle-même : il n'y a personne
 pour l'inviter.
@@ -367,7 +367,7 @@ pour l'inviter.
 
 ```ini
 [Unit]
-Description=VIZDATA CERTIFY — registre des certifications
+Description=VIZDATA CERTIFY : registre des certifications
 After=network.target
 
 [Service]
@@ -383,7 +383,7 @@ Environment=NODE_ENV=production
 Environment=PORT=4321
 Environment=VIZDATA_DB=/var/lib/vizdata-certify/certify.db
 Environment=VIZDATA_SITE_URL=https://certify.vizdata.ci
-# Facultatif — sans cela, les courriers ne partent pas et sont tracés « en attente ».
+# Facultatif : sans cela, les courriers ne partent pas et sont tracés « en attente ».
 # Environment=RESEND_API_KEY=re_...
 # Environment=NOTIFY_FROM=VIZDATA CERTIFY <certify@vizdata.ci>
 
@@ -420,7 +420,7 @@ server {
 
     # Tout passe au registre : il sert l'API et l'application, et pose lui-même
     # le repli SPA. Partager le travail entre nginx et Node ferait deux endroits
-    # où le repli peut être oublié — et c'est /verifier/{jeton}, l'adresse
+    # où le repli peut être oublié, et c'est /verifier/{jeton}, l'adresse
     # imprimée sur les certificats, qui répondrait 404.
     location / {
         proxy_pass         http://127.0.0.1:4321;
@@ -443,7 +443,7 @@ server {
 de connexion. Sans cet en-tête, toutes les requêtes semblent venir de nginx, et la
 limitation s'appliquerait à tout le monde d'un coup.
 
-Les en-têtes de sécurité sont posés par le registre lui-même — inutile de les répéter
+Les en-têtes de sécurité sont posés par le registre lui-même : inutile de les répéter
 ici, et les répéter différemment serait pire.
 
 ```bash
@@ -464,7 +464,7 @@ registre.
 
 | Étape | Ce qu'elle évite |
 | --- | --- |
-| **À chaud** | `cp certify.db` pendant une écriture produit un fichier incohérent — on s'en aperçoit le jour de la restauration |
+| **À chaud** | `cp certify.db` pendant une écriture produit un fichier incohérent : on s'en aperçoit le jour de la restauration |
 | **Vérifiée** | une sauvegarde jamais relue est un espoir ; celle-ci est rouverte et contrôlée page par page |
 | **Chiffrée** | elle contient noms, téléphones et empreintes de mots de passe, et elle doit quitter le serveur |
 | **Expédiée** | l'étape « pense à la copier ailleurs » ne se fait jamais |
@@ -488,7 +488,7 @@ sudo chmod 600 /etc/vizdata-certify.env
 
 **Conservez-en une copie ailleurs que sur ce serveur, et ailleurs que dans ce dépôt.**
 Un gestionnaire de mots de passe, un coffre, une enveloppe. Sans elle, les sauvegardes
-sont des octets aléatoires — c'est exactement ce qu'on demande au chiffrement, et c'est
+sont des octets aléatoires : c'est exactement ce qu'on demande au chiffrement, et c'est
 sans appel.
 
 #### L'expédition hors du serveur
@@ -509,7 +509,7 @@ disponibilité en créant une fuite serait un mauvais échange.
 
 #### Un dépôt GitHub privé comme destination
 
-C'est une destination légitime — gratuite, hors du serveur, versionnée — **à condition
+C'est une destination légitime : gratuite, hors du serveur, versionnée, **à condition
 que les sauvegardes soient chiffrées**, ce dont le script se charge. Jamais dans le dépôt
 du code : un dépôt **privé et distinct**, qui ne contient que des fichiers chiffrés.
 
@@ -524,7 +524,7 @@ VIZDATA_SAUVEGARDE_DISTANTE='cd /var/lib/vizdata-certify/depot-sauvegardes && cp
 
 Deux précautions : la clé SSH du serveur doit être une **clé de déploiement en écriture**
 sur ce dépôt et sur lui seul ; et le dépôt doit rester **privé**, même si les fichiers
-sont chiffrés — un chiffrement public est un chiffrement qu'on invite à casser.
+sont chiffrés : un chiffrement public est un chiffrement qu'on invite à casser.
 
 #### Tous les soirs
 
@@ -544,7 +544,7 @@ Les trente dernières sont conservées sur place (`VIZDATA_SAUVEGARDES_GARDEES`)
 ### 6. Restaurer
 
 Une sauvegarde qu'on ne sait pas restaurer n'est pas une sauvegarde. Essayez-le **une
-fois, maintenant**, pendant que rien ne presse — pas le jour où le registre est à
+fois, maintenant**, pendant que rien ne presse : pas le jour où le registre est à
 l'arrêt.
 
 ```bash
@@ -565,9 +565,9 @@ Arrêter le service d'abord : sinon il écrit dans la base qu'on remplace.
 
 Trois précautions sont prises pour vous :
 
-- la base actuelle est **mise de côté** avant d'être écrasée — restaurer la mauvaise
+- la base actuelle est **mise de côté** avant d'être écrasée : restaurer la mauvaise
   sauvegarde est une erreur banale, la rendre irréversible serait une faute ;
-- les fichiers `-wal` et `-shm` de l'ancienne base sont **supprimés** — les laisser
+- les fichiers `-wal` et `-shm` de l'ancienne base sont **supprimés** : les laisser
   ferait rejouer par SQLite un journal étranger sur la base restaurée, et corromprait
   précisément ce qu'on vient de récupérer ;
 - la base restaurée est **relue** et son contenu affiché.
@@ -612,12 +612,12 @@ employeur fera, et c'est la seule chose que le produit promet.
 
 | Symptôme | Cause habituelle |
 | --- | --- |
-| « Registre injoignable » dans l'interface | le service Node est arrêté — `systemctl status vizdata-certify` |
+| « Registre injoignable » dans l'interface | le service Node est arrêté, `systemctl status vizdata-certify` |
 | 502 de nginx | même chose, ou `PORT` différent de celui du `proxy_pass` |
-| `/verifier/{jeton}` répond 404 au rechargement | nginx ne passe pas tout au registre — voir le `location /` |
+| `/verifier/{jeton}` répond 404 au rechargement | nginx ne passe pas tout au registre : voir le `location /` |
 | La session ne tient pas | le site est servi en HTTP et en HTTPS selon les pages : le cookie `Secure` n'est alors renvoyé que sur l'une des deux |
 | Les invitations ne partent pas | `RESEND_API_KEY` absente ; les liens sont dans `journalctl`, et l'écran Notifications les signale |
-| « database is locked » | deux processus écrivent — un service lancé deux fois, ou une commande `npm run base` pendant une écriture |
+| « database is locked » | deux processus écrivent : un service lancé deux fois, ou une commande `npm run base` pendant une écriture |
 
 ### Ce que ce déploiement ne fait pas
 
@@ -628,5 +628,5 @@ employeur fera, et c'est la seule chose que le produit promet.
   moment où la question du moteur se reposerait.
 - **Pas d'aperçu de partage par certificat.** Les robots de LinkedIn et WhatsApp
   n'exécutent pas le JavaScript ; il faudrait que le serveur rende lui-même les balises
-  pour `/verifier/{jeton}`. C'est désormais possible — il sert déjà les pages — mais ce
+  pour `/verifier/{jeton}`. C'est désormais possible (il sert déjà les pages) mais ce
   n'est pas fait.

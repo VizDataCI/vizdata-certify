@@ -44,8 +44,8 @@ function AppShell({ nav, current, onNav, session, go, logout, title, children, s
                 className={current === n.key ? "on" : ""}
                 /* Une entrée de navigation change d'écran DANS l'espace
                    courant, sans exception. Une entrée a un temps pu mener
-                   ailleurs — « Ma sécurité » renvoyait de l'administration
-                   vers /espace — et c'était faux deux fois : on quittait
+                   ailleurs : « Ma sécurité » renvoyait de l'administration
+                   vers /espace, et c'était faux deux fois : on quittait
                    l'espace sans l'avoir demandé, et la navigation horizontale
                    du téléphone, qui ne connaît que `onNav`, n'affichait rien
                    du tout. Chaque espace héberge donc ses propres écrans. */
@@ -70,7 +70,7 @@ function AppShell({ nav, current, onNav, session, go, logout, title, children, s
                   affiche l'écran chez lui et dit par où y aller : ce bouton ne
                   navigue donc pas, il change d'écran. Il menait auparavant à
                   l'espace du certifié, ce qui faisait sortir l'administrateur
-                  de l'administration — barre, titre et adresse compris. */}
+                  de l'administration : barre, titre et adresse compris. */}
               <button
                 className="vz-linkbtn"
                 style={{ padding: 0, color: "var(--gris)", fontSize: 12 }}

@@ -2,7 +2,7 @@
  *
  * Un vrai processus, une vraie base, de vraies requêtes HTTP avec cookies.
  * Les tests unitaires des modules vérifient les règles ; celui-ci vérifie que
- * les règles sont bien CÂBLÉES — qu'aucune route n'a été oubliée en chemin,
+ * les règles sont bien CÂBLÉES : qu'aucune route n'a été oubliée en chemin,
  * qu'aucune ne laisse passer ce que le module d'autorisation refuse, et
  * qu'aucune réponse ne laisse fuir ce qu'elle ne doit pas.
  *
@@ -68,7 +68,7 @@ before(async () => {
   const programme = uid();
   db.prepare("insert into certification_domains (id, code, name) values (?, 'EXCEL', 'Excel')").run(domaine);
   db.prepare(
-    "insert into certificate_types (id, domain_id, code, name, description, default_duration) values (?, ?, 'EXCEL-AVA', 'Excel — Niveau avancé', 'Fonctions imbriquées.', 30)"
+    "insert into certificate_types (id, domain_id, code, name, description, default_duration) values (?, ?, 'EXCEL-AVA', 'Excel, Niveau avancé', 'Fonctions imbriquées.', 30)"
   ).run(programme, domaine);
 
   const invitation = creerJeton(db, admin, "INVITATION").secret;
@@ -104,7 +104,7 @@ before(async () => {
 
 after(async () => {
   /* Sous Windows, le fichier de base reste verrouillé tant que le processus
-     n'est pas réellement mort — et `kill()` ne fait que demander. Effacer
+     n'est pas réellement mort, et `kill()` ne fait que demander. Effacer
      aussitôt échoue sur EPERM. On attend donc la sortie, puis on réessaie
      quelques fois : le système rend parfois la main avec un temps de retard. */
   if (processus && processus.exitCode === null) {
@@ -603,8 +603,8 @@ test("le cookie de session est hors de portée du JavaScript", async () => {
 test("la connexion en deux temps est câblée de bout en bout", async () => {
   /* Le parcours complet, par HTTP : activer, se déconnecter, et constater que
      le mot de passe seul ne donne plus de session. C'est la différence entre
-     « l'algorithme est juste » — éprouvé dans double-facteur.test.js contre
-     les vecteurs de la RFC — et « la porte est réellement verrouillée ». */
+     « l'algorithme est juste » : éprouvé dans double-facteur.test.js contre
+     les vecteurs de la RFC, et « la porte est réellement verrouillée ». */
   const prep = await appel("/api/double-facteur/preparer", { methode: "POST", corps: {} });
   assert.equal(prep.statut, 200);
   assert.match(prep.donnees.secret, /^[A-Z2-7]{32}$/);
@@ -622,7 +622,7 @@ test("la connexion en deux temps est câblée de bout en bout", async () => {
 
   await appel("/api/session", { methode: "DELETE" });
 
-  /* Le mot de passe seul ne rend plus un profil, mais un défi — et surtout
+  /* Le mot de passe seul ne rend plus un profil, mais un défi, et surtout
      aucun cookie. */
   const premier = await fetch(base + "/api/session", {
     method: "POST",

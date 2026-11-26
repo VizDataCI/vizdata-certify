@@ -208,7 +208,7 @@ function VerifyResult(p) {
               {/* Deux documents, deux affirmations. Écrire « satisfait aux
                   exigences de validation » sous un certificat de participation
                   ferait dire au registre l'inverse de ce que porte le document
-                  — et c'est ici, pas ailleurs, qu'un employeur vient lire. */}
+                 , et c'est ici, pas ailleurs, qu'un employeur vient lire. */}
               {typeCertificat(cert.kind).competences ? (
                 <p>
                   Son titulaire a suivi le parcours de formation VIZDATA correspondant et satisfait aux

@@ -2,11 +2,11 @@
  *
  * Deux précautions, apprises à l'usage :
  *
- * — La clé porte un numéro de version. Le modèle a changé en novembre 2026
+ * - La clé porte un numéro de version. Le modèle a changé en novembre 2026
  *   (domaines, programmes, trois rôles) : un registre enregistré avant cette
  *   date n'a pas la forme attendue, et le relire tel quel ferait planter les
  *   écrans sur un `undefined`.
- * — Le numéro ne suffit pas. Un registre peut avoir été écrit par une version
+ * - Le numéro ne suffit pas. Un registre peut avoir été écrit par une version
  *   intermédiaire, ou tronqué par un quota. La forme est donc vérifiée avant
  *   d'être acceptée : à défaut, on repart du jeu de démonstration plutôt que
  *   de laisser l'application se casser sur des données incomplètes.

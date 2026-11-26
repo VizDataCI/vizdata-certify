@@ -1,7 +1,7 @@
 /* L'académie CITIZEN DATA ANALYST.
  *
  * Second métier dans la même application : des candidatures à une formation,
- * pas des certificats délivrés. Les deux partagent la base — une seconde base
+ * pas des certificats délivrés. Les deux partagent la base : une seconde base
  * serait une seconde chose à sauvegarder, et à perdre.
  *
  * Ce que la page publique peut faire, et rien de plus
@@ -14,7 +14,7 @@
  *
  * Sous Postgres, cette séparation était tenue par RLS et deux fonctions
  * `security definer`. Ici, elle est tenue par le fait qu'aucune route publique
- * ne lit ces tables — ce qui se vérifie en lisant la table des routes, et qui
+ * ne lit ces tables : ce qui se vérifie en lisant la table des routes, et qui
  * est éprouvé par les tests.
  */
 
@@ -63,7 +63,7 @@ function prochaineReferenceCandidature(db, annee) {
 /**
  * Enregistre une candidature et rend sa référence.
  *
- * Les deux engagements — disponibilité et consentement au contact — sont
+ * Les deux engagements (disponibilité et consentement au contact) sont
  * exigés ici ET par la base. Le double contrôle n'est pas une redondance : le
  * formulaire peut être contourné par un appel direct, et une candidature sans
  * consentement au contact n'a pas le droit d'exister.
@@ -187,7 +187,7 @@ function publierCohorte(db, id) {
   });
 }
 
-/** Supprime une cohorte. Les candidatures rattachées sont conservées — la clé
+/** Supprime une cohorte. Les candidatures rattachées sont conservées : la clé
  *  étrangère est en SET NULL : on ne perd pas un candidat parce qu'une session
  *  a été annulée. */
 function supprimerCohorte(db, id) {

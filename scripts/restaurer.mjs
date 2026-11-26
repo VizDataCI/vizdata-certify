@@ -5,7 +5,7 @@
  *
  * Une sauvegarde qu'on ne sait pas restaurer n'est pas une sauvegarde. Ce
  * script est donc écrit en même temps que celui qui sauvegarde, et pas « plus
- * tard, quand on en aura besoin » — c'est-à-dire sous la pression, un jour où
+ * tard, quand on en aura besoin » : c'est-à-dire sous la pression, un jour où
  * le registre est à l'arrêt.
  *
  * Trois précautions, qui viennent toutes de la même idée : on remplace le
@@ -19,7 +19,7 @@
  *    la rendre irréversible serait une faute.
  * 3. ON EMPORTE LE JOURNAL. Les fichiers -wal et -shm appartiennent à l'ANCIENNE
  *    base. Les laisser à côté de la nouvelle ferait rejouer par SQLite un
- *    journal qui ne la concerne pas — et corromprait précisément ce qu'on vient
+ *    journal qui ne la concerne pas, et corromprait précisément ce qu'on vient
  *    de restaurer.
  */
 
@@ -130,7 +130,7 @@ function restaurer() {
     depuis = inventaire(provisoire);
   } catch (e) {
     rmSync(provisoire, { force: true });
-    console.error(`\n  SAUVEGARDE INEXPLOITABLE — ${e.message}`);
+    console.error(`\n  SAUVEGARDE INEXPLOITABLE, ${e.message}`);
     console.error("  La base en place n'a pas été touchée.\n");
     return 1;
   }
@@ -143,7 +143,7 @@ function restaurer() {
     console.log(`\n  (la base en place est illisible : ${e.message})`);
   }
 
-  console.log(`\n  Sauvegarde : ${basename(fichier)}  —  ${lisible(statSync(fichier).size)}${chiffre ? ", chiffrée" : ""}`);
+  console.log(`\n  Sauvegarde : ${basename(fichier)} ,  ${lisible(statSync(fichier).size)}${chiffre ? ", chiffrée" : ""}`);
   console.log(`  Déposée le : ${statSync(fichier).mtime.toLocaleString("fr-FR")}`);
   tableau("Elle contient :", depuis);
   tableau(`Elle remplacerait (${cible}) :`, actuelle);

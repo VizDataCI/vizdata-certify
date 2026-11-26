@@ -15,7 +15,7 @@
  *
  * Les colonnes DATE_EXPIRATION et SCORE ont disparu : ces deux mentions ne sont
  * plus portées par le registre. Un fichier qui les contient encore n'est pas
- * refusé — elles sont simplement ignorées, et l'écran le dit.
+ * refusé : elles sont simplement ignorées, et l'écran le dit.
  */
 
 import { useState } from "react";
@@ -221,7 +221,7 @@ function AdminImport(p) {
           <p className="vz-small vz-muted" style={{ marginBottom: 12, lineHeight: 1.75 }}>
             Colonnes attendues : <span className="vz-mono">NOM · PRENOM · EMAIL · PROGRAMME · DATE_DELIVRANCE</span>.
             Séparateur point-virgule, tabulation ou virgule. La colonne PROGRAMME reçoit le code du programme
-            {codes.length > 0 && <> — <span className="vz-mono">{codes.slice(0, 8).join(", ")}{codes.length > 8 ? "…" : ""}</span></>}.
+            {codes.length > 0 && <> : <span className="vz-mono">{codes.slice(0, 8).join(", ")}{codes.length > 8 ? "…" : ""}</span></>}.
             Les titulaires inconnus sont créés et invités automatiquement.
           </p>
           <input type="file" accept=".csv,.txt,text/csv" onChange={surFichier} className="vz-input" style={{ paddingTop: 6, marginBottom: 12 }} />

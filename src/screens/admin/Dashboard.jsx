@@ -233,7 +233,7 @@ function AdminDashboard(p) {
 
       {/* Deux couleurs sur six, et elles portent un verdict : vert pour ce
           qui est en vigueur, rouge pour ce qui a été retiré. Les quatre autres
-          cartes comptent, elles ne jugent pas — elles sont donc du bleu de
+          cartes comptent, elles ne jugent pas : elles sont donc du bleu de
           l'interface. La rangée en portait six différentes, et l'œil n'y
           trouvait plus rien : une couleur qui sert à tout ne signale plus
           rien, c'est la règle même du système. */}
@@ -313,7 +313,7 @@ function AdminDashboard(p) {
               <div style={{ display: "flex", flexDirection: "column", gap: 15 }}>
                 {parProgramme.map((x) => (
                   /* Même couleur que « Par domaine » : les deux panneaux
-                      comptent LA MÊME CHOSE — des certifications délivrées —,
+                      comptent LA MÊME CHOSE (des certifications délivrées),
                       et les peindre de deux teintes laissait croire à deux
                       mesures différentes posées côte à côte. */
                   <Jauge key={x.code} nom={x.nom} n={x.n} max={maxProgramme} couleur="var(--bleu)" />

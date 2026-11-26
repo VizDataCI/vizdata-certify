@@ -12,14 +12,14 @@
  *    être vérifiée différemment.
  *
  * 2. ON LÈVE, ON NE REND PAS UN BOOLÉEN. Une méthode qui rend `false` se
- *    laisse oublier — un `if` sans `else` est une faille muette. Une méthode
+ *    laisse oublier : un `if` sans `else` est une faille muette. Une méthode
  *    qui lève interrompt la route, et le routeur traduit le refus en code HTTP.
  *
  * 3. LE VOCABULAIRE EST CELUI DE L'INTERFACE. Les clés d'autorisation sont
  *    exactement celles de src/lib/permissions.js, et un test du dépôt vérifie
  *    que les deux listes coïncident. Les redéclarer sans contrôle garantirait
  *    qu'elles divergent un jour : l'écran cacherait une action que le serveur
- *    accepte — ou, bien pire, en proposerait une qu'il refuse.
+ *    accepte : ou, bien pire, en proposerait une qu'il refuse.
  *
  * La règle de fond : l'interface ne protège rien, elle évite de proposer
  * l'inutile. Le serveur, lui, décide.
@@ -94,8 +94,8 @@ final class Autorisations
             throw new Refus(401, 'Authentification requise.');
         }
         if (($acteur['account_status'] ?? 'ACTIVE') === 'DISABLED') {
-            /* Le compte garde son rôle — on ne rétrograde pas quelqu'un qu'on
-               suspend — mais la suspension doit être effective immédiatement. */
+            /* Le compte garde son rôle : on ne rétrograde pas quelqu'un qu'on
+               suspend, mais la suspension doit être effective immédiatement. */
             throw new Refus(403, 'Ce compte a été désactivé. Contactez VIZDATA.');
         }
         return $acteur;
@@ -188,7 +188,7 @@ final class Autorisations
 
         if ($inconnus) {
             /* On refuse plutôt que d'ignorer : un champ silencieusement écarté
-               laisse croire que la modification a eu lieu — et le jour où ce
+               laisse croire que la modification a eu lieu, et le jour où ce
                champ existera, il passera sans contrôle. */
             throw new Refus(403, 'Champ non modifiable : ' . implode(', ', $inconnus) . '.');
         }
@@ -245,7 +245,7 @@ final class Autorisations
      * Vérifie qu'il restera un administrateur actif.
      *
      * Appelé avant toute rétrogradation ou désactivation. Sans lui, la
-     * plateforme peut se retrouver sans personne pour la gouverner — et la
+     * plateforme peut se retrouver sans personne pour la gouverner, et la
      * seule issue serait une écriture directe dans le fichier de base.
      */
     public static function exigerDernierAdministrateur(string $cibleId): void

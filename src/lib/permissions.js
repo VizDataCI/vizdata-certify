@@ -2,13 +2,13 @@
  *
  * Trois rôles, et un principe
  * ---------------------------
- *   ADMIN     — tous les droits, sans exception et sans configuration.
- *   MANAGER   — gestionnaire : ce que l'administrateur lui a accordé, et rien
+ *   ADMIN     : tous les droits, sans exception et sans configuration.
+ *   MANAGER   : gestionnaire : ce que l'administrateur lui a accordé, et rien
  *               d'autre. Les autorisations sont nommées et stockées une par une
  *               dans users.permissions.
- *   CERTIFIED — titulaire : ses propres certificats, son propre profil.
+ *   CERTIFIED : titulaire : ses propres certificats, son propre profil.
  *
- * Ce module ne protège rien. Il sert à décider ce qu'un écran affiche — un
+ * Ce module ne protège rien. Il sert à décider ce qu'un écran affiche : un
  * bouton qu'on ne pourrait pas utiliser n'a rien à faire là. L'autorisation
  * réelle est tenue par la base : politiques RLS, fonctions `has_perm()` et
  * `is_admin()`, et un déclencheur qui empêche un gestionnaire d'élargir ses
@@ -50,7 +50,7 @@ const ROLES = {
 /** Vrai pour un administrateur. */
 const estAdmin = (session) => session?.role === "ADMIN";
 
-/** Vrai pour l'administration au sens large — administrateur ou gestionnaire. */
+/** Vrai pour l'administration au sens large : administrateur ou gestionnaire. */
 const estAdministration = (session) =>
   Boolean(session) && (session.role === "ADMIN" || session.role === "MANAGER") && session.account_status !== "DISABLED";
 

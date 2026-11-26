@@ -13,7 +13,7 @@
  * ne peut même pas lire, et les identifiants du registre ne quittent jamais le
  * serveur. Une catégorie entière d'accidents n'est plus possible.
  *
- * Le SDK Supabase — environ 200 ko — disparaît aussi du paquet.
+ * Le SDK Supabase (environ 200 ko) disparaît aussi du paquet.
  */
 
 /* Mode démonstration : le registre vit dans le navigateur, aucun serveur n'est
@@ -26,8 +26,8 @@ const modeDemo = import.meta.env.VITE_MODE_DEMO === "1";
 const registreDistant = !modeDemo;
 
 /* Compatibilité de nom : les écrans écrits du temps de Supabase lisent
-   `isAuthConfigured`. La chose est la même — « y a-t-il un vrai registre
-   derrière ? » — et renommer partout n'apporterait rien aujourd'hui. */
+   `isAuthConfigured`. La chose est la même : « y a-t-il un vrai registre
+   derrière ? », et renommer partout n'apporterait rien aujourd'hui. */
 const isAuthConfigured = registreDistant;
 
 /** Erreur portant le code HTTP, pour que l'appelant puisse distinguer les cas. */

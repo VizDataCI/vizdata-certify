@@ -30,7 +30,7 @@ const STATUS_META = {
  *
  * Suivre un programme et valider les compétences qu'il enseigne sont deux
  * faits distincts : le premier se constate, le second s'évalue. Le document ne
- * doit donc pas dire la même chose dans les deux cas — un certificat de
+ * doit donc pas dire la même chose dans les deux cas : un certificat de
  * participation qui attesterait « la validation des compétences acquises »
  * dirait faux, et c'est exactement le genre de phrase qu'un employeur vérifie.
  *
@@ -86,8 +86,8 @@ function slugify(s) {
  * Projection publique d'un certificat du registre.
  *
  * C'est la forme que lisent le document imprimé, la page de vérification et
- * la modale de consultation. Les correspondances — titulaire, programme,
- * domaine, compétences — sont passées en paramètre et non lues ici : la même
+ * la modale de consultation. Les correspondances : titulaire, programme,
+ * domaine, compétences : sont passées en paramètre et non lues ici : la même
  * projection sert au registre du serveur et au jeu de démonstration, qui ne
  * vivent pas au même endroit.
  *

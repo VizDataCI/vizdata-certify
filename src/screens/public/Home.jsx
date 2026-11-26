@@ -4,7 +4,7 @@
  * ----------------------------
  * Un employeur arrive ici pour vérifier un certificat ; un titulaire, pour
  * retrouver le sien. La page sert les deux sans se couper en deux : le titre
- * s'adresse au titulaire — c'est lui le sujet du produit —, et l'ACTION
+ * s'adresse au titulaire (c'est lui le sujet du produit), et l'ACTION
  * principale sert l'employeur, parce que c'est la plus urgente des deux. Il
  * vérifie en moins de dix secondes, sans explication préalable, et sans avoir
  * à lire une ligne de présentation.
@@ -16,21 +16,21 @@
  * plutôt que d'en parler est la seule accroche qui n'a pas besoin d'adjectifs.
  *
  * Trois niveaux, du plus léger au plus riche, et la page est complète à
- * chacun d'eux — c'est la règle, parce qu'un fichier manquant ne doit jamais
+ * chacun d'eux : c'est la règle, parce qu'un fichier manquant ne doit jamais
  * laisser un écran cassé :
  *
- *   1. SANS AUCUN FICHIER — le champ de nuit VIZDATA, avec sa vignette. C'est
+ *   1. SANS AUCUN FICHIER : le champ de nuit VIZDATA, avec sa vignette. C'est
  *      l'état actuel, et il se tient.
- *   2. AVEC `/accueil-graduation.jpg` — l'image fixe s'affiche, et sert
+ *   2. AVEC `/accueil-graduation.jpg` : l'image fixe s'affiche, et sert
  *      d'affiche à la vidéo tant qu'elle se charge.
- *   3. AVEC `/accueil-graduation.mp4` (et, au choix, `.webm`) — la séquence
+ *   3. AVEC `/accueil-graduation.mp4` (et, au choix, `.webm`) : la séquence
  *      joue, muette et en boucle.
  *
  * Pourquoi une vidéo plutôt qu'un GIF
  * -----------------------------------
  * Un GIF de six secondes en 1600 px pèse huit à douze mégaoctets, ne connaît
- * que 256 couleurs — les dégradés d'une salle de cérémonie y deviennent des
- * bandes — et se décode par le processeur. Le même plan en MP4 (H.264) pèse
+ * que 256 couleurs : les dégradés d'une salle de cérémonie y deviennent des
+ * bandes, et se décode par le processeur. Le même plan en MP4 (H.264) pèse
  * entre 400 et 800 kilooctets, garde ses couleurs, et se décode par la puce
  * vidéo. Sur une connexion abidjanaise, c'est la différence entre une page qui
  * s'ouvre et une page qu'on abandonne. Le GIF reste accepté si le fichier
@@ -47,7 +47,7 @@
  *                            pour que le premier affichage ne soit jamais vide.
  *
  * Le cadrage doit laisser le tiers gauche calme : c'est là que le texte se
- * pose. Et la séquence ne joue pas pour qui a demandé moins d'animations —
+ * pose. Et la séquence ne joue pas pour qui a demandé moins d'animations
  * voir `vz-scene-media` dans la feuille de style.
  */
 

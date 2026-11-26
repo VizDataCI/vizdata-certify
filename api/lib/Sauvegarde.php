@@ -2,13 +2,13 @@
 /* Sauvegarder et restaurer, sans ligne de commande.
  *
  * L'hébergement n'offre pas d'accès SSH : tout ce qui suit se déclenche par
- * une requête HTTP — un bouton dans l'administration, ou une tâche planifiée
+ * une requête HTTP : un bouton dans l'administration, ou une tâche planifiée
  * du panneau qui appelle une adresse.
  *
  * Quatre étapes, et chacune répond à une façon précise de perdre le registre.
  *
  * 1. À CHAUD. `vacuum into` produit une copie cohérente d'une base vivante,
- *    page par page, sans arrêter le service — et sans journal annexe, ce qui
+ *    page par page, sans arrêter le service, et sans journal annexe, ce qui
  *    donne UN fichier et non trois. Un `copy()` du fichier pendant qu'une
  *    écriture est en cours produit au contraire un fichier incohérent, et l'on
  *    s'en aperçoit le jour de la restauration, c'est-à-dire au pire moment.
@@ -101,7 +101,7 @@ final class Sauvegarde
         } catch (Throwable $e) {
             @unlink($brut);
             throw new RuntimeException(
-                'Sauvegarde refusée — ' . $e->getMessage()
+                'Sauvegarde refusée, ' . $e->getMessage()
                 . ". Rien n'a été laissé en place : un fichier inexploitable rassurerait à tort."
             );
         }
@@ -122,8 +122,8 @@ final class Sauvegarde
 
         /* Témoin daté : c'est lui que lit l'entretien automatique pour savoir
            s'il doit sauvegarder. Le poser ici plutôt que chez l'appelant fait
-           qu'une sauvegarde déclenchée à la main — avant une manipulation
-           délicate — décale aussi l'automatique, au lieu d'en provoquer une
+           qu'une sauvegarde déclenchée à la main : avant une manipulation
+           délicate : décale aussi l'automatique, au lieu d'en provoquer une
            seconde dans la foulée. */
         @touch($dossier . '/.derniere-sauvegarde');
 
@@ -170,9 +170,9 @@ final class Sauvegarde
      * Trois précautions, qui viennent toutes de la même idée : on remplace le
      * registre officiel de VIZDATA, et une erreur ici ne se rattrape pas.
      *
-     *  — sans `$confirme`, on se contente de lire et de rendre l'inventaire ;
-     *  — la base en place est mise de côté avant d'être écrasée ;
-     *  — les fichiers -wal et -shm de l'ancienne base sont supprimés : les
+     *  - sans `$confirme`, on se contente de lire et de rendre l'inventaire ;
+     *  - la base en place est mise de côté avant d'être écrasée ;
+     *  - les fichiers -wal et -shm de l'ancienne base sont supprimés : les
      *    laisser ferait rejouer par SQLite un journal étranger sur la base
      *    restaurée, et corromprait précisément ce qu'on vient de récupérer.
      */
@@ -207,7 +207,7 @@ final class Sauvegarde
             $depuis = self::inventaire($provisoire);
         } catch (Throwable $e) {
             @unlink($provisoire);
-            throw new Refus(400, 'Sauvegarde inexploitable — ' . $e->getMessage() . ". La base en place n'a pas été touchée.");
+            throw new Refus(400, 'Sauvegarde inexploitable, ' . $e->getMessage() . ". La base en place n'a pas été touchée.");
         }
 
         $cible = Config::CHEMIN_BASE;

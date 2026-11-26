@@ -1,8 +1,8 @@
 /* Décodage réel des QR codes produits.
  *
  * Le test qui manquait. L'ancien encodeur maison passait tous les contrôles de
- * structure — dimensions, motifs de repérage, motifs de synchronisation,
- * déterminisme — et produisait des codes qu'aucun lecteur ne décodait. Un QR
+ * structure : dimensions, motifs de repérage, motifs de synchronisation,
+ * déterminisme, et produisait des codes qu'aucun lecteur ne décodait. Un QR
  * code imprimé sur un certificat vit des années : le défaut était irrattrapable
  * une fois la promotion partie.
  *
@@ -17,7 +17,7 @@ import { buildQR } from "../src/lib/qr.js";
 
 /**
  * Rend la matrice en image RGBA, comme le ferait un écran ou une impression.
- * @param silence zone de silence en modules — la norme en exige 4
+ * @param silence zone de silence en modules : la norme en exige 4
  * @param echelle pixels par module
  */
 function versImage({ matrix, size }, silence = 4, echelle = 4) {

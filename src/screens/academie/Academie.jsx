@@ -1,8 +1,8 @@
-/* Page de vente — académie CITIZEN DATA ANALYST.
+/* Page de vente : académie CITIZEN DATA ANALYST.
  *
  * Une page, onze sections, un objectif : que le visiteur comprenne la valeur
  * de la formation et dépose sa candidature. Les boutons d'inscription sont
- * répétés — hero, tarifs, barre fixe sur mobile, appel final — parce qu'un
+ * répétés (hero, tarifs, barre fixe sur mobile, appel final) parce qu'un
  * visiteur décide à des moments différents selon ce qui l'a convaincu.
  *
  * Ce que la page n'invente jamais : les dates de session, le nombre de places,
@@ -33,7 +33,7 @@ const DESCRIPTION_PAGE =
    L'application est une page unique : le titre et la description de
    index.html décrivent le registre de certificats. Une page de vente qui
    hériterait de ce titre serait introuvable. On les remplace à l'affichage, et
-   on les restitue en quittant la page — sans quoi le reste de l'application
+   on les restitue en quittant la page : sans quoi le reste de l'application
    garderait le titre de l'académie dans l'onglet et dans l'historique.
 
    Les robots de LinkedIn et WhatsApp n'exécutent pas le JavaScript : l'aperçu
@@ -217,8 +217,8 @@ function Academie(p) {
     return () => { vivant = false; };
   }, []);
 
-  /* Une adresse partagée avec une ancre — /academie#tarifs dans une publicité
-     ou un message WhatsApp — arrive avant que React n'ait posé les sections :
+  /* Une adresse partagée avec une ancre, /academie#tarifs dans une publicité
+     ou un message WhatsApp : arrive avant que React n'ait posé les sections :
      le navigateur ne trouve rien à cibler et laisse le visiteur en haut de
      page. On rejoue le saut une fois la page montée. */
   useEffect(() => {

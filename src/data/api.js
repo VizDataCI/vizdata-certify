@@ -1,18 +1,18 @@
 /* Accès au registre VIZDATA.
  *
- * Une fonction par geste, et rien d'autre : la décision — qui a le droit de
- * quoi, que faut-il journaliser, quel courrier part — appartient au serveur.
+ * Une fonction par geste, et rien d'autre : la décision : qui a le droit de
+ * quoi, que faut-il journaliser, quel courrier part : appartient au serveur.
  * Ce module n'est qu'un carnet d'adresses.
  *
  * Ce qui a disparu en quittant Supabase, et pourquoi c'est un progrès
  * -------------------------------------------------------------------
- * — LA JOURNALISATION. L'application appelait `logAction` après chaque
+ * - LA JOURNALISATION. L'application appelait `logAction` après chaque
  *   écriture. Elle pouvait donc l'oublier, et une écriture non journalisée ne
  *   se voit pas. Le serveur journalise lui-même, dans la transaction qui écrit.
- * — L'ENVOI DES COURRIERS. Le navigateur demandait une invitation, puis un
+ * - L'ENVOI DES COURRIERS. Le navigateur demandait une invitation, puis un
  *   avis, en deux appels séparés d'une création. Le serveur les envoie dans la
  *   foulée de l'acte qui les justifie.
- * — LES CLÉS. Le paquet livré au navigateur ne contient plus aucun secret.
+ * - LES CLÉS. Le paquet livré au navigateur ne contient plus aucun secret.
  *
  * Les deux fonctions devenues inutiles sont conservées, sans effet, pour ne
  * pas réécrire les écrans qui les appellent encore. Elles le disent.
@@ -126,7 +126,7 @@ async function updateProgram(id, champs) {
 }
 
 /* Le référentiel des compétences : ce qu'un certificat peut attester. Rien ne
-   s'y ajoute tout seul, et rien ne s'en retire — une compétence effacée
+   s'y ajoute tout seul, et rien ne s'en retire : une compétence effacée
    disparaîtrait des certificats déjà délivrés. */
 /** Retire le second facteur d'un compte. Réservé aux administrateurs. */
 async function retirerDoubleFacteur(id) {

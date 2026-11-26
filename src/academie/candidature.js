@@ -2,7 +2,7 @@
  *
  * Ce module ne touche ni au réseau ni au navigateur. Il porte les règles qui
  * décident si une candidature part, comment elle s'affiche et comment elle
- * s'exporte — donc ce qui doit être éprouvé par des tests plutôt qu'à la main
+ * s'exporte, donc ce qui doit être éprouvé par des tests plutôt qu'à la main
  * sur un formulaire.
  *
  * La validation est écrite deux fois : ici, pour dire au candidat ce qui
@@ -143,7 +143,7 @@ function champCsv(valeur) {
  * Tableau des candidatures au format CSV, ouvrable directement dans Excel.
  *
  * Deux détails rendent le fichier lisible par Excel en français sans
- * manipulation : le point-virgule comme séparateur, et le BOM UTF-8 — sans
+ * manipulation : le point-virgule comme séparateur, et le BOM UTF-8 : sans
  * lui, « Contacté » s'affiche « ContactÃ© ».
  */
 function versCsv(lignes, { libelleCohorte = () => "" } = {}) {

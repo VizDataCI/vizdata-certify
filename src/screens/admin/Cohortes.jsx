@@ -131,7 +131,7 @@ function AdminCohortes(p) {
                       {c.publiee && <span className="vz-chip" style={{ marginLeft: 8, color: "var(--vert)", borderColor: "#BFE0D1" }}>publiée</span>}
                     </td>
                     <td className="vz-mono vz-small" style={{ whiteSpace: "nowrap" }}>
-                      {c.date_debut ? fmtShort(c.date_debut) : "—"}
+                      {c.date_debut ? fmtShort(c.date_debut) : "Non datée"}
                       {c.date_fin ? ` → ${fmtShort(c.date_fin)}` : ""}
                     </td>
                     <td className="vz-small">{c.lieu}</td>
@@ -233,7 +233,7 @@ function FormulaireCohorte({ cohorte, onFermer, onEnregistrer }) {
   };
 
   return (
-    <Modal title={cohorte.id ? `Cohorte — ${cohorte.libelle}` : "Nouvelle cohorte"} onClose={onFermer}
+    <Modal title={cohorte.id ? `Cohorte ${cohorte.libelle}` : "Nouvelle cohorte"} onClose={onFermer}
            foot={
              <>
                <button className="vz-btn" onClick={onFermer}>Annuler</button>
@@ -263,10 +263,10 @@ function FormulaireCohorte({ cohorte, onFermer, onEnregistrer }) {
             {STATUTS_COHORTE.map((s) => <option key={s.cle} value={s.cle}>{s.label}</option>)}
           </select>
         </Field>
-        <Field label="Tarif — paiement intégral (FCFA)">
+        <Field label="Tarif en paiement intégral (FCFA)">
           <input className="vz-input" type="number" min="1" step="1000" value={v.tarif_integral} onChange={champ("tarif_integral")} />
         </Field>
-        <Field label="Tarif — paiement en deux fois (FCFA)" hint={`Soit ${montant(Number(v.tarif_echelonne || 0) / 2)} par versement.`}>
+        <Field label="Tarif en deux versements (FCFA)" hint={`Soit ${montant(Number(v.tarif_echelonne || 0) / 2)} par versement.`}>
           <input className="vz-input" type="number" min="1" step="1000" value={v.tarif_echelonne} onChange={champ("tarif_echelonne")} />
         </Field>
       </div>

@@ -10,8 +10,8 @@
  *
  * Les couleurs des marques de données ne sont pas prises au hasard dans la
  * charte : le bleu et le violet de la marque, côte à côte, sont
- * indiscernables pour une vision deutéranope (ΔE 3,5). Le trio retenu —
- * #1578A6, #D9700F, #7A4C9E — passe les six contrôles de séparation, de bande
+ * indiscernables pour une vision deutéranope (ΔE 3,5). Le trio retenu 
+ * #1578A6, #D9700F, #7A4C9E : passe les six contrôles de séparation, de bande
  * de clarté et de contraste sur fond blanc. Le violet est éclairci et l'orange
  * assombri par rapport au logo : ce sont des marques de graphique, pas le
  * logo, qui lui reste intact.
@@ -163,7 +163,7 @@ function ApercuTableauBord() {
  *
  * Les photographies officielles sont fournies par VIZDATA et déposées dans
  * public/academie/. Tant qu'un fichier manque, on affiche les initiales sur un
- * fond de marque — jamais une image cassée, et jamais un portrait de banque
+ * fond de marque : jamais une image cassée, et jamais un portrait de banque
  * d'images qui ferait passer un inconnu pour un formateur.
  */
 function Photo({ src, alt, initiales, className = "ac-photo" }) {

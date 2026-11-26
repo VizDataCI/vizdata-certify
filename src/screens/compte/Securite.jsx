@@ -5,7 +5,7 @@
  * Le mot de passe et le second facteur ne sont pas affaire de titulaire ni
  * d'administrateur : ce sont les clés du COMPTE, et tout compte en a. L'écran
  * habitait l'espace du certifié, et l'administration n'avait qu'un lien vers
- * lui — « Ma sécurité » faisait donc sortir l'administrateur de son espace et
+ * lui : « Ma sécurité » faisait donc sortir l'administrateur de son espace et
  * l'envoyait sur /espace, c'est-à-dire sur l'espace certifié, avec sa barre,
  * son titre et son adresse. Cliquer sur une entrée de la configuration pour
  * atterrir ailleurs se lit comme une erreur, et c'en était une.

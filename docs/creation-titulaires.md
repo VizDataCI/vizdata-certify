@@ -10,14 +10,14 @@ Ce qui se passe, dans cet ordre :
 
 1. L'écran appelle `POST /api/titulaires`.
 2. Le serveur vérifie que l'appelant porte l'autorisation `creer_titulaires`. Créer un
-   compte d'**administration** — gestionnaire ou administrateur — est autre chose, et
+   compte d'**administration** (gestionnaire ou administrateur) est autre chose, et
    réservé à un administrateur : c'est se donner un collègue de même pouvoir.
 3. **Si l'adresse est déjà connue, le compte existant est renvoyé et rien n'est créé.**
    Un doublon donnerait deux espaces personnels à la même personne, dont un vide, et ses
    certificats seraient répartis entre les deux. La comparaison ignore la casse :
    `Yao@example.ci` et `yao@example.ci` sont la même personne.
 4. Sinon, le profil est inséré avec un identifiant public unique, et un lien
-   d'invitation est créé — valable sept jours, une seule fois.
+   d'invitation est créé : valable sept jours, une seule fois.
 5. Le courrier part. Le titulaire suit le lien, atterrit sur `/nouveau-mot-de-passe`,
    choisit son mot de passe, et sa session s'ouvre dans la foulée.
 
@@ -36,7 +36,7 @@ Le compte est créé quand même, et l'écran le dit. Deux issues :
 Bloquer la création parce qu'un courrier n'a pas pu partir serait pire : la certification
 ne pourrait pas être délivrée.
 
-Sans `RESEND_API_KEY` sur le serveur, aucun courrier ne part — c'est le cas en
+Sans `RESEND_API_KEY` sur le serveur, aucun courrier ne part : c'est le cas en
 développement. Le lien est alors **imprimé dans le journal du serveur**, et la
 notification apparaît « en attente » dans l'écran Notifications. Rien ne prétend avoir
 été envoyé.
@@ -81,12 +81,12 @@ Ces trois refus sont prononcés par le serveur, sur chaque route, et pas seuleme
 l'écran : une requête HTTP envoyée à la main est refusée de la même façon.
 
 Il peut modifier son prénom, son nom, son téléphone, son profil LinkedIn, la visibilité
-de son profil public, et son mot de passe — ce dernier en fournissant l'ancien.
+de son profil public, et son mot de passe : ce dernier en fournissant l'ancien.
 
 ## Désactiver, jamais supprimer
 
 Un compte se désactive depuis **Utilisateurs & rôles**. Il ne se supprime pas :
-`certificates.user_id` est en RESTRICT, et la base refuserait. C'est voulu — effacer un
+`certificates.user_id` est en RESTRICT, et la base refuserait. C'est voulu : effacer un
 titulaire effacerait la trace de ce que VIZDATA a certifié.
 
 Désactiver **ferme ses sessions dans l'instant**, y compris celles déjà ouvertes sur

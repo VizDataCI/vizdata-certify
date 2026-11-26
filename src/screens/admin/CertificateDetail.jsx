@@ -1,9 +1,9 @@
-/* Fiche détaillée d'un certificat — ce que l'administration en sait.
+/* Fiche détaillée d'un certificat : ce que l'administration en sait.
  *
  * C'est le seul endroit où la date d'expiration et le score restent visibles,
  * et seulement s'ils sont renseignés : ces deux mentions ont quitté le produit,
  * mais les certificats anciens en portent, et un registre ne réécrit pas ce
- * qu'il a délivré. Elles sont donc présentées comme ce qu'elles sont devenues —
+ * qu'il a délivré. Elles sont donc présentées comme ce qu'elles sont devenues
  * des mentions d'archive.
  */
 

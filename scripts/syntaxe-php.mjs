@@ -6,20 +6,20 @@
  * -------------------------
  * Le registre tourne en PHP sur l'hébergement, et il n'y a pas d'interpréteur
  * PHP sur la machine de développement. `php -l` n'est donc pas une option, et
- * une faute de frappe ne se révélerait qu'une fois le site en ligne — sous la
+ * une faute de frappe ne se révélerait qu'une fois le site en ligne : sous la
  * forme d'une page blanche, parce qu'une erreur d'analyse empêche PHP
  * d'exécuter quoi que ce soit, y compris la gestion d'erreur.
  *
  * Ce que ce script vérifie, et ce qu'il ne vérifie pas
  * ---------------------------------------------------
- * Il lit les fichiers avec un analyseur lexical minimal — il sait reconnaître
- * les chaînes, les heredoc et les commentaires — puis contrôle :
+ * Il lit les fichiers avec un analyseur lexical minimal : il sait reconnaître
+ * les chaînes, les heredoc et les commentaires : puis contrôle :
  *
- *   — l'équilibre des accolades, parenthèses et crochets, hors chaînes ;
- *   — qu'aucune chaîne ni aucun commentaire ne reste ouvert en fin de fichier ;
- *   — que le fichier commence par `<?php` ;
- *   — qu'il ne se termine PAS par `?>`. Ce point n'est pas cosmétique : le
- *     moindre octet après `?>` — une ligne vide suffit — est envoyé au
+ *   - l'équilibre des accolades, parenthèses et crochets, hors chaînes ;
+ *   - qu'aucune chaîne ni aucun commentaire ne reste ouvert en fin de fichier ;
+ *   - que le fichier commence par `<?php` ;
+ *   - qu'il ne se termine PAS par `?>`. Ce point n'est pas cosmétique : le
+ *     moindre octet après `?>` (une ligne vide suffit) est envoyé au
  *     navigateur. Les en-têtes sont alors déjà partis, et poser le cookie de
  *     session échoue. La panne est spectaculaire et l'origine invisible.
  *
@@ -48,11 +48,11 @@ function fichiersPhp(dossier) {
 const PAIRES = { ")": "(", "]": "[", "}": "{" };
 
 /**
- * Analyse un fichier. Rend la liste des reproches — vide si tout va bien.
+ * Analyse un fichier. Rend la liste des reproches : vide si tout va bien.
  *
  * L'analyse avance caractère par caractère plutôt que par expressions
  * régulières : une accolade dans une chaîne, un `*​/` dans un commentaire de
- * ligne, un `//` dans une URL — tout cela piège les expressions régulières, et
+ * ligne, un `//` dans une URL : tout cela piège les expressions régulières, et
  * un contrôle qui crie au loup sur du code correct finit par être ignoré, ce
  * qui est pire que pas de contrôle du tout.
  */
@@ -188,7 +188,7 @@ function controler() {
     if (reproches.length) {
       fautifs++;
       console.log(`\n  ${nom}`);
-      for (const r of reproches) console.log(`    — ${r}`);
+      for (const r of reproches) console.log(`   , ${r}`);
     }
   }
 

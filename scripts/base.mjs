@@ -21,8 +21,8 @@ const SITE = (process.env.VIZDATA_SITE_URL || "http://localhost:5173").replace(/
 
 /* --- catalogue de départ --------------------------------------------------
    Les domaines et programmes de VIZDATA au 15 novembre 2026. Posés une seule
-   fois, à l'initialisation : une base vide n'est pas utilisable — on ne peut
-   rien délivrer sans programme —, mais on ne réécrit jamais un catalogue que
+   fois, à l'initialisation : une base vide n'est pas utilisable : on ne peut
+   rien délivrer sans programme , mais on ne réécrit jamais un catalogue que
    quelqu'un a modifié depuis. */
 
 const DOMAINES = [
@@ -32,17 +32,17 @@ const DOMAINES = [
 ];
 
 const PROGRAMMES = [
-  ["EXCEL", "EXCEL-DEB", "Excel — Niveau débutant", "Prise en main du tableur, saisie, calculs et mise en forme.", 20, 10],
-  ["EXCEL", "EXCEL-INT", "Excel — Niveau intermédiaire", "Formules, fonctions de recherche, mise en forme conditionnelle, graphiques.", 25, 20],
-  ["EXCEL", "EXCEL-AVA", "Excel — Niveau avancé", "Fonctions imbriquées, bases de données, consolidation et automatisation.", 30, 30],
-  ["EXCEL", "EXCEL-EXP", "Excel — Expert", "Maîtrise experte du tableur : modélisation, Power Query, outils d'analyse.", 40, 40],
-  ["EXCEL", "EXCEL-TCD", "Excel — Tableaux croisés dynamiques", "Conception et exploitation des tableaux croisés dynamiques.", 15, 50],
-  ["EXCEL", "EXCEL-STR", "Excel — Structuration et analyse des données", "Structuration des données, nettoyage, analyse et restitution.", 25, 60],
-  ["POWERBI", "PBI-INI", "Power BI — Initiation", "Découverte de Power BI Desktop, premiers rapports.", 20, 10],
-  ["POWERBI", "PBI-ANA", "Power BI — Analyse et visualisation", "Visuels, interactions, mise en récit des données.", 25, 20],
-  ["POWERBI", "PBI-MOD", "Power BI — Modélisation des données", "Modèle en étoile, relations, mesures DAX.", 30, 30],
-  ["POWERBI", "PBI-AVA", "Power BI — Niveau avancé", "DAX avancé, performance, sécurité au niveau des lignes, publication.", 35, 40],
-  ["DATA", "DATA-ANA", "Data Analyst — Parcours complet", "Parcours complet d'analyse de données, de la collecte à la restitution.", 80, 10],
+  ["EXCEL", "EXCEL-DEB", "Excel, Niveau débutant", "Prise en main du tableur, saisie, calculs et mise en forme.", 20, 10],
+  ["EXCEL", "EXCEL-INT", "Excel, Niveau intermédiaire", "Formules, fonctions de recherche, mise en forme conditionnelle, graphiques.", 25, 20],
+  ["EXCEL", "EXCEL-AVA", "Excel, Niveau avancé", "Fonctions imbriquées, bases de données, consolidation et automatisation.", 30, 30],
+  ["EXCEL", "EXCEL-EXP", "Excel, Expert", "Maîtrise experte du tableur : modélisation, Power Query, outils d'analyse.", 40, 40],
+  ["EXCEL", "EXCEL-TCD", "Excel, Tableaux croisés dynamiques", "Conception et exploitation des tableaux croisés dynamiques.", 15, 50],
+  ["EXCEL", "EXCEL-STR", "Excel, Structuration et analyse des données", "Structuration des données, nettoyage, analyse et restitution.", 25, 60],
+  ["POWERBI", "PBI-INI", "Power BI, Initiation", "Découverte de Power BI Desktop, premiers rapports.", 20, 10],
+  ["POWERBI", "PBI-ANA", "Power BI, Analyse et visualisation", "Visuels, interactions, mise en récit des données.", 25, 20],
+  ["POWERBI", "PBI-MOD", "Power BI, Modélisation des données", "Modèle en étoile, relations, mesures DAX.", 30, 30],
+  ["POWERBI", "PBI-AVA", "Power BI, Niveau avancé", "DAX avancé, performance, sécurité au niveau des lignes, publication.", 35, 40],
+  ["DATA", "DATA-ANA", "Data Analyst, Parcours complet", "Parcours complet d'analyse de données, de la collecte à la restitution.", 80, 10],
   ["DATA", "DATA-VIZ", "Data Visualization", "Conception de visualisations et de tableaux de bord.", 25, 20],
 ];
 
@@ -51,7 +51,7 @@ const COMPETENCES = [
   "DAX", "Tableaux croisés dynamiques", "Storytelling data", "SQL", "Modélisation",
 ];
 
-const MODELE = ["VIZDATA-PAYSAGE-2026", "VIZDATA — A4 paysage", "Modèle institutionnel officiel : A4 paysage, logo VIZDATA, QR code de vérification."];
+const MODELE = ["VIZDATA-PAYSAGE-2026", "VIZDATA, A4 paysage", "Modèle institutionnel officiel : A4 paysage, logo VIZDATA, QR code de vérification."];
 
 function semerCatalogue(db) {
   return enTransaction(db, () => {

@@ -2,7 +2,7 @@
  *
  * Tout ce que Supabase faisait pour nous et qu'il faut désormais faire
  * correctement soi-même. Les quatre décisions qui comptent sont écrites ici,
- * avec leurs raisons — c'est le genre de code qu'on relit deux ans plus tard
+ * avec leurs raisons : c'est le genre de code qu'on relit deux ans plus tard
  * sans se souvenir pourquoi il est ainsi.
  *
  * 1. SCRYPT, PAS UN HACHAGE RAPIDE. SHA-256 sur un mot de passe se casse à des
@@ -17,7 +17,7 @@
  * 3. LES PARAMÈTRES SONT STOCKÉS AVEC L'EMPREINTE. Le coût de calcul devra
  *    être relevé dans quelques années. En l'inscrivant dans chaque empreinte,
  *    les anciens mots de passe restent vérifiables pendant que les nouveaux
- *    sont plus chers — sans quoi relever le coût invaliderait tous les comptes.
+ *    sont plus chers : sans quoi relever le coût invaliderait tous les comptes.
  *
  * 4. ON NE STOCKE JAMAIS UN JETON, SEULEMENT SON EMPREINTE. Ni pour les
  *    sessions, ni pour les liens de réinitialisation. Le fichier de base est
@@ -70,7 +70,7 @@ function verifierMotDePasse(motDePasse, stocke) {
     });
   } catch {
     /* Paramètres illisibles ou hors limites : l'empreinte est inexploitable,
-       donc le mot de passe est refusé — jamais accepté par défaut. */
+       donc le mot de passe est refusé : jamais accepté par défaut. */
     return false;
   }
 
@@ -101,13 +101,13 @@ const DUREE_SESSION = 30 * 24 * 3600; // trente jours
  * Toutes duraient trente jours, de l'administrateur qui tient le registre
  * entier au titulaire qui vient voir son diplôme deux fois par an. C'est le
  * compte le plus puissant qui restait ouvert le plus longtemps : un cookie
- * dérobé sur un poste partagé — et le poste est souvent partagé — donnait un
+ * dérobé sur un poste partagé (et le poste est souvent partagé) donnait un
  * mois d'accès à tout le registre.
  *
  * `vie` est la durée absolue : passée celle-ci la session tombe, même
  * utilisée toutes les heures. `repos` coupe une session LAISSÉE ouverte :
  * elle ne gêne pas celui qui travaille, elle ferme la porte derrière celui qui
- * est parti. Un titulaire n'a pas de coupure d'inactivité — il visite
+ * est parti. Un titulaire n'a pas de coupure d'inactivité : il visite
  * rarement, et son espace ne montre que ses propres certificats.
  */
 /** Inactivité tolérée avant déconnexion, et préavis donné à l'écran. */
@@ -134,7 +134,7 @@ const DUREES = {
    Cinq échecs ferment le compte pour un quart d'heure. Avant d'en arriver là,
    chaque échec impose une attente qui s'allonge : une seconde, deux, cinq,
    quinze. C'est ce qui rend l'essai en masse sans intérêt, et c'est presque
-   indolore pour qui s'est trompé de touche — la première faute ne coûte rien.
+   indolore pour qui s'est trompé de touche : la première faute ne coûte rien.
 
    L'attente est RENDUE, pas dormie : faire patienter le serveur occuperait un
    processus pendant que l'attaquant, lui, n'attend rien. */
@@ -175,7 +175,7 @@ const dureesDe = (role) => DUREES[role] || DUREES.ADMIN;
  * Ouvre une session et renvoie le secret à poser dans le cookie.
  *
  * Le secret n'est renvoyé qu'ici, une seule fois : la base n'en garde que
- * l'empreinte, et il est donc impossible de le retrouver ensuite — y compris
+ * l'empreinte, et il est donc impossible de le retrouver ensuite : y compris
  * pour nous.
  */
 function ouvrirSession(db, utilisateurId, { userAgent = null, duree = null } = {}) {
@@ -265,7 +265,7 @@ const DUREE_REINITIALISATION = 3600; // une heure
  *
  * Les jetons antérieurs du même genre sont supprimés : demander un second lien
  * doit invalider le premier, sans quoi deux liens valides circulent et le plus
- * ancien — potentiellement lu par quelqu'un d'autre — reste utilisable.
+ * ancien (potentiellement lu par quelqu'un d'autre) reste utilisable.
  */
 function creerJeton(db, utilisateurId, kind) {
   const duree = kind === "INVITATION" ? DUREE_INVITATION : DUREE_REINITIALISATION;
@@ -338,7 +338,7 @@ function compteParEmail(db, email) {
 /**
  * Vérifie une paire adresse / mot de passe.
  *
- * Le message d'échec est le même dans tous les cas — adresse inconnue, mot de
+ * Le message d'échec est le même dans tous les cas : adresse inconnue, mot de
  * passe faux, compte sans mot de passe. Distinguer renseignerait un attaquant
  * sur les adresses inscrites au registre.
  *
@@ -386,7 +386,7 @@ function authentifier(db, email, motDePasse) {
 /**
  * Les sessions ouvertes d'un compte, la plus récemment vue d'abord.
  *
- * Le secret n'est jamais renvoyé : seulement de quoi reconnaître l'appareil —
+ * Le secret n'est jamais renvoyé : seulement de quoi reconnaître l'appareil
  * quand la session a été ouverte, quand elle a servi, et le navigateur
  * annoncé. Assez pour repérer une session qu'on ne reconnaît pas, trop peu
  * pour s'en servir.

@@ -3,7 +3,7 @@
  * Pourquoi chiffrer
  * -----------------
  * Une sauvegarde qui reste sur le serveur ne protège de rien : ni d'une panne
- * de disque, ni de la perte de la machine. Elle doit donc en partir — vers un
+ * de disque, ni de la perte de la machine. Elle doit donc en partir : vers un
  * dépôt privé, un autre serveur, un espace de stockage. Or le fichier contient
  * tout le registre : noms, adresses, numéros de téléphone, et les empreintes
  * des mots de passe. Le laisser voyager en clair reviendrait à régler un
@@ -11,13 +11,13 @@
  *
  * Les choix, et leurs raisons
  * ---------------------------
- * — AES-256-GCM. Il chiffre ET authentifie : une sauvegarde modifiée d'un seul
+ *, AES-256-GCM. Il chiffre ET authentifie : une sauvegarde modifiée d'un seul
  *   octet est rejetée au déchiffrement, au lieu de rendre des données fausses.
  *   Pour une pièce probante, c'est la propriété qui compte le plus.
- * — La clé est dérivée du mot de passe par scrypt, avec un sel tiré au hasard
+ *, La clé est dérivée du mot de passe par scrypt, avec un sel tiré au hasard
  *   POUR CHAQUE sauvegarde. Un mot de passe humain a trop peu d'entropie pour
  *   servir de clé directement ; scrypt rend l'essai en masse coûteux.
- * — Tous les paramètres voyagent dans l'en-tête du fichier. Une sauvegarde doit
+ *, Tous les paramètres voyagent dans l'en-tête du fichier. Une sauvegarde doit
  *   rester lisible dans cinq ans, par quelqu'un qui n'aura pas ce dépôt sous
  *   les yeux : elle se décrit elle-même.
  *

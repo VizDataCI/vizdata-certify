@@ -3,8 +3,8 @@
  * La page se présentait comme une carte flottante au milieu de l'écran, ce qui
  * la faisait lire comme une fenêtre surgissante : un texte de présentation
  * n'est pas une boîte de dialogue, il n'y a rien à fermer ni à valider. Elle
- * prend donc la même forme que la page de vérification — un entête, un texte,
- * une action — et les deux pages publiques se ressemblent enfin.
+ * prend donc la même forme que la page de vérification : un entête, un texte,
+ * une action, et les deux pages publiques se ressemblent enfin.
  *
  * Trois paragraphes, pas quatre. Ce qui est écrit ici engage VIZDATA : chaque
  * phrase est une affirmation vérifiable sur cette plateforme, et non une

@@ -10,7 +10,7 @@
  * 1. LA NUMÉROTATION EST ATOMIQUE. `prochaineReference` lit le dernier numéro
  *    et écrit le suivant dans la même transaction que l'insertion du
  *    certificat. Deux administrateurs qui délivrent au même instant ne peuvent
- *    donc pas obtenir la même référence — ce que seule la base garantissait
+ *    donc pas obtenir la même référence : ce que seule la base garantissait
  *    sous Postgres, via une fonction.
  * 2. LA PROJECTION PUBLIQUE EST UNIQUE. Elle passe par la vue
  *    `v_certificats_publics`, qui ne contient ni adresse e-mail, ni score, ni
@@ -297,7 +297,7 @@ function creerCertificat(db, acteur, { user_id, certificate_type_id, issue_date,
     /* Un même programme ne se délivre qu'une fois à la même personne. Deux
        certificats en vigueur pour le même parcours ne veulent rien dire :
        lequel ferait foi ? Un certificat révoqué ou annulé ne barre pas la
-       route — il n'est plus en vigueur, et une révocation par erreur ne doit
+       route : il n'est plus en vigueur, et une révocation par erreur ne doit
        pas fermer le programme à quelqu'un pour toujours. */
     const deja = db
       .prepare("select reference from certificates where user_id = ? and certificate_type_id = ? and status = 'ACTIVE' limit 1")
@@ -475,7 +475,7 @@ function creerTitulaire(db, acteur, { email, first_name, last_name, phone = null
 
   /* `normaliserCompte` et non un étalement de la ligne : celle-ci porte
      `password_hash`, et l'étaler le renverrait à l'appelant. Sur une adresse
-     déjà connue — le cas courant, puisqu'on réutilise le compte existant —
+     déjà connue : le cas courant, puisqu'on réutilise le compte existant
      cela signifierait livrer l'empreinte du mot de passe du titulaire à tout
      gestionnaire capable de taper son adresse. */
   const existant = db.prepare("select * from users where email = ? collate nocase").get(adresse);

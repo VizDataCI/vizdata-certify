@@ -2,7 +2,7 @@
  *
  * Ce formulaire écrit réellement : la candidature part dans la table
  * `candidatures` par la fonction `soumettre_candidature`, et la référence
- * rendue par la base est affichée au candidat. Rien n'est simulé — un
+ * rendue par la base est affichée au candidat. Rien n'est simulé : un
  * formulaire de page de vente qui n'enregistre pas est un formulaire qui perd
  * des inscriptions sans que personne ne le sache.
  *
@@ -12,8 +12,8 @@
  *   3. les e-mails partent, au mieux.
  *
  * Si l'envoi d'e-mail échoue, le candidat voit quand même sa référence et
- * l'administration voit quand même la candidature. L'inverse — attendre
- * l'e-mail pour confirmer — ferait dépendre une inscription d'un service
+ * l'administration voit quand même la candidature. L'inverse : attendre
+ * l'e-mail pour confirmer : ferait dépendre une inscription d'un service
  * tiers.
  */
 
@@ -50,8 +50,8 @@ function Formulaire({ cohorte, tarifs, formuleInitiale = "INTEGRAL", notify }) {
   const [panne, setPanne] = useState("");
   const [recu, setRecu] = useState(null);
 
-  /* La formule suit le bouton cliqué dans la section des tarifs — « choisir le
-     paiement en 2 fois » doit cocher la bonne case — jusqu'à ce que le
+  /* La formule suit le bouton cliqué dans la section des tarifs : « choisir le
+     paiement en 2 fois » doit cocher la bonne case : jusqu'à ce que le
      visiteur en décide autrement dans le formulaire. Dérivée plutôt que
      recopiée par un effet : un effet ferait un second rendu à chaque clic, et
      surtout écraserait le choix du visiteur s'il remontait voir les tarifs. */

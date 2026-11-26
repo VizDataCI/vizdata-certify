@@ -1,4 +1,4 @@
-/* La chaîne de mot de passe — ce qui en relève du navigateur.
+/* La chaîne de mot de passe : ce qui en relève du navigateur.
  *
  * Ces tests existent à cause d'un défaut réel et durable : l'e-mail de
  * réinitialisation partait, le lien fonctionnait, et le mot de passe ne

@@ -3,7 +3,7 @@
    La fonction `public_profile` ne rend que les certifications en vigueur d'un
    titulaire ayant activé son profil. Un profil fermé et un titulaire inconnu
    renvoient tous deux une liste vide : la page ne distingue pas les deux cas,
-   et c'est voulu — l'absence de réponse ne doit pas renseigner sur l'existence
+   et c'est voulu : l'absence de réponse ne doit pas renseigner sur l'existence
    d'un compte. */
 
 import { useState, useEffect } from "react";

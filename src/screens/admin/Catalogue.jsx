@@ -1,18 +1,18 @@
-/* Domaines et programmes — le catalogue des certifications.
+/* Domaines et programmes : le catalogue des certifications.
  *
  * Deux niveaux, et pourquoi
  * -------------------------
  * Le registre ne connaissait qu'une liste plate de « types » : EXCEL, PBI,
- * DATA. Or VIZDATA délivre six certifications Excel distinctes — débutant,
+ * DATA. Or VIZDATA délivre six certifications Excel distinctes : débutant,
  * intermédiaire, avancé, expert, tableaux croisés dynamiques, structuration.
  * Un code par domaine ne pouvait pas les porter.
  *
- *   Domaine   — EXCEL, POWER BI, DATA…
- *   Programme — « Excel — Niveau avancé », avec son code unique et son intitulé
+ *   Domaine  , EXCEL, POWER BI, DATA…
+ *   Programme : « Excel, Niveau avancé », avec son code unique et son intitulé
  *               exact, celui qui sera imprimé sur le certificat.
  *
  * Le code du programme entre dans la référence : VIZ-2026-EXCEL-AVA-000001. Il
- * ne doit donc plus changer dès qu'un certificat a été délivré — l'écran le dit
+ * ne doit donc plus changer dès qu'un certificat a été délivré : l'écran le dit
  * plutôt que de l'interdire sans explication.
  *
  * Ajouter un domaine ou un programme ne demande aucune intervention technique :

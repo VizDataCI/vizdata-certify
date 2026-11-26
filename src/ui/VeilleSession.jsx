@@ -7,7 +7,7 @@
  * déjeuner. S'il tranchait seul, il couperait au milieu d'une lecture.
  *
  * L'écran, lui, voit la souris, le clavier et le doigt. C'est donc lui qui
- * compte, et le serveur coupe deux minutes plus tard, en filet — pour le cas
+ * compte, et le serveur coupe deux minutes plus tard, en filet : pour le cas
  * où l'onglet serait fermé brutalement, où la machine serait mise en veille,
  * ou simplement où personne ne reviendrait.
  *
@@ -58,8 +58,8 @@ function VeilleSession({ actif, onExpire, notify }) {
     const bouge = () => { derniere.current = Date.now(); };
     for (const g of GESTES) window.addEventListener(g, bouge, { passive: true });
 
-    /* Revenir sur l'onglet ne compte pas comme une activité — on peut
-       l'avoir rouvert par hasard —, mais le minuteur doit se remettre à jour
+    /* Revenir sur l'onglet ne compte pas comme une activité : on peut
+       l'avoir rouvert par hasard , mais le minuteur doit se remettre à jour
        tout de suite, sinon le panneau apparaît avec du retard. */
     const reveil = () => { if (!document.hidden) tic(); };
     document.addEventListener("visibilitychange", reveil);

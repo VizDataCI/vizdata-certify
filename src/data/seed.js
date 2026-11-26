@@ -1,7 +1,7 @@
 /* Jeu de données de démonstration, reconstruit à chaque registre vierge.
  *
  * Il sert à deux choses : faire tourner l'application sans projet Supabase, et
- * montrer la structure attendue. Il suit donc exactement le modèle de la base —
+ * montrer la structure attendue. Il suit donc exactement le modèle de la base
  * domaines, programmes, trois rôles, autorisations nommées. Si les deux
  * divergeaient, la démonstration mentirait sur le produit.
  */
@@ -11,7 +11,7 @@ import { TODAY } from "../lib/dates.js";
 const BASE_URL = "https://certify.vizdata.ci";
 
 /* Référence d'exemple, montrée dans les champs de recherche. Elle doit suivre
-   le format réel — code de PROGRAMME, pas code de domaine — sinon elle apprend
+   le format réel (code de PROGRAMME, pas code de domaine) sinon elle apprend
    à saisir une référence qui n'existe pas. */
 const REFERENCE_EXEMPLE = "VIZ-2026-EXCEL-AVA-000125";
 
@@ -61,9 +61,9 @@ const SEED_TEMPLATES = [
 ];
 
 /* --- comptes -------------------------------------------------------------
-   Un administrateur, un gestionnaire aux autorisations partielles — pour que
+   Un administrateur, un gestionnaire aux autorisations partielles : pour que
    la démonstration montre ce que « selon les autorisations définies » veut
-   dire —, et cinq titulaires. */
+   dire , et cinq titulaires. */
 const SEED_USERS = [
   { id: 1, first_name: "Fabrice", last_name: "BOH", email: "fabrice.boh@vizdata.ci", username: "fabrice-boh", linkedin_url: "https://linkedin.com/in/fabriceboh", public_profile: true, role: "CERTIFIED", account_status: "ACTIVE", must_change_password: false, permissions: {} },
   { id: 2, first_name: "Aminata", last_name: "KONÉ", email: "aminata.kone@example.ci", username: "aminata-kone", linkedin_url: "", public_profile: true, role: "CERTIFIED", account_status: "ACTIVE", must_change_password: false, permissions: {} },
@@ -119,8 +119,8 @@ function token(n = 14) {
 }
 
 function buildSeed() {
-  /* La référence est construite comme la base la construit —
-     VIZ-{année}-{code du programme}-{numéro sur six chiffres} — avec un
+  /* La référence est construite comme la base la construit
+     VIZ-{année}-{code du programme}-{numéro sur six chiffres} : avec un
      compteur par couple (code, année). Reproduire la règle ici plutôt que
      d'écrire les références à la main garantit que la démonstration montre le
      vrai format, y compris quand les dates changent d'année. */

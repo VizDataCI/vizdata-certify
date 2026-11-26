@@ -1,4 +1,4 @@
-/* Logo VIZDATA en SVG — net à toute taille, fidèle à l'impression. */
+/* Logo VIZDATA en SVG : net à toute taille, fidèle à l'impression. */
 
 const VZ_TEAL = "#1E7FA6";
 const VZ_PURPLE = "#4A2A63";

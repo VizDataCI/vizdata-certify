@@ -3,12 +3,12 @@
  * Le registre est chargé une fois puis substitué à l'objet local, dans la même
  * forme : les écrans en aval ignorent leur source. Les écritures passent toutes
  * par `creerActions`, qui prend la bifurcation « distant ou démonstration » une
- * seule fois — voir actions.js.
+ * seule fois : voir actions.js.
  *
  * La navigation est filtrée par les autorisations du compte. Un gestionnaire ne
  * voit pas les écrans qu'il ne pourrait pas utiliser : montrer un bouton dont
  * la base refusera l'action n'informe personne. Mais ce filtrage n'est qu'une
- * commodité d'affichage — l'autorisation réelle est tenue par la base.
+ * commodité d'affichage : l'autorisation réelle est tenue par la base.
  */
 
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -50,7 +50,7 @@ const PAGES_ACADEMIE = ["candidatures", "cohortes"];
 
 /** Écrans qui ne dépendent pas du registre : ils ne doivent donc ni attendre
     son chargement, ni afficher son erreur. La sécurité du compte en fait
-    partie — un registre indisponible ne doit pas empêcher d'activer son
+    partie : un registre indisponible ne doit pas empêcher d'activer son
     second facteur. */
 const PAGES_SANS_REGISTRE = [...PAGES_ACADEMIE, "securite"];
 
@@ -139,15 +139,15 @@ function AdminSpace(p) {
        L'entrée renvoyait vers l'espace personnel : cliquer dans la
        configuration du registre faisait sortir de l'administration et
        atterrir sur /espace, avec une autre barre et un autre titre. Le même
-       écran sert aux deux espaces — voir screens/compte/Securite.jsx. */
+       écran sert aux deux espaces : voir screens/compte/Securite.jsx. */
     { key: "securite", label: "Ma sécurité", icone: IconeVerrou },
     { group: "Académie" },
     { key: "candidatures", label: "Candidatures", icone: IconeCandidatures },
     { key: "cohortes", label: "Cohortes", icone: IconeCohortes },
   ].filter(Boolean);
 
-  /* Un gestionnaire qui atterrit sur un écran réservé — adresse recopiée,
-     rôle modifié en cours de session — est ramené au tableau de bord plutôt
+  /* Un gestionnaire qui atterrit sur un écran réservé : adresse recopiée,
+     rôle modifié en cours de session : est ramené au tableau de bord plutôt
      que de voir un écran vide. */
   const autorisee = nav.some((n) => n.key === page);
   const pageCourante = autorisee ? page : "dashboard";

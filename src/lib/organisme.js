@@ -4,7 +4,7 @@
  * où elles n'avaient rien à faire : l'adresse d'un organisme de formation
  * n'est pas un argument commercial, c'est un fait de l'entreprise. Un
  * titulaire qui veut joindre VIZDATA depuis son espace a besoin des mêmes
- * numéros que le visiteur qui lit la page de vente — et le jour où le numéro
+ * numéros que le visiteur qui lit la page de vente, et le jour où le numéro
  * change, il ne doit changer qu'ici.
  *
  * Deux adresses, et elles ne servent pas à la même chose : l'une est l'accueil

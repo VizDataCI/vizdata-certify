@@ -1,7 +1,7 @@
 /* Utilisateurs et rôles.
  *
  * Trois rôles : administrateur, gestionnaire, certifié. Le gestionnaire est le
- * seul dont les droits se règlent ici, une autorisation à la fois — c'est le
+ * seul dont les droits se règlent ici, une autorisation à la fois : c'est le
  * sens de « selon les autorisations définies par l'administrateur ».
  *
  * Ce que cet écran ne décide pas
@@ -10,7 +10,7 @@
  * tire les conséquences : les politiques RLS interrogent `has_perm()`, et le
  * déclencheur `guard_user_privileges` refuse à quiconque n'est pas
  * administrateur de modifier un rôle, une autorisation, un statut de compte ou
- * une adresse e-mail — y compris par appel REST direct, hors de toute
+ * une adresse e-mail : y compris par appel REST direct, hors de toute
  * interface. Décocher une case ici retire donc réellement un droit.
  *
  * Aucune suppression de compte. Désactiver, oui ; supprimer, non : un titulaire

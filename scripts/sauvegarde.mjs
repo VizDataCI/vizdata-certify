@@ -18,8 +18,8 @@
  *    cloche, le script échoue BRUYAMMENT plutôt que de laisser croire.
  *
  * 3. CHIFFRÉE. Elle contient noms, adresses, téléphones et empreintes de mots
- *    de passe. Elle doit quitter le serveur — sinon elle ne protège que des
- *    erreurs humaines — et elle ne peut pas en partir en clair.
+ *    de passe. Elle doit quitter le serveur : sinon elle ne protège que des
+ *    erreurs humaines, et elle ne peut pas en partir en clair.
  *
  * 4. EXPÉDIÉE. L'étape « pense à la copier ailleurs » ne se fait jamais. Elle
  *    est donc confiée à une commande, lancée par le script lui-même.
@@ -58,9 +58,9 @@ const lisible = (octets) =>
  * La copie hérite du mode WAL de la source : elle arrive donc accompagnée d'un
  * `-wal` et d'un `-shm`. Deux conséquences, et la seconde est grave :
  *
- *   — la sauvegarde n'est pas UN fichier mais trois, et n'en déplacer qu'un
+ *   - la sauvegarde n'est pas UN fichier mais trois, et n'en déplacer qu'un
  *     revient à perdre les écritures les plus récentes ;
- *   — le `-wal` contient des données EN CLAIR. Chiffrer le fichier principal
+ *   - le `-wal` contient des données EN CLAIR. Chiffrer le fichier principal
  *     en le laissant à côté annulerait tout l'intérêt du chiffrement.
  *
  * `journal_mode = delete` replie le journal et le supprime : il ne reste
@@ -124,7 +124,7 @@ function elaguer(dossier, garder) {
  * Lance la commande d'expédition.
  *
  * On passe par un shell parce que la commande est écrite par un humain dans
- * une variable d'environnement — elle contient souvent un tube ou une
+ * une variable d'environnement : elle contient souvent un tube ou une
  * redirection. C'est la configuration du serveur, pas une entrée d'utilisateur.
  */
 function expedier(commande, fichier) {
@@ -155,7 +155,7 @@ async function sauvegarder() {
      Les trois tiennent dans le même filet : la source peut être illisible, la
      copie peut échouer à mi-parcours, la vérification peut refuser. Dans tous
      les cas, on efface ce qui a été produit. Une sauvegarde illisible est pire
-     que pas de sauvegarde — elle rassure. */
+     que pas de sauvegarde : elle rassure. */
   let contenu;
   try {
     const db = new DatabaseSync(source, { readOnly: true });
@@ -168,7 +168,7 @@ async function sauvegarder() {
     contenu = verifier(base);
   } catch (e) {
     for (const suffixe of ["", "-wal", "-shm"]) rmSync(base + suffixe, { force: true });
-    console.error(`\n  SAUVEGARDE REFUSÉE — ${e.message}`);
+    console.error(`\n  SAUVEGARDE REFUSÉE, ${e.message}`);
     console.error("  Rien n'a été laissé en place : un fichier inexploitable rassurerait à tort.");
     console.error(`  Vérifiez la base elle-même : ${source}\n`);
     return 1;
@@ -181,7 +181,7 @@ async function sauvegarder() {
     writeFileSync(chiffre, chiffrer(readFileSync(base), cle));
     /* La copie en clair n'a plus lieu d'être : la laisser à côté de la version
        chiffrée annulerait tout l'intérêt du chiffrement. Le journal est déjà
-       replié par `consolider`, mais on s'en assure — c'est précisément ce
+       replié par `consolider`, mais on s'en assure : c'est précisément ce
        genre de fichier oublié qui fait fuir une base. */
     for (const suffixe of ["", "-wal", "-shm"]) rmSync(base + suffixe, { force: true });
     fichier = chiffre;
@@ -211,7 +211,7 @@ async function sauvegarder() {
       expedier(distante, fichier);
       console.log(`  Expédiée   : hors du serveur\n`);
     } catch (e) {
-      /* La copie locale existe : on ne perd rien, mais on le dit fort — une
+      /* La copie locale existe : on ne perd rien, mais on le dit fort : une
          expédition silencieusement en échec, c'est un serveur qu'on croit
          sauvegardé et qui ne l'est pas. */
       console.error(`\n  EXPÉDITION EN ÉCHEC : ${e.message}`);

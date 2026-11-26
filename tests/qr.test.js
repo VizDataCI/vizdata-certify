@@ -2,7 +2,7 @@
  *
  * Ces contrôles portent sur la géométrie : dimensions normalisées, motifs de
  * repérage aux trois coins, motifs de synchronisation. Ils ne prouvent pas
- * qu'un lecteur décode le code — l'ancien encodeur maison les passait tous en
+ * qu'un lecteur décode le code : l'ancien encodeur maison les passait tous en
  * produisant des matrices illisibles. C'est tests/qr-decodage.test.js qui rend
  * ce verdict-là.
  *

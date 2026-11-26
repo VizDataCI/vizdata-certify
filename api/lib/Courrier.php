@@ -12,7 +12,7 @@
  * ---------------------------------
  * `mail()` de PHP est disponible sur l'hébergement et suffit pour un volume
  * modeste. Resend est utilisé s'il est configuré : il rend un verdict de
- * remise, ce que `mail()` ne fait pas — il dit seulement que le message a été
+ * remise, ce que `mail()` ne fait pas : il dit seulement que le message a été
  * confié au système.
  *
  * Ce que fait cette classe quand rien ne part
@@ -43,7 +43,7 @@ final class Courrier
      *
      * Le logo est une image matricielle servie par le site, et non le SVG de
      * l'application : Gmail supprime le SVG, Outlook ne l'a jamais su. Le mot
-     * « vizdata » reste écrit en toutes lettres sous l'image — les messageries
+     * « vizdata » reste écrit en toutes lettres sous l'image : les messageries
      * bloquent les images distantes par défaut, et la marque doit tenir même
      * quand le destinataire ne les a pas affichées.
      *
@@ -85,7 +85,7 @@ final class Courrier
             . '<p style="margin:0 0 14px;font-size:15px;line-height:1.6;color:#344054;">' . $intro . '</p>'
             . $corps . $bouton
             . '<p style="margin:22px 0 0;font-size:12.5px;line-height:1.6;color:#667085;border-top:1px solid #E3E6EC;padding-top:16px;">'
-            . 'VIZDATA CERTIFY — registre officiel des certifications VIZDATA.<br>'
+            . 'VIZDATA CERTIFY, registre officiel des certifications VIZDATA.<br>'
             . 'Vérifiez l\'authenticité d\'un certificat sur <a href="' . $site . '/verifier" style="color:#12688F;">certify.vizdata.ci/verifier</a>.'
             . '</p></td></tr></table></td></tr></table></body></html>';
     }
@@ -153,7 +153,7 @@ final class Courrier
                     . '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #E3E6EC;border-radius:8px;">'
                     . self::ligne('Programme', (string) ($p['certification'] ?? ''))
                     . self::ligne('Type de certificat', $participation ? 'Certificat de participation' : 'Certificat de compétences')
-                    . self::ligne('Domaine', (string) ($p['domaine'] ?? '—'))
+                    . self::ligne('Domaine', (string) ($p['domaine'] ?? 'Non précisé'))
                     . self::ligne('Référence', (string) ($p['reference'] ?? ''), true)
                     . '</table>'
                     . '<p style="margin:16px 0 0;font-size:14px;line-height:1.6;color:#344054;">'
@@ -177,7 +177,7 @@ final class Courrier
                 ),
             ],
             'CANDIDATURE' => [
-                'sujet' => 'Votre candidature CITIZEN DATA ANALYST — ' . ($p['reference'] ?? ''),
+                'sujet' => 'Votre candidature CITIZEN DATA ANALYST (' . ($p['reference'] ?? '') . ')',
                 'html' => self::gabarit(
                     'Votre candidature est enregistrée',
                     "Bonjour $prenom, nous avons bien reçu votre candidature à la formation CITIZEN DATA ANALYST. Nous revenons vers vous très vite sur WhatsApp.",
@@ -190,11 +190,11 @@ final class Courrier
             /* L'alerte interne. Elle part vers VIZDATA, pas vers le candidat :
                elle porte le téléphone et l'adresse, et n'a rien à faire dans
                une boîte extérieure. Sans elle, une candidature n'existerait
-               que dans l'écran d'administration — vue le jour où quelqu'un
+               que dans l'écran d'administration : vue le jour où quelqu'un
                pense à l'ouvrir, ce qui n'est pas un délai acceptable pour
                rappeler un candidat. */
             'CANDIDATURE_ALERTE' => [
-                'sujet' => 'Nouvelle candidature — ' . ($p['nom'] ?? '') . ' (' . ($p['reference'] ?? '') . ')',
+                'sujet' => 'Nouvelle candidature de ' . ($p['nom'] ?? '') . ' (' . ($p['reference'] ?? '') . ')',
                 'html' => self::gabarit(
                     'Nouvelle candidature CITIZEN DATA ANALYST',
                     'Une candidature vient d\'être déposée sur la page de l\'académie.',
@@ -203,8 +203,8 @@ final class Courrier
                     . self::ligne('Nom', (string) ($p['nom'] ?? ''))
                     . self::ligne('WhatsApp', (string) ($p['whatsapp'] ?? ''))
                     . self::ligne('E-mail', (string) ($p['email'] ?? ''))
-                    . self::ligne('Profession', (string) ($p['profession'] ?? '—'))
-                    . self::ligne('Entreprise', (string) ($p['entreprise'] ?? '—'))
+                    . self::ligne('Profession', (string) ($p['profession'] ?? 'Non précisée'))
+                    . self::ligne('Entreprise', (string) ($p['entreprise'] ?? 'Non précisée'))
                     . self::ligne('Niveau', (string) ($p['niveau'] ?? ''))
                     . self::ligne('Formule', (string) ($p['formule'] ?? ''))
                     . '</table>'
@@ -304,7 +304,7 @@ final class Courrier
             return [false, "Fournisseur injoignable : $erreur"];
         }
         if ($statut < 200 || $statut >= 300) {
-            return [false, "Le fournisseur a refusé l'envoi ($statut) — " . mb_substr((string) $reponse, 0, 300)];
+            return [false, "Le fournisseur a refusé l'envoi ($statut) : " . mb_substr((string) $reponse, 0, 300)];
         }
         return [true, null];
     }

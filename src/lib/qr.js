@@ -1,6 +1,6 @@
 /* Encodage QR.
  *
- * Cette application a longtemps embarqué un encodeur écrit à la main — Galois
+ * Cette application a longtemps embarqué un encodeur écrit à la main, Galois
  * Field, Reed-Solomon, huit masques, le tout sans dépendance. Il produisait des
  * matrices d'apparence irréprochable : bonnes dimensions, motifs de repérage et
  * de synchronisation aux bons endroits, déterminisme. Les tests le vérifiaient.
@@ -8,7 +8,7 @@
  * Aucun lecteur ne parvenait à les décoder.
  *
  * Contrôler la structure d'un QR code ne prouve rien : c'est le décodage qui
- * fait foi. La règle vaut au-delà d'ici — un certificat imprimé porte ce code
+ * fait foi. La règle vaut au-delà d'ici : un certificat imprimé porte ce code
  * pendant des années, et un défaut y est irrattrapable une fois la promotion
  * partie. On s'appuie donc sur une implémentation éprouvée, et
  * tests/qr-decodage.test.js décode réellement ce qui sort d'ici.

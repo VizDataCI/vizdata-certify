@@ -1,7 +1,7 @@
 /* Page de vente de l'académie CITIZEN DATA ANALYST.
  *
  * Feuille distincte de styles.css, et non son prolongement : le registre de
- * certificats est une application de gestion — dense, 14 px, grise — tandis
+ * certificats est une application de gestion (dense, 14 px, grise) tandis
  * qu'une page de vente se lit à distance, sur un téléphone, en défilant. Les
  * deux échelles ne peuvent pas cohabiter dans le même jeu de variables.
  *

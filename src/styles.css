@@ -51,7 +51,7 @@
 
      Elle descendait trop bas. À #102E3F, et plus encore au bas d'un dégradé
      qui finissait à #0B2231, la barre virait au noir : elle pesait sur l'écran
-     et ne disait plus rien de VIZDATA — n'importe quel outil a une barre noire.
+     et ne disait plus rien de VIZDATA : n'importe quel outil a une barre noire.
      La voici remontée de quatre points de clarté et resaturée vers le bleu de
      la marque : on reconnaît la maison, et le contraste du texte blanc reste
      très au-dessus de ce qu'exige l'accessibilité (12:1 contre 4,5 exigés).
@@ -92,7 +92,7 @@
   --gris-300:#C8D2DE;
   --trait:#DDE5EE;
   --trait-fort:#CBD6E2;
-  /* Les deux fonds de l'application. Ils tiraient vers le bleu — #F4F7FB —,
+  /* Les deux fonds de l'application. Ils tiraient vers le bleu (#F4F7FB),
      ce qui mettait une teinte froide sous chaque tableau, chaque entête et
      chaque champ, et empêchait les pages de l'application de se raccorder aux
      pages publiques, elles neutres. Deux points de bleu en moins : la nuance
@@ -104,7 +104,7 @@
   /* Le fond des pages publiques. Presque blanc, et volontairement plus neutre
      que `--surface`, qui tire vers le bleu : ces pages portent un document
      officiel, et un document se lit sur une table claire, pas sur une teinte.
-     Deux points d'écart avec le blanc suffisent à détacher une carte — en
+     Deux points d'écart avec le blanc suffisent à détacher une carte : en
      dessous, le filet d'un pixel fait tout le travail et la carte flotte. */
   --papier:#F7F8FA;
 
@@ -166,7 +166,7 @@
 /* Un anneau de focus net, et seulement au clavier : visible pour qui en a
    besoin, invisible pour qui clique. */
 .vz :focus-visible{outline:2px solid var(--bleu-400);outline-offset:2px;border-radius:4px}
-/* Sur les deux fonds sombres — la barre latérale et la scène de l'accueil —,
+/* Sur les deux fonds sombres (la barre latérale et la scène de l'accueil),
    un anneau bleu sur bleu nuit ne se voit pas. Or c'est précisément là que
    l'anneau sert : quelqu'un qui navigue au clavier doit savoir où il est, et
    il n'a pas d'autre repère. Blanc, donc, sur ces deux fonds-là. */
@@ -177,7 +177,7 @@
 /* --- l'échelle d'affichage -----------------------------------------------
    Les titres de l'application vont de 15 à 25 px : c'est l'échelle du travail,
    et elle est juste. Les pages PUBLIQUES, elles, ont besoin d'une voix plus
-   haute — mais une voix, pas un cri.
+   haute, mais une voix, pas un cri.
 
    Trois règles tiennent cette échelle, et ce sont les mêmes que suivent les
    fonderies depuis toujours :
@@ -265,7 +265,7 @@
 /* Les deux boutons qui vivent sur fond sombre. Un bouton blanc ordinaire y
    paraît découpé au ciseau, et un bouton bleu s'y noie : il faut un plein
    blanc pour l'action secondaire, et un contour translucide pour la
-   tertiaire. Le verre translucide est volontairement très léger — un vrai
+   tertiaire. Le verre translucide est volontairement très léger : un vrai
    effet de verre dépoli sur un bouton est l'ornement qui trahit la maquette. */
 .vz-btn-clair{
   background:#fff;border-color:transparent;color:var(--nuit);
@@ -483,7 +483,7 @@
    Le nombre de colonnes est fixé par palier, et non laissé à « auto-fit » :
    au fil du redimensionnement, celui-ci laissait une carte seule sur une
    deuxième ligne, ce qui est pire que deux rangées pleines. Le palier suit le
-   nombre de cartes — six aujourd'hui ; en ajouter une demande de revoir ce
+   nombre de cartes : six aujourd'hui ; en ajouter une demande de revoir ce
    chiffre ici. */
 @media (min-width:1100px){ .vz-stats-rangee{grid-template-columns:repeat(6,minmax(0,1fr))} }
 @media (min-width:700px) and (max-width:1099px){ .vz-stats-rangee{grid-template-columns:repeat(3,minmax(0,1fr))} }
@@ -589,7 +589,7 @@
    gagne le calme qu'on attend d'un registre. */
 /* `width:100%` est indispensable, et il n'est pas décoratif : `.vz-public` est
    un conteneur flex en colonne, et dans un conteneur flex une marge `auto`
-   n'étire pas l'enfant — elle le centre ET le réduit à son contenu. Sur une
+   n'étire pas l'enfant : elle le centre ET le réduit à son contenu. Sur une
    seule colonne, les trois faits se retrouvaient dans un bloc de 363 px
    centré au milieu d'une tablette, avec deux cents pixels de vide à gauche. */
 .vz-points{
@@ -620,7 +620,7 @@
    ========================================================================= */
 
 /* Le fond portait deux halos de marque, un bleu en haut à gauche, un violet en
-   bas à droite. Ils donnaient de la profondeur à peu de frais — et c'est
+   bas à droite. Ils donnaient de la profondeur à peu de frais, et c'est
    précisément le problème : un dégradé bleu-violet en fond de page est devenu
    la signature de l'interface produite à la chaîne. On l'a vu partout, il ne
    dit plus rien de VIZDATA, et il met une teinte sous CHAQUE chose posée
@@ -650,7 +650,7 @@
 
 /* Au-dessus d'une scène sombre, la barre se pose SUR l'image, sans fond ni
    filet : une bande blanche en travers d'une photo coupe en deux ce qui doit
-   se lire d'un bloc. Elle n'est plus collante non plus — elle appartient à la
+   se lire d'un bloc. Elle n'est plus collante non plus : elle appartient à la
    scène, et suit donc la scène quand on descend. */
 .vz-public-scene .vz-public-bar.clair{
   position:absolute;top:0;left:0;right:0;z-index:30;
@@ -684,7 +684,7 @@
 .vz-verdict.ok{background:linear-gradient(180deg,var(--vert-050),var(--blanc))}
 .vz-verdict.ko{background:linear-gradient(180deg,var(--rouge-050),var(--blanc))}
 .vz-verdict.attente{background:linear-gradient(180deg,var(--orange-050),var(--blanc))}
-/* L'encart de verdict ne sert plus qu'aux états de passage — recherche en
+/* L'encart de verdict ne sert plus qu'aux états de passage : recherche en
    cours, lien introuvable, registre injoignable. Son disque a maigri de 46 à
    38 px et perdu son ombre portée : une pastille de couleur avec une ombre est
    l'ornement par excellence, et ces trois états n'ont rien à célébrer. */
@@ -708,7 +708,7 @@
 
 /* --- la demande de vérification ----------------------------------------------
    Pas une carte posée au milieu de l'écran : une page. La carte donnait à ce
-   geste l'allure d'une boîte de connexion, alors qu'il n'y a rien à ouvrir —
+   geste l'allure d'une boîte de connexion, alors qu'il n'y a rien à ouvrir
    on pose une question au registre, publiquement, et la page doit avoir la
    tenue d'un guichet plutôt que d'un formulaire.
 
@@ -740,7 +740,7 @@
 
 /* --- l'attestation vérifiée --------------------------------------------------
    Ce que cette page affirme, elle l'affirme dans cet ordre : c'est vrai, et
-   c'est à cette personne. La référence vient après — elle sert à retrouver le
+   c'est à cette personne. La référence vient après : elle sert à retrouver le
    document, elle n'est pas le document.
 
    L'ancienne mise en page faisait l'inverse : un disque de couleur de 46 px,
@@ -772,7 +772,7 @@
 
 .vz-atteste-tete{padding:28px 26px 24px;border-bottom:1px solid var(--trait)}
 /* Le nom tient sur deux lignes au maximum sans rapetisser : `clamp` descend
-   avec la fenêtre, et l'interlettrage se resserre à mesure — un nom ivoirien
+   avec la fenêtre, et l'interlettrage se resserre à mesure : un nom ivoirien
    complet dépasse facilement vingt-cinq signes. */
 .vz-atteste-nom{
   font-size:clamp(26px, 4vw, 34px);line-height:1.12;letter-spacing:-.032em;
@@ -858,9 +858,9 @@
 }
 
 /* Le voile, en deux couches qui ne font pas le même travail :
-   — un dégradé horizontal, dense à gauche où se pose le texte, presque nul à
+   - un dégradé horizontal, dense à gauche où se pose le texte, presque nul à
      droite, pour ne pas éteindre l'image qu'on a pris la peine de mettre ;
-   — une base très légère sur toute la surface, qui garantit le contraste même
+   - une base très légère sur toute la surface, qui garantit le contraste même
      si l'image déposée est claire. Sans elle, une photo surexposée rendrait le
      titre illisible, et personne ne s'en apercevrait avant la mise en ligne. */
 .vz-scene-voile{
@@ -1163,7 +1163,7 @@
 /* --- choix du type de certificat -------------------------------------------------
    Deux cartes côte à côte, et non une liste déroulante : le choix change ce qui
    sera imprimé en haut du document et ce que le certificat affirme. Il doit se
-   lire en entier avant d'être fait, avec ce que chaque option implique — une
+   lire en entier avant d'être fait, avec ce que chaque option implique : une
    liste déroulante cache l'option qu'on ne regarde pas. */
 .vz-typecert{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .vz-typecert-choix{
@@ -1274,13 +1274,12 @@
      a une largeur intrinsèque minimale qu'il impose à son conteneur, et
      `width:auto` sur les listes déroulantes les laissait prendre la largeur de
      leur plus longue option. Tout s'étire sur une colonne, et `min-width:0`
-     autorise enfin les enfants à rétrécir — sans lui, un enfant flexible
+     autorise enfin les enfants à rétrécir : sans lui, un enfant flexible
      refuse de passer sous sa largeur de contenu, et c'est la cause de presque
      tous les débordements horizontaux. */
   .vz-filtres{flex-direction:column;align-items:stretch;min-width:0}
   /* `max-width:100%`, et non `none`. La règle disait `none!important` pour
-     annuler le `maxWidth:290` posé en ligne sur le champ de recherche — mais
-     elle retirait du même coup TOUT plafond aux listes déroulantes, qui
+     annuler le `maxWidth:290` posé en ligne sur le champ de recherche, mais      elle retirait du même coup TOUT plafond aux listes déroulantes, qui
      prennent alors la largeur de leur plus longue option : « Excel : Tableaux
      croisés dynamiques » faisait 355 px dans une carte de 327. C'est de là que
      venait le défilement latéral de la page entière. */

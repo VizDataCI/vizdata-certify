@@ -1,4 +1,4 @@
-/* Qui a le droit de quoi — côté serveur.
+/* Qui a le droit de quoi : côté serveur.
  *
  * Ce module remplace à lui seul les politiques RLS de Postgres. S'il se
  * trompe, rien ne rattrape l'erreur : il n'y a plus de seconde ligne de
@@ -12,7 +12,7 @@
  * L'attaque de référence, celle contre laquelle presque tout est écrit ici :
  * un gestionnaire a le droit de corriger la fiche d'un titulaire ; il envoie
  * donc la même requête sur SA PROPRE fiche, en y glissant `role: 'ADMIN'`.
- * Aucun outil particulier n'est nécessaire — une requête HTTP suffit.
+ * Aucun outil particulier n'est nécessaire : une requête HTTP suffit.
  */
 
 import test from "node:test";
@@ -48,7 +48,7 @@ const suspendu = { id: "s1", role: "ADMIN", permissions: {}, account_status: "DI
 function refuse(execution, statut, motif) {
   assert.throws(execution, (e) => {
     assert.ok(e instanceof Refus, `erreur inattendue : ${e.message}`);
-    assert.equal(e.statut, statut, `code ${e.statut} au lieu de ${statut} — ${e.message}`);
+    assert.equal(e.statut, statut, `code ${e.statut} au lieu de ${statut}, ${e.message}`);
     if (motif) assert.match(e.message, motif);
     return true;
   });
@@ -64,7 +64,7 @@ test("sans session, tout est refusé", () => {
 });
 
 test("un compte désactivé ne peut plus rien, même administrateur", () => {
-  /* Le compte garde son rôle — on ne rétrograde pas quelqu'un qu'on suspend —
+  /* Le compte garde son rôle : on ne rétrograde pas quelqu'un qu'on suspend
      mais la suspension doit être effective immédiatement. */
   refuse(() => exigerSession(suspendu), 403, /désactivé/);
   refuse(() => exigerAdmin(suspendu), 403);
@@ -133,7 +133,7 @@ test("un titulaire ne lit que sa propre fiche", () => {
 
 test("un gestionnaire ne peut pas se promouvoir administrateur", () => {
   /* L'attaque de référence. Elle ne demande qu'une requête HTTP sur sa propre
-     fiche — une fiche qu'il a par ailleurs le droit de modifier. */
+     fiche : une fiche qu'il a par ailleurs le droit de modifier. */
   refuse(() => exigerEcritureCompte(gestionnaire, gestionnaire, { role: "ADMIN" }), 403, /administrateur/);
 });
 
@@ -174,7 +174,7 @@ test("un champ privilégié glissé parmi des champs libres est refusé en bloc"
 
 test("un champ inconnu est refusé, pas ignoré en silence", () => {
   /* Un champ silencieusement écarté laisse croire que la modification a eu
-     lieu — et, le jour où ce champ existera, il passera sans contrôle. */
+     lieu : et, le jour où ce champ existera, il passera sans contrôle. */
   refuse(() => exigerEcritureCompte(admin, titulaire, { password_hash: "scrypt$…" }), 403, /non modifiable/);
   refuse(() => exigerEcritureCompte(admin, titulaire, { id: "autre" }), 403);
   refuse(() => exigerEcritureCompte(titulaire, titulaire, { must_change_password: 0 }), 403);
@@ -202,7 +202,7 @@ test("l'administrateur modifie rôle, autorisations, statut et adresse", () => {
 
 test("même administrateur, on ne modifie pas son propre rôle", () => {
   /* Sans cette règle, le dernier administrateur peut se retirer ses droits et
-     verrouiller la plateforme — plus personne ne peut rien réparer. */
+     verrouiller la plateforme : plus personne ne peut rien réparer. */
   refuse(() => exigerEcritureCompte(admin, admin, { role: "CERTIFIED" }), 403, /propre rôle/);
   refuse(() => exigerEcritureCompte(admin, admin, { permissions: {} }), 403);
   refuse(() => exigerEcritureCompte(admin, admin, { account_status: "DISABLED" }), 403, /propre compte/);
@@ -267,7 +267,7 @@ test("un administrateur désactivé ne compte pas comme administrateur restant",
 
 test("serveur et interface partagent le même vocabulaire d'autorisations", () => {
   /* Les deux importent `src/lib/permissions.js`. Si l'un redéclarait sa propre
-     liste, l'écran finirait par cacher une action que le serveur accepte —
+     liste, l'écran finirait par cacher une action que le serveur accepte
      ou, bien pire, par en proposer une qu'il refuse. */
   assert.ok(AUTORISATIONS.length >= 4);
   for (const a of AUTORISATIONS) {

@@ -42,7 +42,7 @@ test("deux mots de passe identiques donnent deux empreintes différentes", () =>
 test("l'empreinte porte ses paramètres de calcul", () => {
   /* Le coût devra être relevé dans quelques années. En l'inscrivant dans
      chaque empreinte, les anciens mots de passe restent vérifiables pendant
-     que les nouveaux coûtent plus cher — sans quoi relever le coût
+     que les nouveaux coûtent plus cher : sans quoi relever le coût
      invaliderait tous les comptes d'un coup. */
   const ancienne = hacherMotDePasse("VizData2026", { N: 16384, r: 8, p: 1, longueur: 32, maxmem: 96 * 1024 * 1024 });
   assert.ok(ancienne.startsWith("scrypt$16384$8$1$"));
@@ -105,7 +105,7 @@ test("un compte sans mot de passe ne se connecte pas", () => {
 
     /* Le second essai vient aussitôt après le premier : il tombe désormais
        sous le délai progressif, qui s'allonge à chaque échec. Le refus n'est
-       plus le même — mais ce que le test tient est inchangé, et c'est le seul
+       plus le même, mais ce que le test tient est inchangé, et c'est le seul
        point qui compte : le compte ne s'ouvre d'aucune façon. */
     const ensuite = authentifier(db, "invite@vizdata.ci", "VizData2026");
     assert.ok(["identifiants", "attendre"].includes(ensuite.refus), ensuite.refus);
@@ -284,7 +284,7 @@ test("un lien expiré est refusé pour ce qu'il est", () => {
 });
 
 test("demander un second lien invalide le premier", () => {
-  /* Deux liens valides en circulation, c'est une porte de plus — et la plus
+  /* Deux liens valides en circulation, c'est une porte de plus, et la plus
      ancienne est celle qui a eu le plus de temps pour être lue par
      quelqu'un d'autre. */
   const { db, fermer } = baseNeuve();

@@ -1,13 +1,13 @@
 /* Rôles et autorisations, côté affichage.
  *
  * Ces règles ne protègent rien : elles décident ce qu'un écran montre. La
- * sécurité est tenue par la base — politiques RLS, `has_perm()`, `is_admin()`,
+ * sécurité est tenue par la base : politiques RLS, `has_perm()`, `is_admin()`,
  * et le déclencheur qui empêche un gestionnaire d'élargir ses propres droits.
  *
  * Elles doivent néanmoins dire la même chose que la base. Si l'écran est plus
  * permissif, il propose des actions que la base refusera : désagréable. S'il
  * l'est moins, il cache des actions permises : frustrant. Le cas réellement
- * grave serait qu'une règle ici fasse CROIRE à une protection — d'où le test
+ * grave serait qu'une règle ici fasse CROIRE à une protection : d'où le test
  * du gestionnaire sans autorisation, qui ne doit rien pouvoir.
  */
 
@@ -67,7 +67,7 @@ test("un visiteur sans session ne peut rien", () => {
 });
 
 test("un compte désactivé perd l'accès à l'administration", () => {
-  /* Le compte garde son rôle — on ne rétrograde pas quelqu'un qu'on suspend —
+  /* Le compte garde son rôle : on ne rétrograde pas quelqu'un qu'on suspend
      mais il ne doit plus rien pouvoir. La base applique la même règle :
      `is_staff()` et `has_perm()` exigent account_status = 'ACTIVE'. */
   const suspendu = { ...admin, account_status: "DISABLED" };

@@ -1,14 +1,14 @@
 /* Ouverture et entretien de la base SQLite.
  *
  * Aucune dépendance : `node:sqlite` est livré avec Node depuis la version 22.
- * C'est l'un des arguments du choix — un pilote de base de données est
+ * C'est l'un des arguments du choix : un pilote de base de données est
  * exactement le genre de dépendance qu'on ne veut pas voir changer de
  * mainteneur ou de licence au milieu de la vie d'un registre.
  *
  * Les PRAGMA ne sont pas des réglages d'optimisation
  * --------------------------------------------------
  * Trois d'entre eux changent la correction, pas la vitesse, et doivent être
- * posés à CHAQUE ouverture — ils ne sont pas stockés dans le fichier :
+ * posés à CHAQUE ouverture : ils ne sont pas stockés dans le fichier :
  *
  *   foreign_keys = ON   SQLite ignore les clés étrangères par défaut. Sans ce
  *                       pragma, « references users(id) » est un commentaire :
@@ -47,14 +47,14 @@ function cheminBase() {
 /** Identifiant : un uuid v4, en texte. Imprévisible, et de longueur fixe. */
 const uid = () => randomUUID();
 
-/** Horodatage ISO-8601 UTC — le même format que les valeurs par défaut SQL,
+/** Horodatage ISO-8601 UTC : le même format que les valeurs par défaut SQL,
  *  et il se trie dans l'ordre chronologique. */
 const maintenant = () => new Date().toISOString();
 
 /** Date du jour au format 'AAAA-MM-JJ'. */
 const jour = () => new Date().toISOString().slice(0, 10);
 
-/** Horodatage décalé de n secondes — pour les expirations. */
+/** Horodatage décalé de n secondes : pour les expirations. */
 const dans = (secondes) => new Date(Date.now() + secondes * 1000).toISOString();
 
 /* --- ouverture ----------------------------------------------------------- */
@@ -101,7 +101,7 @@ function fichiersMigration() {
  *
  * Chaque fichier est joué dans une transaction : s'il échoue à mi-parcours, la
  * base reste dans l'état d'avant, et elle n'est pas marquée comme migrée. Une
- * migration à moitié appliquée est la pire des situations — elle ne se rejoue
+ * migration à moitié appliquée est la pire des situations : elle ne se rejoue
  * pas, et elle ne fonctionne pas.
  */
 function appliquerMigrations(db, { silencieux = false } = {}) {

@@ -3,7 +3,7 @@
  * Isolées du reste pour être éprouvables hors d'un navigateur : ce sont les
  * seules règles de toute la chaîne de réinitialisation qui ne dépendent ni du
  * réseau ni du DOM. Le serveur importe le même module, de sorte que l'écran et
- * le registre exigent exactement la même chose d'un mot de passe — et qu'il
+ * le registre exigent exactement la même chose d'un mot de passe, et qu'il
  * est impossible qu'ils divergent.
  *
  * Depuis le passage à notre propre registre, le lien a une forme simple :
@@ -22,7 +22,7 @@
  *
  * Huit caractères, une lettre, un chiffre. Volontairement modeste : des règles
  * plus sévères poussent les gens à écrire leur mot de passe sur un papier. Ce
- * qui protège vraiment, c'est qu'il soit choisi par son titulaire — jamais
+ * qui protège vraiment, c'est qu'il soit choisi par son titulaire : jamais
  * transmis par courrier, jamais provisoire.
  */
 function qualiteMotDePasse(mdp) {

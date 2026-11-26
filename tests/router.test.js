@@ -1,7 +1,7 @@
 /* Routage : correspondance entre adresses et écrans.
  *
- * toRoute et toPath sont des fonctions pures — elles ne touchent pas au
- * navigateur — donc directement exécutables sous Node.
+ * toRoute et toPath sont des fonctions pures : elles ne touchent pas au
+ * navigateur, donc directement exécutables sous Node.
  */
 
 import test from "node:test";

@@ -1,14 +1,14 @@
 /* Le serveur du registre.
  *
  * Il fait deux choses : servir l'application construite, et répondre aux
- * appels `/api`. Rien d'autre — pas de rendu côté serveur, pas de moteur de
+ * appels `/api`. Rien d'autre : pas de rendu côté serveur, pas de moteur de
  * gabarits, aucune dépendance. `node:http` suffit, et une dépendance de moins
  * est une dépendance qui ne cessera pas d'être maintenue.
  *
  * Ce qui tient la sécurité, et dans quel ordre
  * --------------------------------------------
  * 1. La session est lue au début de chaque requête, depuis un cookie
- *    HttpOnly — donc inaccessible au JavaScript de la page, ce qui met les
+ *    HttpOnly, donc inaccessible au JavaScript de la page, ce qui met les
  *    sessions hors de portée d'une faille d'injection dans l'interface.
  * 2. Chaque route déclare si elle est publique. Une route qui ne le déclare
  *    pas exige une session : l'oubli penche du bon côté.
@@ -21,7 +21,7 @@
  * Ce que ce serveur ne fait pas, et pourquoi
  * ------------------------------------------
  * Pas de HTTPS : nginx est devant, c'est lui qui termine TLS. Pas de CORS :
- * l'application est servie par ce même serveur, donc même origine — et une
+ * l'application est servie par ce même serveur, donc même origine, et une
  * absence de CORS est une surface d'attaque en moins.
  */
 
@@ -162,7 +162,7 @@ function empreinteClient(req) {
 /* --- limitation de débit --------------------------------------------------
    En mémoire, volontairement : le serveur est unique, et une table en base
    pour quelques compteurs coûterait plus qu'elle ne rapporte. Elle protège les
-   deux portes qui comptent — la connexion et la demande de réinitialisation —
+   deux portes qui comptent : la connexion et la demande de réinitialisation
    contre l'essai en masse de mots de passe. Supabase s'en chargeait ; plus
    personne ne le fait à notre place. */
 const tentatives = new Map();
@@ -257,7 +257,7 @@ route(
        pour empêcher le balayage de nombreuses adresses depuis un même poste. */
     /* Ce limiteur-ci compte TOUTES les tentatives, réussies comprises, et il
        ne sait rien du compte visé. Depuis que cinq échecs bloquent le compte
-       lui-même, c'est cette règle-là qui doit parler — elle dit quoi faire et
+       lui-même, c'est cette règle-là qui doit parler : elle dit quoi faire et
        pour combien de temps. Le limiteur reste en arrière-garde, reculé assez
        pour ne plus couvrir le message précis d'un « réessayez plus tard ». */
     limiter("conn:" + String(email || "").toLowerCase(), { max: 20, fenetre: 15 * 60_000 });
@@ -274,7 +274,7 @@ route(
       throw new Refus(
         429,
         resultat.motif === "blocage"
-          ? `Trop de tentatives ont échoué sur ce compte : il est bloqué encore ${n >= 60 ? `${Math.ceil(n / 60)} minutes` : `${n} secondes`}. Si ce n'est pas vous, votre mot de passe n'a pas été trouvé — mais changez-le par sécurité.`
+          ? `Trop de tentatives ont échoué sur ce compte : il est bloqué encore ${n >= 60 ? `${Math.ceil(n / 60)} minutes` : `${n} secondes`}. Si ce n'est pas vous, votre mot de passe n'a pas été trouvé, mais changez-le par sécurité.`
           : `Patientez ${n} seconde${n > 1 ? "s" : ""} avant de réessayer.`
       );
     }
@@ -452,8 +452,8 @@ route("POST", /^\/api\/mot-de-passe\/changer$/, async ({ req, acteur }) => {
 
 /* --- validation en deux étapes -------------------------------------------- *
  *
- * Trois gestes qui engagent le compte — activer, désactiver, renouveler les
- * codes de secours — et tous redemandent le mot de passe, sauf l'activation,
+ * Trois gestes qui engagent le compte : activer, désactiver, renouveler les
+ * codes de secours, et tous redemandent le mot de passe, sauf l'activation,
  * déjà protégée par le code à scanner. Un poste laissé déverrouillé ne doit
  * pas suffire à retirer le second facteur de quelqu'un.
  */
@@ -827,7 +827,7 @@ async function servirStatique(res, chemin) {
     res.end(contenu);
   } catch {
     /* Repli SPA : tout chemin inconnu rend index.html, faute de quoi
-       /verifier/{jeton} — l'adresse imprimée sur les certificats —
+       /verifier/{jeton} : l'adresse imprimée sur les certificats
        répondrait 404 au rechargement. */
     try {
       const page = await readFile(join(RACINE_STATIQUE, "index.html"));
@@ -870,7 +870,7 @@ const serveur = createServer(async (req, res) => {
   if (!trouvee) {
     /* Si le chemin existe mais pas avec cette méthode, le dire : « route
        inconnue » enverrait chercher une faute d'adresse là où il n'y en a pas.
-       La table des routes n'est pas un secret — elle est dans le paquet
+       La table des routes n'est pas un secret : elle est dans le paquet
        servi au navigateur. */
     const methodes = routes.filter((r) => r.motif.test(url.pathname)).map((r) => r.methode);
     if (methodes.length) {
@@ -896,7 +896,7 @@ const serveur = createServer(async (req, res) => {
     }
     /* Les contraintes de la base portent des messages clairs pour nous, et
        révélateurs pour un attaquant : on garde le détail côté serveur. */
-    console.error(`[${new Date().toISOString()}] ${req.method} ${url.pathname} —`, e.message);
+    console.error(`[${new Date().toISOString()}] ${req.method} ${url.pathname} `, e.message);
     if (/UNIQUE constraint/i.test(e.message)) {
       repondre(res, 409, { error: "Cette valeur existe déjà dans le registre." });
       return;
@@ -914,7 +914,7 @@ serveur.listen(PORT, () => {
      un, et c'est ainsi que les tests démarrent le serveur sans risquer de
      tomber sur un port déjà pris. */
   const port = serveur.address().port;
-  console.log(`\n  VIZDATA CERTIFY — registre`);
+  console.log(`\n  VIZDATA CERTIFY : registre`);
   console.log(`  Base      : ${process.env.VIZDATA_DB || "data/certify.db"}`);
   console.log(`  Interface : ${RACINE_STATIQUE}`);
   console.log(`  Écoute    : http://localhost:${port}`);
@@ -922,7 +922,7 @@ serveur.listen(PORT, () => {
     console.log(`  Ménage    : ${bilanMenage.sessions} session(s) et ${bilanMenage.jetons} jeton(s) périmés retirés`);
   }
   if (!process.env.RESEND_API_KEY) {
-    console.log(`  Courrier  : aucun fournisseur configuré — les liens sont imprimés ici`);
+    console.log(`  Courrier  : aucun fournisseur configuré : les liens sont imprimés ici`);
   }
   console.log("");
 });

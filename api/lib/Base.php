@@ -9,14 +9,14 @@
  * qu'un registre parfait sur une machine qu'on n'a pas.
  *
  * Ce qui ne change pas : le schéma. `schema/001_socle.sql` est le MÊME fichier
- * que celui du serveur Node — du SQLite standard, sans rien de propre à un
+ * que celui du serveur Node : du SQLite standard, sans rien de propre à un
  * langage. Les deux implémentations partagent donc leur définition de la
  * vérité, ce qui compte plus que le langage au-dessus.
  *
  * Les pragmas ne sont pas des réglages de confort
  * -----------------------------------------------
  * Trois d'entre eux changent la correction et doivent être posés à CHAQUE
- * ouverture — ils ne sont pas stockés dans le fichier :
+ * ouverture : ils ne sont pas stockés dans le fichier :
  *
  *   foreign_keys = ON   SQLite les ignore par défaut. Sans ce pragma, chaque
  *                       « references » du schéma est un commentaire : on
@@ -91,7 +91,7 @@ final class Base
      *
      * Chaque fichier est joué dans une transaction : s'il échoue à mi-parcours,
      * la base reste dans l'état d'avant et n'est pas marquée comme migrée. Une
-     * migration à moitié appliquée est la pire des situations — elle ne se
+     * migration à moitié appliquée est la pire des situations : elle ne se
      * rejoue pas, et elle ne fonctionne pas.
      */
     public static function migrer(): array
@@ -149,7 +149,7 @@ final class Base
     /**
      * Referme la connexion.
      *
-     * Nécessaire avant de remplacer le fichier de base — une restauration —,
+     * Nécessaire avant de remplacer le fichier de base (une restauration),
      * sinon on écrirait sous les pieds de SQLite, qui tient le fichier ouvert
      * et son journal avec.
      */
@@ -233,14 +233,14 @@ final class Base
         return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($o), 4));
     }
 
-    /** Horodatage ISO-8601 UTC — le même format que les valeurs par défaut SQL,
+    /** Horodatage ISO-8601 UTC : le même format que les valeurs par défaut SQL,
      *  et il se trie dans l'ordre chronologique. */
     public static function maintenant(): string
     {
         return (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d\TH:i:s.v\Z');
     }
 
-    /** Horodatage décalé de n secondes — pour les expirations. */
+    /** Horodatage décalé de n secondes : pour les expirations. */
     public static function dans(int $secondes): string
     {
         return (new DateTimeImmutable('now', new DateTimeZone('UTC')))

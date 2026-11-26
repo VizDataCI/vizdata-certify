@@ -15,7 +15,7 @@
  * dans l'espace du titulaire, et l'écran Notifications montre ce qui n'est pas
  * parti.
  *
- * En développement, le lien est imprimé dans la console du serveur — c'est le
+ * En développement, le lien est imprimé dans la console du serveur : c'est le
  * seul moyen d'éprouver la chaîne d'invitation sans fournisseur d'envoi.
  *
  * Configuration (toutes facultatives)
@@ -59,7 +59,7 @@ function gabarit(titre, intro, corps, lien) {
           <p style="margin:0 0 14px;font-size:15px;line-height:1.6;color:#344054;">${intro}</p>
           ${corps}${bouton}
           <p style="margin:22px 0 0;font-size:12.5px;line-height:1.6;color:#667085;border-top:1px solid #E3E6EC;padding-top:16px;">
-            VIZDATA CERTIFY — registre officiel des certifications VIZDATA.<br>
+            VIZDATA CERTIFY : registre officiel des certifications VIZDATA.<br>
             Vérifiez l'authenticité d'un certificat sur <a href="${SITE()}/verifier" style="color:#12688F;">certify.vizdata.ci/verifier</a>.
           </p>
         </td></tr>
@@ -110,7 +110,7 @@ function composer(kind, p = {}) {
         `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #E3E6EC;border-radius:8px;">
            ${ligne("Programme", p.certification ?? "")}
            ${ligne("Type de certificat", p.type === "PARTICIPATION" ? "Certificat de participation" : "Certificat de compétences")}
-           ${ligne("Domaine", p.domaine || "—")}
+           ${ligne("Domaine", p.domaine || "Non précisé")}
            ${ligne("Référence", p.reference ?? "", true)}
          </table>`,
         { url: `${SITE()}/espace`, libelle: "Ouvrir mon espace" }
@@ -174,7 +174,7 @@ async function envoyer(db, { kind, destinataire, utilisateurId = null, ...donnee
 
     if (!reponse.ok) {
       const detail = (await reponse.text()).slice(0, 500);
-      tracerNotification(db, { ...trace, status: "FAILED", error: `HTTP ${reponse.status} — ${detail}` });
+      tracerNotification(db, { ...trace, status: "FAILED", error: `HTTP ${reponse.status}, ${detail}` });
       return { envoye: false, raison: `Le fournisseur a refusé l'envoi (${reponse.status}).` };
     }
 

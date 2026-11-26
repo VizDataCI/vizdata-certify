@@ -105,7 +105,7 @@ const IconeLieu = enveloppe(MapPin);
 const IconeSite = enveloppe(Globe);
 /* WhatsApp n'a pas de glyphe chez Lucide, et mélanger un logo de marque au
    jeu d'icônes se verrait immédiatement : épaisseur, coins, tout diffère.
-   Une bulle de message, donc — c'est le mot « WhatsApp » à côté qui porte la
+   Une bulle de message, donc : c'est le mot « WhatsApp » à côté qui porte la
    reconnaissance, pas le dessin. */
 const IconeMessage = enveloppe(MessageCircle);
 

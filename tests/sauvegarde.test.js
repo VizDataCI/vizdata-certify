@@ -3,7 +3,7 @@
  * Ces tests existent parce que le projet a déjà perdu une base : elle vivait
  * chez un tiers, rien n'en avait été copié, et le schéma lui-même n'était
  * écrit nulle part. Une sauvegarde qui échouerait en silence, ou qu'on ne
- * saurait pas relire, reproduirait exactement cette situation — avec, en
+ * saurait pas relire, reproduirait exactement cette situation : avec, en
  * prime, la certitude d'être protégé.
  *
  * Le test qui compte le plus est le dernier : on détruit la base, on restaure,
@@ -217,7 +217,7 @@ test("détruire la base et la restaurer rend un registre utilisable", async (t) 
   assert.equal(sauver.status, 0, sauver.stderr);
   const sauvegarde = join(dossier, "sauvegardes", readdirSync(join(dossier, "sauvegardes"))[0]);
 
-  /* Destruction complète — fichier principal et journal. */
+  /* Destruction complète : fichier principal et journal. */
   for (const suffixe of ["", "-wal", "-shm"]) rmSync(chemin + suffixe, { force: true });
   assert.ok(!existsSync(chemin), "la base n'a pas été détruite");
 

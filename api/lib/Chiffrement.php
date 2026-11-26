@@ -11,18 +11,18 @@
  *
  * Les choix, et leurs raisons
  * ---------------------------
- * — AES-256-GCM. Il chiffre ET authentifie : une sauvegarde modifiée d'un seul
+ *, AES-256-GCM. Il chiffre ET authentifie : une sauvegarde modifiée d'un seul
  *   octet est rejetée au déchiffrement, au lieu de rendre des données fausses.
  *   Pour une pièce probante, c'est la propriété qui compte le plus.
- * — La clé est dérivée du mot de passe par PBKDF2-SHA512, avec un sel tiré au
+ *, La clé est dérivée du mot de passe par PBKDF2-SHA512, avec un sel tiré au
  *   hasard POUR CHAQUE sauvegarde. Un mot de passe humain a trop peu
  *   d'entropie pour servir de clé directement.
- * — PBKDF2 plutôt que scrypt — qui était retenu du temps du serveur Node —
+ * (PBKDF2 plutôt que scrypt) qui était retenu du temps du serveur Node
  *   parce qu'il est livré avec PHP partout, sans extension. Changer de
  *   fonction de dérivation impose de changer le format : d'où le « 2 » dans
  *   l'en-tête. Une sauvegarde au format 1 reste reconnaissable, et le message
  *   d'erreur le dit plutôt que de laisser chercher.
- * — Tous les paramètres voyagent dans l'en-tête. Une sauvegarde doit rester
+ *, Tous les paramètres voyagent dans l'en-tête. Une sauvegarde doit rester
  *   lisible dans cinq ans, par quelqu'un qui n'aura pas ce dépôt sous les
  *   yeux : elle se décrit elle-même.
  *

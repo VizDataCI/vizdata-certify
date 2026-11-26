@@ -5,7 +5,7 @@
  * Toutes les sessions duraient trente jours, de l'administrateur qui tient le
  * registre entier au titulaire qui vient voir son diplôme deux fois par an :
  * c'était le compte le plus puissant qui restait ouvert le plus longtemps.
- * Et le registre refusait les essais en masse EN SILENCE — on pouvait passer
+ * Et le registre refusait les essais en masse EN SILENCE : on pouvait passer
  * la nuit à essayer des mots de passe sans que personne ne l'apprenne.
  *
  * Ces tests tiennent les deux règles : une session d'administration laissée
@@ -58,7 +58,7 @@ test("une session laissée au repos tombe", () => {
     assert.ok(sessionDepuisSecret(db, secret), "neuf minutes ne suffisent pas");
 
     /* Onze minutes : l'écran a déconnecté il y a une minute. Le serveur, lui,
-       attend sa marge avant de couper — sans elle il tomberait pendant que
+       attend sa marge avant de couper : sans elle il tomberait pendant que
        l'écran affiche son préavis, et le compte à rebours mentirait. */
     reculerVue(db, 11 * 60);
     assert.ok(sessionDepuisSecret(db, secret), "la marge du serveur doit tenir");
@@ -120,7 +120,7 @@ test("un mot de passe faux est compté, une connexion réussie remet à zéro", 
   const { db, fermer, id } = monde();
   try {
     /* Les échecs sont espacés à la main : sans cela, le délai progressif
-       refuserait le deuxième essai avant même de le compter — ce qui est
+       refuserait le deuxième essai avant même de le compter : ce qui est
        précisément ce qu'il doit faire en conditions réelles. */
     for (let i = 0; i < 3; i++) {
       authentifier(db, "cible@vizdata.ci", "faux");
@@ -293,7 +293,7 @@ test("les durées du navigateur sont celles du registre", async () => {
      les deux durées y sont donc recopiées, dans src/lib/inactivite.js. C'est
      la seule duplication acceptée dans ce produit, et voici ce qui la tient.
      Sans ce test, l'écran pourrait prévenir à huit minutes pendant que le
-     serveur coupe à cinq — et le compte à rebours mentirait. */
+     serveur coupe à cinq, et le compte à rebours mentirait. */
   const ecran = await import("../src/lib/inactivite.js");
   assert.equal(ecran.INACTIVITE, INACTIVITE);
   assert.equal(ecran.INACTIVITE_PREAVIS, INACTIVITE_PREAVIS);

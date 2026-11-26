@@ -5,7 +5,7 @@
  * ---------------------------------
  * TOTP (RFC 6238) : un secret partagé, l'horloge, six chiffres qui changent
  * toutes les trente secondes. C'est ce que lisent Google Authenticator,
- * Microsoft Authenticator, Authy, 1Password, Bitwarden et les autres — aucune
+ * Microsoft Authenticator, Authy, 1Password, Bitwarden et les autres : aucune
  * application n'est imposée au titulaire, et VIZDATA n'a aucun service tiers à
  * payer ni à faire confiance. Un SMS aurait coûté à chaque connexion, et se
  * détourne par duplication de carte SIM.
@@ -15,13 +15,13 @@
  * Le secret ne peut pas être haché : le serveur doit le relire pour recalculer
  * le code attendu. Il est donc chiffré en AES-256-GCM, avec une clé qui vit
  * dans un FICHIER à côté de la base, jamais dans la base. Une copie de la base
- * seule — une sauvegarde égarée, un dump — ne permet donc pas de fabriquer des
+ * seule (une sauvegarde égarée, un dump) ne permet donc pas de fabriquer des
  * codes.
  *
  * La contrepartie est à connaître : restaurer la base sur une machine qui n'a
  * pas le fichier de clé rend les secrets illisibles. Les titulaires concernés
- * entrent alors avec un code de secours — ceux-là sont hachés, donc toujours
- * valables — ou un administrateur désactive leur second facteur. C'est pour
+ * entrent alors avec un code de secours : ceux-là sont hachés, donc toujours
+ * valables, ou un administrateur désactive leur second facteur. C'est pour
  * cela que ces deux échappatoires existent.
  */
 
@@ -208,7 +208,7 @@ final class DoubleFacteur
      * Prépare une activation : un secret neuf, pas encore actif.
      *
      * Rappelé autant de fois que nécessaire tant que l'activation n'est pas
-     * confirmée — un titulaire qui ferme l'écran avant d'avoir scanné doit
+     * confirmée : un titulaire qui ferme l'écran avant d'avoir scanné doit
      * pouvoir recommencer, et le secret inachevé n'a aucune valeur.
      */
     public static function preparer(array $compte): array
@@ -265,7 +265,7 @@ final class DoubleFacteur
      * sache combien de codes circulent.
      *
      * Ils sont rendus UNE fois, en clair, et hachés en base. VIZDATA ne peut
-     * pas les retrouver ensuite — c'est ce qui en fait une preuve.
+     * pas les retrouver ensuite : c'est ce qui en fait une preuve.
      */
     public static function renouvelerCodesSecours(string $utilisateurId): array
     {
@@ -273,7 +273,7 @@ final class DoubleFacteur
         $codes = [];
         for ($i = 0; $i < self::NB_CODES_SECOURS; $i++) {
             /* Dix chiffres en deux groupes : lisible à voix haute, recopiable
-               sans ambiguïté — pas de lettre qui se confonde avec un chiffre. */
+               sans ambiguïté : pas de lettre qui se confonde avec un chiffre. */
             $brut = str_pad((string) random_int(0, 99999), 5, '0', STR_PAD_LEFT)
                 . '-' . str_pad((string) random_int(0, 99999), 5, '0', STR_PAD_LEFT);
             $codes[] = $brut;

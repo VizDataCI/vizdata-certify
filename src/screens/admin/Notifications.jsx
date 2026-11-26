@@ -8,7 +8,7 @@
  * qu'il ne se plaigne.
  *
  * Chaque tentative laisse donc une ligne dans `notifications`, avec son
- * verdict. Les envois en attente — faute de fournisseur configuré — sont
+ * verdict. Les envois en attente (faute de fournisseur configuré) sont
  * visibles ici plutôt que perdus : l'attribution d'un certificat ne doit pas
  * échouer parce qu'un e-mail n'a pas pu partir, mais elle ne doit pas non plus
  * faire croire que l'avis est arrivé.

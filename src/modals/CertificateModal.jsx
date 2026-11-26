@@ -1,15 +1,15 @@
 /* Le certificat, en consultation ou en délivrance.
  *
- * Reçoit la forme publique normalisée — celle que rendent les fonctions
+ * Reçoit la forme publique normalisée : celle que rendent les fonctions
  * Supabase comme le registre local.
  *
  * Deux régimes, portés par « telechargeable »
  * -------------------------------------------
- * — consultation : ce que voit un employeur venu vérifier. Il constate
+ * - consultation : ce que voit un employeur venu vérifier. Il constate
  *   l'authenticité, il ne repart pas avec le document. Ni téléchargement ni
  *   impression ne sont proposés, et la zone d'impression n'est pas montée :
  *   un Ctrl+P ne produit donc pas un certificat détouré prêt à circuler.
- * — délivrance : réservé au titulaire et à VIZDATA, seuls fondés à diffuser
+ * - délivrance : réservé au titulaire et à VIZDATA, seuls fondés à diffuser
  *   l'attestation. Téléchargement et impression sont là.
  *
  * Rien n'empêchera jamais une capture d'écran. Le propos n'est pas de rendre la
@@ -30,7 +30,7 @@ function CertificateModal({ cert, onClose, telechargeable = true, ...p }) {
     if (cert.local_record && p.log) p.log(action, cert.local_record.id, cert.reference);
   };
 
-  /* Les deux gestes ouvrent la même boîte de dialogue — celle du navigateur —
+  /* Les deux gestes ouvrent la même boîte de dialogue : celle du navigateur
      et c'est voulu : son moteur produit un texte vectoriel, net à tout
      agrandissement, et exactement la mise en page de l'écran. Ce qui les
      distingue est le nom proposé pour le fichier, et ce qu'on dit à

@@ -3,7 +3,7 @@
 --
 -- Un mot de passe seul protège mal un registre qui fait foi : il se devine, il
 -- se réutilise d'un service à l'autre, il se lit par-dessus une épaule. Le
--- second facteur ajoute une preuve que l'attaquant distant n'a pas — le
+-- second facteur ajoute une preuve que l'attaquant distant n'a pas : le
 -- téléphone du titulaire.
 --
 -- Ce qui est stocké, et ce qui ne l'est pas

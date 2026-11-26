@@ -3,12 +3,12 @@
  * La distinction porte sur ce que le document AFFIRME. Un certificat de
  * participation atteste une présence ; un certificat de compétences atteste
  * une évaluation. Confondre les deux ferait dire au document plus qu'il ne
- * sait — et c'est exactement la phrase qu'un employeur lit.
+ * sait, et c'est exactement la phrase qu'un employeur lit.
  *
  * D'où ce que ces tests tiennent : le type est enregistré, il remonte dans la
  * vue publique que lisent le document et la page de vérification, une valeur
  * inconnue retombe sur « compétences » plutôt que de casser, et un certificat
- * de participation ne porte AUCUNE compétence — même si l'appel en propose.
+ * de participation ne porte AUCUNE compétence : même si l'appel en propose.
  * Cette dernière règle n'est pas une coquetterie : les compétences sont
  * affichées sur la page publique, où elles seraient lues comme validées.
  */

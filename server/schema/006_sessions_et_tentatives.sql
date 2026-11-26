@@ -4,7 +4,7 @@
 -- Le registre refusait déjà les essais en masse : dix tentatives par adresse
 -- et quarante par poste, par quart d'heure. Mais il les refusait EN SILENCE.
 -- Quelqu'un pouvait passer la nuit à essayer des mots de passe sur le compte
--- d'administration, et personne ne l'apprenait jamais — ni le titulaire du
+-- d'administration, et personne ne l'apprenait jamais : ni le titulaire du
 -- compte, ni VIZDATA. Un refus que personne ne voit ne protège que de
 -- l'attaque qui réussit du premier coup.
 --
@@ -28,7 +28,7 @@ alter table users add column last_failed_at text;
 -- Les sessions portent déjà `last_seen`, mis à jour à chaque requête. Il ne
 -- servait à rien : une session restait valable trente jours même sans être
 -- touchée une seule fois. C'est le code qui s'en sert désormais pour couper
--- les sessions d'administration laissées ouvertes — voir Comptes::DUREES.
+-- les sessions d'administration laissées ouvertes : voir Comptes::DUREES.
 -- Aucune colonne à ajouter, seulement un index : la liste des sessions d'un
 -- compte se demande à chaque ouverture de l'écran de sécurité.
 create index if not exists idx_sessions_user on sessions (user_id, last_seen desc);

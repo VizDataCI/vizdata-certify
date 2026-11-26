@@ -1,7 +1,7 @@
 /* Règles métier du certificat.
  *
- * effectiveStatus porte le principe central du produit — le statut n'est pas
- * stocké, il est calculé — et la même règle existe côté base dans
+ * effectiveStatus porte le principe central du produit : le statut n'est pas
+ * stocké, il est calculé, et la même règle existe côté base dans
  * effective_status(). Les deux doivent rester d'accord.
  */
 

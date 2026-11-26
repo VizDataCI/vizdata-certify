@@ -7,8 +7,8 @@
  * Elle se présentait comme une boîte de connexion : un sceau de marque, un
  * titre centré, un champ étroit au milieu d'une carte de 440 px. Rien ne
  * disait OÙ trouver la référence qu'on lui demandait, et c'est pourtant la
- * seule chose qu'il ignore. Le libellé le dit désormais, et le QR code — qui
- * est le chemin le plus court, et celui que l'on prend de toute façon — est
+ * seule chose qu'il ignore. Le libellé le dit désormais, et le QR code : qui
+ * est le chemin le plus court, et celui que l'on prend de toute façon : est
  * nommé à côté du champ plutôt que laissé deviner.
  */
 
@@ -62,7 +62,7 @@ function VerifySearch(p) {
           <h1 className="vz-titre-section">Vérifier un certificat</h1>
           <p className="vz-chapeau">
             Toute certification délivrée par VIZDATA porte une référence unique. Saisissez-la pour
-            consulter son statut au registre — aucun compte n'est nécessaire.
+            consulter son statut au registre : aucun compte n'est nécessaire.
           </p>
         </div>
 

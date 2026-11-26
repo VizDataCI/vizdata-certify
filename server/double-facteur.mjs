@@ -6,7 +6,7 @@
  *
  * TOTP (RFC 6238) : un secret partagé, l'horloge, six chiffres qui changent
  * toutes les trente secondes. C'est ce que lisent Google Authenticator,
- * Microsoft Authenticator, Authy, 1Password et Bitwarden — aucune application
+ * Microsoft Authenticator, Authy, 1Password et Bitwarden : aucune application
  * n'est imposée, et aucun service tiers n'est payé ni cru sur parole.
  *
  * Où vit le secret
@@ -49,7 +49,7 @@ const cles = new Map();
 function cle(db) {
   /* Chemin ABSOLU : « data/certify.db » donnerait « data/.cle-secrets »
      relatif au dossier courant, et la clé se poserait là où la commande a été
-     lancée — au pire à la racine du dépôt. */
+     lancée : au pire à la racine du dépôt. */
   const chemin = join(dirname(resolve(db.name || "certify.db")), ".cle-secrets");
   if (cles.has(chemin)) return cles.get(chemin);
 

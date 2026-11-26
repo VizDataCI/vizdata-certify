@@ -1,7 +1,7 @@
 <?php
 /* Mots de passe, sessions et liens à usage unique.
  *
- * Quatre décisions qui comptent, avec leurs raisons — c'est le genre de code
+ * Quatre décisions qui comptent, avec leurs raisons : c'est le genre de code
  * qu'on relit deux ans plus tard sans se souvenir pourquoi il est ainsi.
  *
  * 1. `password_hash` DE PHP, PAS UN HACHAGE MAISON. Il choisit Argon2id quand
@@ -39,8 +39,8 @@ final class Comptes
      * Toutes les sessions duraient trente jours, de l'administrateur qui tient
      * le registre entier au titulaire qui vient voir son diplôme deux fois par
      * an. C'est le compte le plus puissant qui restait ouvert le plus
-     * longtemps : un cookie dérobé sur un poste partagé — et à Abidjan, le
-     * poste est souvent partagé — donnait un mois d'accès à tout le registre.
+     * longtemps : un cookie dérobé sur un poste partagé, et à Abidjan, le
+     * poste est souvent partagé : donnait un mois d'accès à tout le registre.
      *
      * Deux limites, et elles ne disent pas la même chose :
      *   * `vie` est la durée absolue. Passée celle-ci, la session tombe, même
@@ -77,7 +77,7 @@ final class Comptes
        Cinq échecs ferment le compte pour un quart d'heure. Avant d'en arriver
        là, chaque échec impose une attente qui s'allonge : une seconde, deux,
        cinq, quinze. C'est ce qui rend l'essai en masse sans intérêt, et c'est
-       presque indolore pour qui s'est simplement trompé de touche — la
+       presque indolore pour qui s'est simplement trompé de touche : la
        première faute ne coûte rien, la seconde une seconde.
 
        L'attente est RENDUE, pas dormie : faire patienter le serveur occuperait
@@ -123,7 +123,7 @@ final class Comptes
         return password_verify($motDePasse, $stocke);
     }
 
-    /** Exigences minimales — les mêmes que src/lib/mot-de-passe.js. */
+    /** Exigences minimales : les mêmes que src/lib/mot-de-passe.js. */
     public static function qualiteMotDePasse(?string $mdp): string
     {
         $v = $mdp ?? '';
@@ -161,7 +161,7 @@ final class Comptes
      * Ouvre une session et rend le secret à poser dans le cookie.
      *
      * Le secret n'est rendu qu'ici, une seule fois : la base n'en garde que
-     * l'empreinte, et il est donc impossible de le retrouver ensuite — y
+     * l'empreinte, et il est donc impossible de le retrouver ensuite : y
      * compris pour nous.
      */
     public static function ouvrirSession(string $utilisateurId, ?string $agent = null, ?int $duree = null): array
@@ -226,7 +226,7 @@ final class Comptes
      * Les sessions ouvertes d'un compte, la courante d'abord.
      *
      * Le secret n'est jamais rendu : seulement de quoi reconnaître l'appareil
-     * — quand elle a été ouverte, quand elle a servi la dernière fois, et le
+     * - quand elle a été ouverte, quand elle a servi la dernière fois, et le
      * navigateur annoncé. C'est assez pour repérer une session qu'on ne
      * reconnaît pas, et trop peu pour s'en servir.
      */
@@ -265,7 +265,7 @@ final class Comptes
     /**
      * Un nom d'appareil lisible, tiré de l'agent annoncé.
      *
-     * L'agent brut — « Mozilla/5.0 (Windows NT 10.0; Win64; x64) … » — ne dit
+     * L'agent brut (« Mozilla/5.0 (Windows NT 10.0; Win64; x64) … ») ne dit
      * rien à personne. Ce qu'il faut pour reconnaître SA session, c'est le
      * système et le navigateur, et rien de plus : ni version, ni moteur de
      * rendu, qui ne feraient qu'allonger la ligne.
@@ -335,7 +335,7 @@ final class Comptes
      *
      * Les jetons antérieurs du même genre sont supprimés : demander un second
      * lien doit invalider le premier, sans quoi deux liens valides circulent et
-     * le plus ancien — potentiellement lu par quelqu'un d'autre — reste
+     * le plus ancien (potentiellement lu par quelqu'un d'autre) reste
      * utilisable.
      */
     public static function creerJeton(string $utilisateurId, string $kind): array
@@ -430,7 +430,7 @@ final class Comptes
     /**
      * Vérifie une paire adresse / mot de passe.
      *
-     * Le refus est le même mot dans tous les cas — adresse inconnue, mot de
+     * Le refus est le même mot dans tous les cas : adresse inconnue, mot de
      * passe faux, compte sans mot de passe. Distinguer renseignerait un
      * attaquant sur les adresses inscrites au registre.
      *

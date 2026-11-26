@@ -3,8 +3,8 @@
  * Le jeu de démonstration n'est pas qu'un décor : c'est ce que l'application
  * montre tant qu'aucun projet Supabase n'est configuré, et c'est aussi la
  * seule description exécutable du modèle de données. S'il s'écarte du modèle
- * réel — un programme sans domaine, une référence au mauvais format, un score
- * qui traîne — la démonstration ment sur le produit.
+ * réel : un programme sans domaine, une référence au mauvais format, un score
+ * qui traîne : la démonstration ment sur le produit.
  */
 
 import test from "node:test";
@@ -79,7 +79,7 @@ test("la référence porte le code du programme et l'année de délivrance", () 
 
 test("la référence d'exemple suit le même format que les vraies", () => {
   /* Elle est montrée dans les champs de recherche : si elle garde l'ancien
-     format — un code de domaine au lieu d'un code de programme — elle apprend
+     format (un code de domaine au lieu d'un code de programme) elle apprend
      à saisir une référence qui n'existera jamais. */
   assert.match(REFERENCE_EXEMPLE, /^VIZ-\d{4}-[A-Z0-9-]+-\d{6}$/);
   const codes = SEED_TYPES.map((t) => t.code);

@@ -53,7 +53,7 @@ function Carte({ p, titre, children, pied }) {
 }
 
 /* ========================================================================
-   1. DEMANDE — « j'ai oublié mon mot de passe »
+   1. DEMANDE : « j'ai oublié mon mot de passe »
    ====================================================================== */
 
 function ForgotPassword(p) {
@@ -127,7 +127,7 @@ function ForgotPassword(p) {
 }
 
 /* ========================================================================
-   2. ARRIVÉE — « voici mon nouveau mot de passe »
+   2. ARRIVÉE : « voici mon nouveau mot de passe »
    ====================================================================== */
 
 function NewPassword(p) {
@@ -163,7 +163,7 @@ function NewPassword(p) {
       setFait(true);
     } catch (e) {
       /* 410 : le lien a expiré ou a déjà servi. C'est le seul refus qui appelle
-         une action précise — en redemander un —, donc il a son propre écran. */
+         une action précise (en redemander un), donc il a son propre écran. */
       if (e.statut === 410) setPerime(e.message);
       else setErr(e.message);
     }

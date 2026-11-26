@@ -12,7 +12,7 @@
  *    toujours par être vérifiée différemment.
  *
  * 2. ON LÈVE, ON NE RENVOIE PAS UN BOOLÉEN. Une fonction qui rend `false` se
- *    laisse oublier — `if (peut(...))` sans `else` est une faille muette. Une
+ *    laisse oublier, `if (peut(...))` sans `else` est une faille muette. Une
  *    fonction qui lève interrompt la route, et le serveur transforme le refus
  *    en réponse HTTP. L'oubli devient impossible.
  *
@@ -20,7 +20,7 @@
  *    autorisations viennent de `src/lib/permissions.js`, le module qu'utilise
  *    déjà le navigateur pour décider ce qu'il affiche. Les redéclarer ici
  *    garantirait qu'ils divergent un jour : l'écran proposerait une action que
- *    le serveur refuse, ou — bien pire — cacherait une action qu'il accepte.
+ *    le serveur refuse, ou (bien pire) cacherait une action qu'il accepte.
  *
  * La règle de fond reste celle d'avant : l'interface ne protège rien, elle
  * évite de proposer l'inutile. Le serveur, lui, décide.
@@ -47,8 +47,8 @@ const refus404 = (m = "Introuvable.") => new Refus(404, m);
 function exigerSession(acteur) {
   if (!acteur) throw refus401();
   if (acteur.account_status === "DISABLED") {
-    /* Le compte garde son rôle — on ne rétrograde pas quelqu'un qu'on
-       suspend — mais il ne peut plus rien. */
+    /* Le compte garde son rôle : on ne rétrograde pas quelqu'un qu'on
+       suspend, mais il ne peut plus rien. */
     throw refus403("Ce compte a été désactivé. Contactez VIZDATA.");
   }
   return acteur;
@@ -109,7 +109,7 @@ function exigerLectureCompte(acteur, cible) {
 /* --- écriture sur un compte ---------------------------------------------- */
 
 /* Les champs qu'un compte peut modifier sur lui-même. Tout le reste relève de
-   l'administration — et quatre d'entre eux de l'administrateur seul. */
+   l'administration, et quatre d'entre eux de l'administrateur seul. */
 const CHAMPS_LIBRES = new Set(["first_name", "last_name", "phone", "linkedin_url", "public_profile", "avatar_url"]);
 
 /* Les champs qui donnent du pouvoir. Les modifier, c'est changer qui peut
@@ -179,7 +179,7 @@ function exigerEcritureCompte(acteur, cible, champs) {
  * Créer un compte.
  *
  * Créer un titulaire demande `creer_titulaires`. Créer un compte
- * d'administration — gestionnaire ou administrateur — est autre chose : c'est
+ * d'administration (gestionnaire ou administrateur) est autre chose : c'est
  * se donner un collègue de même pouvoir, et seul un administrateur peut le
  * faire. Les confondre reviendrait à laisser un gestionnaire se fabriquer un
  * second compte administrateur.
@@ -199,7 +199,7 @@ function exigerCreationCompte(acteur, role) {
  * administrateur actif.
  *
  * Appelé avant toute rétrogradation ou désactivation. Sans lui, la plateforme
- * peut se retrouver sans personne pour la gouverner — et la seule issue serait
+ * peut se retrouver sans personne pour la gouverner, et la seule issue serait
  * une écriture directe dans le fichier de base.
  */
 function exigerDernierAdministrateur(db, cibleId) {

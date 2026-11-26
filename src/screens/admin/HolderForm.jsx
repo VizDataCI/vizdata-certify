@@ -4,7 +4,7 @@
  * --------
  * Un titulaire ne peut pas exister sans compte d'authentification :
  * `public.users.id` référence `auth.users(id)`. Créer ce compte demande la clé
- * secrète du projet, qui n'a rien à faire dans un navigateur — elle contourne
+ * secrète du projet, qui n'a rien à faire dans un navigateur : elle contourne
  * toutes les politiques RLS. La création passe donc par la fonction Edge
  * `inviter-titulaire`, qui détient la clé et vérifie elle-même l'autorisation
  * de l'appelant.
@@ -106,7 +106,7 @@ function HolderForm({ titulaire, onClose, ...p }) {
           <div className="vz-alert info">
             <span>
               <strong>{t.first_name} {t.last_name}</strong> était déjà enregistré au registre.
-              Son compte existant est conservé — aucun doublon n'a été créé. Vous pouvez lui attribuer une certification.
+              Son compte existant est conservé. Aucun doublon n'a été créé. Vous pouvez lui attribuer une certification.
             </span>
           </div>
         ) : (
@@ -120,7 +120,7 @@ function HolderForm({ titulaire, onClose, ...p }) {
         {!resultat.existe && (
           <p className="vz-small vz-muted" style={{ marginTop: 14, lineHeight: 1.75 }}>
             {resultat.invitation_envoyee
-              ? "Une invitation vient de partir vers son adresse. Elle contient un lien sécurisé pour choisir son mot de passe — aucun mot de passe n'a été envoyé en clair."
+              ? "Une invitation vient de partir vers son adresse. Elle contient un lien sécurisé pour choisir son mot de passe. Aucun mot de passe n'a été envoyé en clair."
               : "Le compte est créé, mais l'invitation n'a pas pu être envoyée. Le titulaire peut utiliser « Mot de passe oublié » sur la page de connexion pour accéder à son espace."}
           </p>
         )}

@@ -1,8 +1,8 @@
 /* Base de test : un fichier neuf par suite, effacé à la fin.
  *
  * Volontairement un VRAI fichier, et non une base en mémoire. Deux
- * comportements ne se manifestent que sur disque — le mode WAL, et le
- * verrouillage entre connexions — et ce sont précisément ceux dont dépend le
+ * comportements ne se manifestent que sur disque : le mode WAL, et le
+ * verrouillage entre connexions, et ce sont précisément ceux dont dépend le
  * serveur en production. Une base en mémoire aurait rendu les tests plus
  * rapides et moins fidèles.
  */

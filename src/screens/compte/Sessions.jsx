@@ -2,14 +2,14 @@
  *
  * Pourquoi cet écran existe
  * -------------------------
- * Une session se ferme en se déconnectant — depuis l'appareil où elle est
+ * Une session se ferme en se déconnectant : depuis l'appareil où elle est
  * ouverte. Celui qui s'est connecté depuis un poste partagé et qui est parti
  * sans fermer n'avait donc aucun recours : la seule manière de couper était de
  * changer de mot de passe, et personne ne change de mot de passe pour cette
  * raison. La session restait ouverte des semaines.
  *
  * Un bouton, et il ne demande rien d'autre qu'un clic : fermer PARTOUT
- * AILLEURS. Pas de liste à cocher, pas de session à désigner — au moment où
+ * AILLEURS. Pas de liste à cocher, pas de session à désigner : au moment où
  * l'on s'inquiète, on ne sait pas laquelle est la bonne, on sait seulement
  * qu'on veut être seul.
  *
@@ -82,7 +82,7 @@ function SessionsCarte({ notify }) {
         {err && <div className="vz-alert err" style={{ marginTop: 12 }}>{err}</div>}
 
         {/* La dernière tentative échouée, quand il y en a une. Elle ne dit pas
-            qu'on est attaqué — un mot de passe se tape mal — mais elle donne
+            qu'on est attaqué (un mot de passe se tape mal) mais elle donne
             une date, et c'est à partir d'une date qu'on s'inquiète à bon
             escient. */}
         {etat?.derniere_tentative_echouee && (

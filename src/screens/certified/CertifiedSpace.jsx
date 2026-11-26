@@ -2,7 +2,7 @@
  *
  * Les certificats sont demandés sans filtre sur le titulaire : la politique
  * `certificates_owner_select` s'en charge. Ce qui arrive ici est donc déjà ce
- * que le compte connecté a le droit de voir — et rien d'autre. Ajouter un
+ * que le compte connecté a le droit de voir, et rien d'autre. Ajouter un
  * filtre côté client laisserait croire que la séparation vient du navigateur.
  *
  * Ni date d'expiration ni score n'apparaissent : un certificat VIZDATA atteste
@@ -63,7 +63,7 @@ function CertifiedSpace(p) {
 
   /* On ne renvoie vers la connexion qu'une fois la session CONNUE. Rediriger
      avant reviendrait à mettre dehors quelqu'un de parfaitement connecté,
-     simplement parce que la réponse du serveur n'est pas encore arrivée — ce
+     simplement parce que la réponse du serveur n'est pas encore arrivée : ce
      qui arrive à chaque fois qu'on ouvre directement l'adresse de son espace,
      par exemple depuis le lien d'un courrier.
      Le renvoi part d'un effet et non du rendu : changer l'état de App pendant

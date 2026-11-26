@@ -1,5 +1,5 @@
 -- ===========================================================================
--- VIZDATA CERTIFY — socle de la base SQLite.
+-- VIZDATA CERTIFY : socle de la base SQLite.
 --
 -- Pourquoi SQLite
 -- ---------------
@@ -9,18 +9,18 @@
 -- c'est que la base doit appartenir à VIZDATA.
 --
 -- Une base SQLite est un fichier. Il ne s'évapore pas pour inactivité, il se
--- sauvegarde en le copiant — à chaud, base ouverte, grâce à l'API de
--- sauvegarde de Node —, il se déplace d'un serveur à l'autre sans migration,
+-- sauvegarde en le copiant : à chaud, base ouverte, grâce à l'API de
+-- sauvegarde de Node , il se déplace d'un serveur à l'autre sans migration,
 -- et il n'a ni démon à tenir, ni limite de connexions, ni palier tarifaire.
--- Pour la charge d'un organisme de formation — quelques centaines de
--- certificats par an, des vérifications en lecture — il est très largement
+-- Pour la charge d'un organisme de formation : quelques centaines de
+-- certificats par an, des vérifications en lecture : il est très largement
 -- dimensionné.
 --
 -- Ce que le passage à SQLite fait perdre, et comment on le compense
 -- ----------------------------------------------------------------
 -- Postgres portait l'autorisation DANS la base : RLS, `security definer`,
 -- `has_perm()`. SQLite n'a rien de tel. L'autorisation remonte donc dans
--- l'API — un seul module, `server/autorisations.mjs`, par lequel passe toute
+-- l'API : un seul module, `server/autorisations.mjs`, par lequel passe toute
 -- écriture, et qui est éprouvé par des tests exhaustifs. C'est un recul en
 -- défense en profondeur, assumé ; c'est un progrès en vérifiabilité, car les
 -- politiques RLS n'ont jamais pu être testées sans projet vivant.
@@ -37,7 +37,7 @@
 --
 --   identifiants  TEXT portant un uuid v4 (crypto.randomUUID)
 --   booléens      INTEGER 0 / 1, borné par un CHECK
---   horodatages   TEXT ISO-8601 UTC — se trient dans l'ordre chronologique
+--   horodatages   TEXT ISO-8601 UTC : se trient dans l'ordre chronologique
 --   dates         TEXT 'AAAA-MM-JJ', validées par date(x) IS NOT NULL
 --   énumérés      TEXT + CHECK ... IN (...)
 --   json          TEXT + CHECK json_valid(x)
@@ -51,7 +51,7 @@
 -- 1. COMPTES
 -- ---------------------------------------------------------------------------
 
--- Une seule table là où Supabase en avait deux — `auth.users` pour l'identité
+-- Une seule table là où Supabase en avait deux, `auth.users` pour l'identité
 -- et `public.users` pour le profil. La séparation imposait une fonction
 -- privilégiée pour créer le moindre titulaire ; ici, le mot de passe est une
 -- colonne de plus.
@@ -98,7 +98,7 @@ create index if not exists users_statut_idx on users (account_status);
 --
 -- Le cookie ne porte pas l'identifiant de session mais un secret aléatoire,
 -- dont seule l'empreinte est stockée. Si le fichier de base fuitait, les
--- sessions en cours ne seraient pas réutilisables — même raisonnement que
+-- sessions en cours ne seraient pas réutilisables : même raisonnement que
 -- pour les mots de passe.
 create table if not exists sessions (
   id         text primary key,
@@ -133,7 +133,7 @@ create table if not exists jetons (
 create index if not exists jetons_user_idx on jetons (user_id, kind);
 
 -- ---------------------------------------------------------------------------
--- 2. CATALOGUE — domaines, programmes, modèles
+-- 2. CATALOGUE : domaines, programmes, modèles
 -- ---------------------------------------------------------------------------
 
 -- Premier niveau : EXCEL, POWERBI, DATA…
@@ -201,7 +201,7 @@ create table if not exists skills (
 -- Pas de contrainte d'unicité en base sur (user_id, certificate_type_id), mais
 -- une règle appliquée à l'attribution : un même programme ne se délivre qu'une
 -- fois à la même personne TANT QU'UN CERTIFICAT EST EN VIGUEUR. Deux
--- certificats actifs pour le même parcours ne veulent rien dire — lequel
+-- certificats actifs pour le même parcours ne veulent rien dire : lequel
 -- ferait foi ?
 --
 -- La règle vit dans le code et non dans un index unique, parce qu'elle porte
@@ -211,7 +211,7 @@ create table if not exists skills (
 --
 -- Ce qui est unique en base, c'est la référence.
 --
--- `expiry_date` et `score` ne sont plus renseignés depuis novembre 2026 — un
+-- `expiry_date` et `score` ne sont plus renseignés depuis novembre 2026 : un
 -- certificat atteste d'un acquis, et la note relève de l'évaluation. Les
 -- colonnes existent pour recevoir les certificats anciens lors d'une reprise
 -- de données ; rien ne les expose.
@@ -284,7 +284,7 @@ create index if not exists shares_cert_idx on shares (certificate_id);
 
 -- Le journal garde l'identifiant de l'auteur ET son nom au moment de l'acte.
 -- Sous Postgres, seul l'identifiant était conservé : un compte supprimé
--- laissait des lignes « — » sans auteur lisible. Un journal qui perd le nom de
+-- laissait des lignes «, » sans auteur lisible. Un journal qui perd le nom de
 -- qui a agi perd sa valeur de preuve.
 create table if not exists audit_logs (
   id          integer primary key autoincrement,
@@ -328,7 +328,7 @@ create table if not exists settings (
 );
 
 -- ---------------------------------------------------------------------------
--- 5. ACADÉMIE — cohortes et candidatures
+-- 5. ACADÉMIE : cohortes et candidatures
 -- ---------------------------------------------------------------------------
 -- Second métier dans la même application : des candidatures à une formation,
 -- pas des certificats délivrés. Les tables vivent dans la même base, parce
@@ -392,7 +392,7 @@ create index if not exists candidatures_when_idx    on candidatures (created_at 
 -- ---------------------------------------------------------------------------
 -- SQLite n'a pas de « before update » : on écrit des déclencheurs « after »,
 -- qui réécrivent la ligne. La garde `when new.updated_at = old.updated_at`
--- évite la récursion — sans elle, la mise à jour déclenchée relancerait le
+-- évite la récursion : sans elle, la mise à jour déclenchée relancerait le
 -- déclencheur indéfiniment.
 
 create trigger if not exists users_touch after update on users
@@ -442,13 +442,13 @@ end;
 -- ---------------------------------------------------------------------------
 -- La projection publique du certificat, en un seul endroit. Elle ne contient
 -- ni adresse e-mail, ni téléphone, ni identifiant de compte, ni date
--- d'expiration, ni score. Ce n'est pas une barrière — SQLite n'en offre pas —
+-- d'expiration, ni score. Ce n'est pas une barrière, SQLite n'en offre pas
 -- mais une définition : si une colonne privée devait apparaître sur la page de
 -- vérification, il faudrait l'ajouter ici, ce qui se voit en relecture.
 --
 -- Le statut EFFECTIF n'est pas calculé ici : il l'est en JavaScript, par
 -- `effectiveStatus()`, déjà écrit et testé. Sous Postgres la règle était
--- dédoublée — une fois en SQL, une fois dans le navigateur — et les deux
+-- dédoublée (une fois en SQL, une fois dans le navigateur) et les deux
 -- pouvaient diverger. Une seule mise en œuvre vaut mieux.
 create view if not exists v_certificats_publics as
 select

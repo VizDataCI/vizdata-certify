@@ -1,14 +1,14 @@
 <?php
-/* Le registre — point d'entrée unique.
+/* Le registre : point d'entrée unique.
  *
  * Toutes les requêtes `/api/*` arrivent ici, par la réécriture d'Apache (voir
- * le .htaccess du site). Le reste — l'interface construite — est servi
+ * le .htaccess du site). Le reste (l'interface construite) est servi
  * directement par le serveur web : ce fichier ne s'en occupe pas.
  *
  * Ce qui tient la sécurité, et dans quel ordre
  * --------------------------------------------
  * 1. La session est lue au début de chaque requête, depuis un cookie
- *    HttpOnly — donc inaccessible au JavaScript de la page, ce qui met les
+ *    HttpOnly, donc inaccessible au JavaScript de la page, ce qui met les
  *    sessions hors de portée d'une faille d'injection dans l'interface.
  *    SameSite=Lax ferme la falsification de requête inter-site sans qu'il
  *    faille gérer de jeton anti-CSRF.
@@ -36,7 +36,7 @@ if (!is_file(__DIR__ . '/config.php')) {
     header('Content-Type: application/json; charset=utf-8');
     echo json_encode([
         'error' => "api/config.php est absent. Copiez api/config.exemple.php en api/config.php "
-            . "et renseignez-le — voir docs/deploiement.md.",
+            . "et renseignez-le. Voir docs/deploiement.md.",
     ], JSON_UNESCAPED_UNICODE);
     exit;
 }
@@ -94,7 +94,7 @@ function corpsJson(): array
     }
     /* `json_decode('{}', true)` rend un tableau VIDE, que `array_is_list()` tient
        pour une liste : refuser les listes sans cette exception rejetterait un
-       corps `{}` parfaitement légitime — le cas d'une route qui n'attend aucun
+       corps `{}` parfaitement légitime : le cas d'une route qui n'attend aucun
        champ. On ne refuse donc que les listes non vides. */
     if ($objet !== [] && array_is_list($objet)) {
         throw new Refus(400, 'Un objet JSON est attendu, pas une liste.');
@@ -127,8 +127,8 @@ function empreinteClient(): string
 
 /* --- limitation de débit --------------------------------------------------
    PHP-FPM ne garde rien entre deux requêtes : le compteur vit dans un fichier,
-   sous le dossier de la base. Il protège les deux portes qui comptent — la
-   connexion et la demande de réinitialisation — contre l'essai en masse de
+   sous le dossier de la base. Il protège les deux portes qui comptent : la
+   connexion et la demande de réinitialisation : contre l'essai en masse de
    mots de passe. Rien ne le fait à notre place sur cet hébergement. */
 function limiter(string $cle, int $max, int $fenetre): void
 {
@@ -178,11 +178,11 @@ function traceVisiteur(): array
  * Le panneau de cet hébergement n'offre PAS de tâches planifiées à cet
  * abonnement : ni cron, ni « récupérer une URL ». La route GET /sauvegarde
  * reste là pour le jour où ce sera possible, mais compter dessus aujourd'hui
- * reviendrait à n'avoir aucune sauvegarde tout en croyant en avoir une — la
+ * reviendrait à n'avoir aucune sauvegarde tout en croyant en avoir une : la
  * situation exacte qui a coûté le registre précédent.
  *
  * Le registre s'en charge donc lui-même : une fois par jour, la première
- * requête venue déclenche la sauvegarde — APRÈS avoir répondu.
+ * requête venue déclenche la sauvegarde, APRÈS avoir répondu.
  * `fastcgi_finish_request()` rend la main au visiteur, puis PHP continue :
  * personne n'attend, pas même celui qui a eu la malchance de passer en
  * premier.
@@ -194,11 +194,11 @@ function traceVisiteur(): array
  * personne n'ait à le deviner.
  *
  * Trois garde-fous :
- *   — un témoin daté, pour ne regarder l'heure qu'une fois par jour (un stat,
+ *   - un témoin daté, pour ne regarder l'heure qu'une fois par jour (un stat,
  *     le contrôle le moins cher qui soit) ;
- *   — un verrou, pour que deux requêtes simultanées ne sauvegardent pas deux
+ *   - un verrou, pour que deux requêtes simultanées ne sauvegardent pas deux
  *     fois ;
- *   — un silence complet en cas d'échec : une sauvegarde ratée est consignée
+ *   - un silence complet en cas d'échec : une sauvegarde ratée est consignée
  *     dans le journal du serveur, elle ne casse pas une page.
  */
 const SAUVEGARDE_INTERVALLE = 20 * 3600;
@@ -228,7 +228,7 @@ function entretienAutomatique(): void
 
     try {
         /* Le témoin est posé AVANT la tentative. Sinon, une sauvegarde qui
-           échoue — disque plein, droits perdus — serait retentée à CHAQUE
+           échoue (disque plein, droits perdus) serait retentée à CHAQUE
            requête, et transformerait une panne discrète en panne bruyante. */
         @touch($temoin);
         Sauvegarde::creer();
@@ -357,7 +357,7 @@ route('POST', '#^/session$#', function () {
        pour empêcher le balayage de nombreuses adresses depuis un même poste. */
     /* Ce limiteur-ci compte TOUTES les tentatives, réussies comprises, et il
        ne sait rien du compte visé. Depuis que cinq échecs bloquent le compte
-       lui-même, c'est cette règle-là qui doit parler — elle dit quoi faire et
+       lui-même, c'est cette règle-là qui doit parler : elle dit quoi faire et
        pour combien de temps. Le limiteur reste en arrière-garde, reculé assez
        pour ne plus couvrir le message précis d'un « réessayez plus tard ». */
     limiter('conn:' . strtolower($email), 20, 900);
@@ -375,7 +375,7 @@ route('POST', '#^/session$#', function () {
         $s = (int) $resultat['secondes'];
         throw new Refus(429, $resultat['motif'] === 'blocage'
             ? sprintf(
-                "Trop de tentatives ont échoué sur ce compte : il est bloqué %s. Si ce n'est pas vous, votre mot de passe n'a pas été trouvé — mais changez-le par sécurité.",
+                "Trop de tentatives ont échoué sur ce compte : il est bloqué %s. Si ce n'est pas vous, votre mot de passe n'a pas été trouvé, mais changez-le par sécurité.",
                 $s >= 60 ? 'encore ' . (int) ceil($s / 60) . ' minutes' : 'encore ' . $s . ' secondes'
             )
             : sprintf('Patientez %d seconde%s avant de réessayer.', $s, $s > 1 ? 's' : ''));
@@ -452,7 +452,7 @@ route('POST', '#^/session/code$#', function () {
 route('GET', '#^/session$#', fn (array $p, ?array $acteur) => $acteur, true);
 
 /* Les appareils connectés. Un titulaire qui s'est connecté depuis un poste
-   partagé — et le poste est souvent partagé — n'avait aucun moyen de fermer
+   partagé (et le poste est souvent partagé) n'avait aucun moyen de fermer
    cette session à distance : il fallait changer de mot de passe, ce que
    personne ne fait pour cette raison. */
 route('GET', '#^/mes-sessions$#', fn (array $p, array $acteur) => [
@@ -556,8 +556,8 @@ route('POST', '#^/mot-de-passe/changer$#', function (array $p, array $acteur) {
 
 /* --- validation en deux étapes ------------------------------------------------
  *
- * Trois gestes qui engagent le compte — activer, désactiver, renouveler les
- * codes de secours — et tous redemandent le mot de passe, sauf l'activation,
+ * Trois gestes qui engagent le compte : activer, désactiver, renouveler les
+ * codes de secours, et tous redemandent le mot de passe, sauf l'activation,
  * qui est déjà protégée par le code à scanner. Un poste laissé déverrouillé
  * ne doit pas suffire à retirer le second facteur de quelqu'un.
  */
@@ -830,7 +830,7 @@ route('PATCH', '#^/competences/([^/]+)$#', function (array $p, array $acteur) {
    son jeton (GET).
    Sur l'hébergement de VIZDATA, le panneau n'offre AUCUNE tâche planifiée à
    cet abonnement : c'est `entretienAutomatique()`, plus haut, qui s'en charge.
-   Ces deux routes restent utiles — le bouton, et le jour où un vrai cron
+   Ces deux routes restent utiles : le bouton, et le jour où un vrai cron
    deviendra possible. */
 
 route('POST', '#^/sauvegarde$#', function (array $p, ?array $acteur) {
@@ -851,11 +851,11 @@ route('POST', '#^/sauvegarde$#', function (array $p, ?array $acteur) {
 /* La même sauvegarde, en GET.
    Ce n'est pas une facilité : la tâche planifiée de Plesk est de type
    « Récupérer une URL » et fait une requête GET. Sans cette route, la
-   sauvegarde nocturne répondrait 405 chaque nuit — et personne ne regarde le
+   sauvegarde nocturne répondrait 405 chaque nuit, et personne ne regarde le
    journal d'une tâche qui « tourne ».
    Le jeton est ici le SEUL moyen d'entrer : une session d'administrateur ne
    suffit pas, parce qu'un GET se déclenche depuis n'importe quelle page
-   extérieure — une balise <img> suffirait — et lancerait des sauvegardes à
+   extérieure (une balise <img> suffirait) et lancerait des sauvegardes à
    l'insu de l'administrateur connecté. */
 route('GET', '#^/sauvegarde$#', function () {
     $jeton = (string) ($_GET['jeton'] ?? '');
@@ -1021,7 +1021,7 @@ try {
 } catch (Throwable $e) {
     /* Les contraintes de la base portent des messages clairs pour nous, et
        révélateurs pour un attaquant : on garde le détail côté serveur. */
-    error_log('[certify] ' . $methode . ' ' . $chemin . ' — ' . $e->getMessage());
+    error_log('[certify] ' . $methode . ' ' . $chemin . ' : ' . $e->getMessage());
 
     $message = $e->getMessage();
     if (str_contains($message, 'UNIQUE constraint')) {

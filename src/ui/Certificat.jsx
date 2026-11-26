@@ -1,10 +1,10 @@
-/* Le certificat VIZDATA — document officiel.
+/* Le certificat VIZDATA : document officiel.
  *
  * Pourquoi un gabarit en pixels fixes
  * -----------------------------------
  * Le document mesure 1123 × 794 pixels CSS. Ce n'est pas un chiffre arbitraire :
  * un navigateur imprime le pixel CSS à 96 points par pouce, et 1123 × 794 px à
- * 96 ppp font exactement 297 × 210 mm — une feuille A4 en paysage.
+ * 96 ppp font exactement 297 × 210 mm : une feuille A4 en paysage.
  *
  * La conséquence est ce que le cahier des charges exige : « le PDF téléchargé et
  * le document imprimé conservent exactement la même mise en page ». Le document
@@ -44,7 +44,7 @@ const CACHET = "/cachet-vizdata.png";
 
 function CertificatDocument({ cert, verifyUrl }) {
   /* Participation ou compétences : tout ce qui change d'un type à l'autre est
-     tenu par ce seul objet — titre, phrase d'introduction, formule, et le fait
+     tenu par ce seul objet : titre, phrase d'introduction, formule, et le fait
      d'énumérer ou non les compétences. Voir lib/certificates.js. */
   const type = typeCertificat(cert.kind);
 
@@ -108,7 +108,7 @@ function CertificatDocument({ cert, verifyUrl }) {
             <img className="vzc-cachet" src={CACHET} alt="" aria-hidden="true" />
             <div className="vzc-signature-trait" />
             <div className="vzc-signature-nom">{cert.signatory || "Direction VIZDATA"}</div>
-            <div className="vzc-signature-role">VIZDATA — Côte d'Ivoire</div>
+            <div className="vzc-signature-role">VIZDATA, Côte d'Ivoire</div>
           </div>
 
           <div className="vzc-meta">
@@ -132,7 +132,7 @@ function CertificatDocument({ cert, verifyUrl }) {
             <QRCode value={verifyUrl} size={104} />
             {/* La légende est imprimée : elle doit désigner un chemin qui
                 existe. Elle a un temps indiqué /verify, disparu lors du passage
-                aux adresses françaises — un certificat imprimé alors renvoyait
+                aux adresses françaises : un certificat imprimé alors renvoyait
                 vers une page introuvable. */}
             <div className="vzc-qr-legende">
               Vérifier l'authenticité<br />
@@ -166,7 +166,7 @@ function Certificat({ cert, verifyUrl }) {
     ajuster();
 
     /* ResizeObserver plutôt qu'un écouteur sur la fenêtre : le cadre peut
-       changer de largeur sans que la fenêtre bouge — ouverture d'une modale,
+       changer de largeur sans que la fenêtre bouge : ouverture d'une modale,
        apparition d'une barre latérale. */
     if (typeof ResizeObserver === "undefined") {
       window.addEventListener("resize", ajuster);
@@ -206,14 +206,14 @@ function Certificat({ cert, verifyUrl }) {
 function ZoneImpression({ cert, verifyUrl }) {
   /* Le conteneur est écrit en dur dans index.html : il existe donc avant que
      React ne monte quoi que ce soit. Le lire dans l'initialiseur d'état plutôt
-     que dans un effet évite un premier rendu à vide — et surtout une course
+     que dans un effet évite un premier rendu à vide, et surtout une course
      avec l'impression, qui peut être demandée dans la même frappe. */
   const [hote] = useState(() => (typeof document === "undefined" ? null : document.getElementById("impression")));
 
   /* Tant qu'un document est monté ici, et seulement alors, l'impression ne
      porte que sur lui. Sans ce marqueur, la règle « masquer l'application à
      l'impression » s'appliquerait en permanence, et un Ctrl+P n'importe où dans
-     la plateforme sortirait une page blanche — la page de vérification
+     la plateforme sortirait une page blanche : la page de vérification
      publique comprise, que l'on peut légitimement vouloir imprimer comme
      preuve de consultation. */
   useEffect(() => {
@@ -244,13 +244,13 @@ function ZoneImpression({ cert, verifyUrl }) {
  *
  *  Le titre du document est remplacé le temps de l'opération : les navigateurs
  *  s'en servent pour proposer le nom du fichier PDF. Sans cela, le titulaire
- *  enregistre « VIZDATA CERTIFY — Registre officiel… .pdf » ; avec, il obtient
+ *  enregistre « VIZDATA CERTIFY, Registre officiel… .pdf » ; avec, il obtient
  *  « VIZ-2026-EXCEL-AVA-000125.pdf », qui se classe et se retrouve.
  *
  *  Pourquoi l'impression du navigateur plutôt qu'une bibliothèque PDF : le
  *  moteur d'impression produit un texte vectoriel, net à tout agrandissement,
  *  et c'est exactement la mise en page de l'écran. Les bibliothèques
- *  disponibles côté navigateur passent par une capture en pixels — plus lourde,
+ *  disponibles côté navigateur passent par une capture en pixels : plus lourde,
  *  et floue à l'impression. Le résultat serait moins bon pour un document
  *  officiel. */
 function imprimerCertificat(reference) {
@@ -268,7 +268,7 @@ function imprimerCertificat(reference) {
      vide sur les navigateurs qui ouvrent la boîte de façon synchrone. */
   setTimeout(() => {
     window.print();
-    /* `afterprint` n'est pas déclenché partout — filet de sécurité. */
+    /* `afterprint` n'est pas déclenché partout : filet de sécurité. */
     setTimeout(restaurer, 1500);
   }, 120);
 }

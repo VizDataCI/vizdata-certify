@@ -1,7 +1,7 @@
 /* Téléchargement d'un fichier produit dans le navigateur.
  *
  * Isolé pour une raison pratique : exporté depuis un module d'écran, il
- * empêchait le rechargement à chaud de React — un fichier qui exporte autre
+ * empêchait le rechargement à chaud de React : un fichier qui exporte autre
  * chose que des composants perd cette propriété.
  */
 

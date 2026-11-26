@@ -1,10 +1,10 @@
 /* ===========================================================================
-   LE CERTIFICAT — document officiel VIZDATA, A4 paysage.
+   LE CERTIFICAT : document officiel VIZDATA, A4 paysage.
 
    Toutes les dimensions sont en pixels CSS, aucune n'est relative à la fenêtre.
    Le gabarit mesure 1123 × 794 px, soit exactement 297 × 210 mm à 96 ppp : le
    document imprimé est le document affiché, à l'échelle près. Une seule mesure
-   dépendante de l'écran suffirait à faire mentir l'aperçu — d'où cette règle
+   dépendante de l'écran suffirait à faire mentir l'aperçu : d'où cette règle
    sans exception.
 
    Le préfixe `vzc-` isole ces styles du reste de l'application : ils ne sont
@@ -233,7 +233,7 @@
 .vzc-signature-nom { font-size: 13px; font-weight: 600; }
 .vzc-signature-role { font-size: 11px; color: #8a91a0; margin-top: 2px; }
 
-/* Les quatre blocs du pied — cachet, date, durée, QR code — se répartissent la
+/* Les quatre blocs du pied (cachet, date, durée, QR code) se répartissent la
    largeur à intervalles comparables. Groupées au centre d'un espace très large,
    la date et la durée formaient un amas, avec un trou de part et d'autre.
    « space-around » les pose au quart et aux trois quarts de l'espace libre, ce
@@ -278,14 +278,14 @@
 /* ===========================================================================
    IMPRESSION
 
-   La recette classique — `body * { visibility: hidden }` puis réafficher la
-   zone à imprimer — a un défaut tenace : les éléments masqués gardent leur
+   La recette classique, `body * { visibility: hidden }` puis réafficher la
+   zone à imprimer : a un défaut tenace : les éléments masqués gardent leur
    place, et l'on obtient des pages blanches avant ou après le certificat. Le
    nombre de pages dépend alors de la hauteur de l'écran sous-jacent, ce qui
    est inacceptable pour un document officiel.
 
    D'où ce procédé : le document est rendu une seconde fois, par un portail
-   React, dans `#impression` — un conteneur frère de l'application, vide et
+   React, dans `#impression` : un conteneur frère de l'application, vide et
    masqué à l'écran. À l'impression, c'est l'application entière qui disparaît
    et lui seul qui s'affiche. Une page, toujours, quel que soit l'écran.
 
@@ -296,8 +296,8 @@
 #impression { display: none; }
 
 @media print {
-  /* L'orientation de la feuille — « @page { size: A4 landscape; margin: 0 } »
-     — n'est PAS déclarée ici. Une règle `@page` ne se conditionne pas par une
+  /* L'orientation de la feuille : « @page { size: A4 landscape; margin: 0 } »
+     - n'est PAS déclarée ici. Une règle `@page` ne se conditionne pas par une
      classe : posée à demeure, elle mettrait en paysage l'impression de
      n'importe quelle page de la plateforme, y compris la page publique de
      vérification. Elle est donc injectée par ZoneImpression, montée et
@@ -313,7 +313,7 @@
 
   /* Une modale, une barre de navigation ou un avis fugitif sont des gestes
      d'interface : ils n'ont rien à faire sur une feuille. `.vz-noprint` sert
-     aux cas particuliers — le certificat affiché en consultation publique, par
+     aux cas particuliers : le certificat affiché en consultation publique, par
      exemple, que le visiteur ne doit pas pouvoir emporter. */
   .vz-modal-bg,
   .vz-toast,
@@ -324,7 +324,7 @@
   .vz-noprint { display: none !important; }
 
   /* Le basculement n'a lieu QUE lorsqu'un document est réellement monté dans
-     la zone d'impression — voir ZoneImpression. Hors de ce cas, la page
+     la zone d'impression : voir ZoneImpression. Hors de ce cas, la page
      s'imprime comme elle se lit : la page publique de vérification doit
      pouvoir servir de preuve de consultation. */
   .vz-document-pret #root { display: none !important; }
@@ -342,7 +342,7 @@
 
      1123 × 794 px à 96 ppp font 297,07 × 210,08 mm. L'A4 en fait 297 × 210.
      Le document est donc plus grand que la feuille de huit centièmes de
-     millimètre — invisible à l'œil, décisif pour le moteur d'impression, qui
+     millimètre : invisible à l'œil, décisif pour le moteur d'impression, qui
      constate un débordement et ouvre une deuxième page, vide. C'est ce que
      produisait l'export PDF : deux pages, dont une blanche.
 

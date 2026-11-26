@@ -5,14 +5,14 @@
  * Chaque écran portait sa propre bifurcation « si le registre distant est
  * configuré, appeler l'API ; sinon, modifier l'objet local ». Le même
  * raisonnement était donc réécrit dans le formulaire de certificat, dans les
- * paramètres, dans l'import — avec des divergences inévitables. Ici, la
+ * paramètres, dans l'import : avec des divergences inévitables. Ici, la
  * bifurcation est prise une fois : les écrans appellent toujours la même
  * méthode et ignorent d'où vient la donnée.
  *
  * Ce que le passage à notre propre registre a retiré d'ici
  * --------------------------------------------------------
  * La journalisation et l'envoi des courriers. L'application les déclenchait
- * après coup, en appels séparés — elle pouvait donc les oublier, et une
+ * après coup, en appels séparés : elle pouvait donc les oublier, et une
  * écriture non journalisée ne se voit pas. Le serveur les fait désormais dans
  * la transaction qui écrit. Le registre local, lui, les simule : c'est ce qui
  * permet à la démonstration de montrer un journal et des notifications sans
@@ -116,7 +116,7 @@ function creerActions({ remote, dbRef, setDb, session, recharger }) {
     },
 
     /** Active ou désactive. On ne supprime jamais : effacer un titulaire
-     *  effacerait la trace des certificats qu'il a obtenus — et la clé
+     *  effacerait la trace des certificats qu'il a obtenus, et la clé
      *  étrangère est en RESTRICT, la base refuserait de toute façon. */
     async changerStatutCompte(utilisateur, status) {
       if (remote) {

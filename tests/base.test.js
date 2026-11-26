@@ -1,6 +1,6 @@
 /* Intégrité du schéma SQLite.
  *
- * Ce que la base refuse, aucune application ne peut le contourner — pas même
+ * Ce que la base refuse, aucune application ne peut le contourner : pas même
  * un script écrit à la hâte, pas même un appel direct au fichier. C'est la
  * seule garantie qui survivra à toutes les réécritures du code au-dessus,
  * d'où ces tests.
@@ -266,7 +266,7 @@ test("updated_at avance tout seul à chaque modification", () => {
 
 test("la vue publique n'expose aucune donnée privée", () => {
   /* Elle sert de définition : si une colonne privée devait apparaître sur la
-     page de vérification, il faudrait l'ajouter ici — ce qui se voit en
+     page de vérification, il faudrait l'ajouter ici : ce qui se voit en
      relecture, et casse ce test. */
   const { db, fermer } = baseNeuve();
   try {

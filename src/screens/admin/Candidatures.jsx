@@ -2,7 +2,7 @@
  *
  * Le tableau de suivi demandé : une ligne par candidature, un statut qui
  * avance de « Nouveau » à « Inscrit », et un export pour travailler hors de
- * l'écran. Rien n'est affiché publiquement — cet écran vit derrière
+ * l'écran. Rien n'est affiché publiquement : cet écran vit derrière
  * l'authentification, et la table est fermée par la politique
  * `candidatures_admin_all`.
  *

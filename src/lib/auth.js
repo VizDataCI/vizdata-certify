@@ -2,10 +2,10 @@
  *
  * Deux régimes, décidés par le mode de construction :
  *
- * — registre      : le serveur VIZDATA vérifie le mot de passe et pose un
+ * - registre      : le serveur VIZDATA vérifie le mot de passe et pose un
  *                   cookie de session HttpOnly. Le navigateur ne détient
- *                   aucun secret — il ne peut même pas lire ce cookie.
- * — démonstration : aucun mot de passe n'est vérifié, le registre vit dans le
+ *                   aucun secret : il ne peut même pas lire ce cookie.
+ * - démonstration : aucun mot de passe n'est vérifié, le registre vit dans le
  *                   navigateur. C'est `npm run demo`, et rien d'autre.
  *
  * Ce qui a changé en quittant Supabase
@@ -28,7 +28,7 @@ function humanError(error) {
 }
 
 /**
- * Connexion. Renvoie le profil complet — rôle et autorisations compris.
+ * Connexion. Renvoie le profil complet : rôle et autorisations compris.
  *
  * Supabase rendait un compte d'authentification qu'il fallait ensuite
  * rapprocher d'un profil, en un second aller-retour. Le registre les tient
@@ -73,7 +73,7 @@ async function currentUser() {
  * Il n'a plus d'objet : la session est un cookie, le serveur la valide à
  * chaque requête, et il n'y a pas de jeton à rafraîchir. La fonction est
  * conservée pour ne pas réécrire les écrans qui l'appellent, et elle ne fait
- * rien — ce qui est exactement ce qu'il faut qu'elle fasse.
+ * rien : ce qui est exactement ce qu'il faut qu'elle fasse.
  */
 function onAuthChange() {
   return () => {};

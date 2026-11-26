@@ -2,8 +2,8 @@
  *
  * Le catalogue des certifications a quitté cet écran : domaines et programmes
  * se gèrent désormais dans « Domaines & programmes ». Ce qui reste ici est
- * ce qui vaut pour toute la plateforme — l'émetteur, l'adresse de
- * vérification, le format des références — plus le diagnostic de la
+ * ce qui vaut pour toute la plateforme : l'émetteur, l'adresse de
+ * vérification, le format des références : plus le diagnostic de la
  * configuration, qui est la première chose qu'on vient chercher quand quelque
  * chose ne fonctionne pas.
  */
@@ -127,12 +127,12 @@ function AdminSettings(p) {
    Pourquoi cette carte existe
    ---------------------------
    Le registre se sauvegarde tout seul, une fois par jour, après avoir répondu
-   à une requête — l'hébergement n'offre pas de tâches planifiées. Mais cela ne
+   à une requête : l'hébergement n'offre pas de tâches planifiées. Mais cela ne
    se voit pas : rien, dans l'application, ne disait si cela se faisait. Une
    sauvegarde qu'on croit faite est pire qu'une sauvegarde qu'on sait absente.
 
    Cette carte montre donc ce qui existe réellement sur le serveur, et permet
-   d'en déclencher une avant une manipulation délicate — un import en masse,
+   d'en déclencher une avant une manipulation délicate : un import en masse,
    une révocation, une mise à jour.
 
    Ce qu'elle ne fait PAS : restaurer. La restauration remplace le registre
@@ -155,7 +155,7 @@ function CarteSauvegardes({ notify }) {
   const [liste, setListe] = useState(null);
   const [panne, setPanne] = useState("");
   const [encours, setEncours] = useState(false);
-  /* Relu à chaque incrément — après une sauvegarde manuelle. */
+  /* Relu à chaque incrément : après une sauvegarde manuelle. */
   const [tour, setTour] = useState(0);
   /* L'instant de la lecture est retenu plutôt que relu au rendu : l'heure
      n'est pas une donnée du rendu, et la relire à chaque passage ferait
@@ -191,8 +191,8 @@ function CarteSauvegardes({ notify }) {
   };
 
   const derniere = liste && liste.length > 0 ? liste[0] : null;
-  /* Plus de 48 h sans sauvegarde : soit le site n'a reçu aucune visite — c'est
-     une visite qui déclenche l'entretien —, soit l'écriture échoue. Dans les
+  /* Plus de 48 h sans sauvegarde : soit le site n'a reçu aucune visite : c'est
+     une visite qui déclenche l'entretien , soit l'écriture échoue. Dans les
      deux cas il faut le savoir, et c'est ici la seule chance de l'apprendre. */
   const vieille = derniere && lu - new Date(derniere.date).getTime() > 48 * 3600 * 1000;
 

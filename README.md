@@ -5,13 +5,13 @@ publique** des certificats délivrés par VIZDATA.
 
 > **État : complet, et prêt à être déployé.**
 >
-> La base est un fichier SQLite sur le serveur VIZDATA. Le registre précédent — un projet
-> hébergé chez un tiers — a cessé d'exister sans préavis, emportant un schéma qui n'était
+> La base est un fichier SQLite sur le serveur VIZDATA. Le registre précédent : un projet
+> hébergé chez un tiers : a cessé d'exister sans préavis, emportant un schéma qui n'était
 > écrit nulle part ailleurs. Tout ce qui suit découle de cette leçon : **la base doit
 > appartenir à VIZDATA.**
 >
 > Le registre existe en **deux implémentations**, qui servent le même schéma et les mêmes
-> routes — à la sauvegarde près : **PHP** (`api/`) pour un hébergement mutualisé sans ligne
+> routes, à la sauvegarde près : **PHP** (`api/`) pour un hébergement mutualisé sans ligne
 > de commande, c'est celle de `certify.vizdata.ci` ; **Node** (`server/`) pour un serveur
 > dont on a la main. L'interface ne sait pas laquelle elle a en face.
 >
@@ -44,9 +44,9 @@ serveur.
 
 | Script | Effet |
 | --- | --- |
-| `npm run serveur` | le registre — API et application construite, port 4321 |
+| `npm run serveur` | le registre, API et application construite, port 4321 |
 | `npm run dev` | l'interface en développement, port 5173 |
-| `npm run demo` | l'interface **sans base** — registre local, authentification factice |
+| `npm run demo` | l'interface **sans base** : registre local, authentification factice |
 | `npm run base -- init` | crée la base et le catalogue de départ |
 | `npm run base -- admin <email>` | ouvre ou promeut un administrateur |
 | `npm run base -- etat` | ce que contient la base |
@@ -56,7 +56,7 @@ serveur.
 | `npm run build` | construit l'interface dans `dist/` |
 | `npm test` | 220 tests, sans aucune dépendance de test |
 | `npm run lint` | Oxlint |
-| `npm run php` | contrôle de surface des fichiers PHP — à défaut de `php -l` |
+| `npm run php` | contrôle de surface des fichiers PHP : à défaut de `php -l` |
 | `npm run paquet` | l'archive à téléverser : interface construite + registre PHP |
 
 ### Comptes de démonstration
@@ -68,12 +68,12 @@ est libre**.
 | Rôle | Adresse | Ce qu'il montre |
 | --- | --- | --- |
 | Administrateur | `admin@vizdata.ci` | tous les écrans |
-| Gestionnaire | `gestion@vizdata.ci` | deux autorisations sur quatre — ni catalogue, ni rôles, ni révocation |
+| Gestionnaire | `gestion@vizdata.ci` | deux autorisations sur quatre : ni catalogue, ni rôles, ni révocation |
 | Certifié | `fabrice.boh@vizdata.ci` | espace personnel, plusieurs certifications |
 
 Référence valide pour tester la vérification : `VIZ-2026-EXCEL-AVA-000125`. Les
 références du jeu de démonstration sont recalculées à chaque registre vierge, à partir de
-dates relatives à aujourd'hui — sans quoi le tableau de bord finirait par s'ouvrir sur
+dates relatives à aujourd'hui : sans quoi le tableau de bord finirait par s'ouvrir sur
 « 0 délivrance sur les trente derniers jours ».
 
 Ce mode ne doit jamais être mis en ligne : la connexion y accepte n'importe quel mot de
@@ -90,8 +90,8 @@ Quatre règles structurent tout le reste :
 2. **On partage la page de vérification, jamais le fichier.** Le lien diffusé pointe
    vers `/verifier/{jeton}`. Un certificat révoqué ne peut donc jamais apparaître comme
    valide, même si son PDF continue de circuler.
-3. **L'autorisation est tenue par le serveur, pas par l'écran.** Un seul module décide —
-   `server/autorisations.mjs` —, et il lève au lieu de rendre un booléen, parce qu'un
+3. **L'autorisation est tenue par le serveur, pas par l'écran.** Un seul module décide
+   `server/autorisations.mjs` , et il lève au lieu de rendre un booléen, parce qu'un
    booléen se laisse oublier. L'interface se contente de ne pas proposer ce qu'elle sait
    refusé. Si les deux divergent, l'écran propose une action que le serveur refuse :
    désagréable, jamais dangereux. L'inverse serait une faille.
@@ -118,25 +118,25 @@ est complète même si aucun n'est présent**.
 
 Trois niveaux, et la page se tient à chacun :
 
-1. **Aucun fichier** — le champ de nuit VIZDATA avec sa vignette.
-2. **L'affiche seule** — l'image fixe s'affiche.
-3. **La vidéo** — la séquence joue, muette et en boucle.
+1. **Aucun fichier** : le champ de nuit VIZDATA avec sa vignette.
+2. **L'affiche seule** : l'image fixe s'affiche.
+3. **La vidéo** : la séquence joue, muette et en boucle.
 
 **Pourquoi un MP4 et non un GIF.** Un GIF de six secondes en 1600 px pèse huit à douze
-mégaoctets, ne connaît que 256 couleurs — les dégradés d'une salle de cérémonie y
-deviennent des bandes — et se décode par le processeur. Le même plan en H.264 pèse 400
+mégaoctets, ne connaît que 256 couleurs : les dégradés d'une salle de cérémonie y
+deviennent des bandes, et se décode par le processeur. Le même plan en H.264 pèse 400
 à 800 kilooctets, garde ses couleurs, et se décode par la puce vidéo. Sur une connexion
 abidjanaise, c'est la différence entre une page qui s'ouvre et une page qu'on abandonne.
 
 **Le cadrage.** Le tiers gauche doit rester calme : c'est là que le titre se pose. Un
-plan fixe ou un travelling lent, jamais un plan agité — du texte sur une image qui
+plan fixe ou un travelling lent, jamais un plan agité : du texte sur une image qui
 bouge vite est illisible. Et la séquence ne joue pas pour qui a demandé moins
 d'animations : l'affiche la remplace.
 
 ## Domaines et programmes
 
 Le registre ne connaissait qu'une liste plate de « types » : `EXCEL`, `PBI`, `DATA`. Or
-VIZDATA délivre six certifications Excel distinctes — débutant, intermédiaire, avancé,
+VIZDATA délivre six certifications Excel distinctes : débutant, intermédiaire, avancé,
 expert, tableaux croisés dynamiques, structuration. Un code par domaine ne pouvait pas
 les porter.
 
@@ -147,7 +147,7 @@ les porter.
 
 `certificate_types` **devient** la table des programmes plutôt que d'être doublée par
 une table neuve : elle portait déjà code, intitulé, description, durée et statut, et les
-certificats délivrés gardent ainsi leur clé étrangère — donc restent vérifiables. Le
+certificats délivrés gardent ainsi leur clé étrangère, donc restent vérifiables. Le
 domaine n'est qu'une colonne de plus.
 
 Ajouter un domaine ou un programme se fait depuis **Domaines & programmes**, sans
@@ -177,7 +177,7 @@ plateforme), et personne ne peut désactiver son propre compte.
 
 ## Les trois espaces
 
-**Public — sans compte.** Accueil et recherche par référence, page de vérification
+**Public : sans compte.** Accueil et recherche par référence, page de vérification
 (verdict, titulaire, certification, domaine, date de délivrance, statut, compétences
 validées, motif de révocation le cas échéant), **consultation** du certificat, profils
 publics `/u/{identifiant}` pour les titulaires qui l'activent.
@@ -186,12 +186,12 @@ Consultation seulement : **ni téléchargement, ni partage**. Celui qui vérifie
 l'authenticité ; il n'a pas à repartir avec l'attestation d'autrui. Diffuser le document
 appartient à son titulaire, depuis son espace, et à VIZDATA depuis l'administration. Sur
 ce chemin, le document n'est pas monté dans la zone d'impression : il n'y a donc rien à
-imprimer — sans prétendre empêcher une capture d'écran, ce qu'aucune application ne peut
+imprimer : sans prétendre empêcher une capture d'écran, ce qu'aucune application ne peut
 faire.
 
 **Espace certifié.** Tableau de bord personnel : nombre de certifications, domaines
-couverts, et une carte par certification avec trois actions — consulter, télécharger en
-PDF, imprimer — plus le partage et le lien vers la page de vérification. Profil
+couverts, et une carte par certification avec trois actions : consulter, télécharger en
+PDF, imprimer : plus le partage et le lien vers la page de vérification. Profil
 modifiable, sauf l'adresse e-mail qui identifie le compte. Changement de mot de passe
 avec vérification du mot de passe actuel.
 
@@ -204,12 +204,12 @@ envoyées, import en série, statistiques.
 
 Trois étapes, dans cet ordre, parce qu'un certificat ne peut pas exister sans titulaire :
 
-1. **Le certifié** — on le cherche par nom ou par adresse. S'il n'existe pas, on le crée
+1. **Le certifié** : on le cherche par nom ou par adresse. S'il n'existe pas, on le crée
    sur place : son compte d'accès s'ouvre et son invitation part avant que la
    certification ne lui soit attribuée. Si l'adresse est déjà connue, le compte existant
-   est réutilisé — un doublon donnerait un second espace personnel, vide.
-2. **La certification** — domaine, puis programme.
-3. **La délivrance** — date, durée, formateur, signataire, compétences validées.
+   est réutilisé : un doublon donnerait un second espace personnel, vide.
+2. **La certification** : domaine, puis programme.
+3. **La délivrance** : date, durée, formateur, signataire, compétences validées.
 
 La référence et le jeton public sont produits par la base, non par le navigateur : deux
 administrateurs qui délivrent au même instant ne doivent pas obtenir le même numéro.
@@ -238,12 +238,12 @@ arbitraire : un navigateur imprime le pixel CSS à 96 points par pouce, et 1123 
 
 La conséquence est celle qu'on attend d'un document officiel : **le PDF téléchargé et le
 document imprimé ont exactement la mise en page de l'écran.** Le document n'est jamais
-remis en page pour l'impression — à l'écran il est réduit par une transformation
+remis en page pour l'impression : à l'écran il est réduit par une transformation
 d'échelle, sur le papier l'échelle est retirée et le gabarit tombe pile dans la feuille.
 Aucune dimension intérieure n'est relative à la fenêtre : une seule suffirait à faire
 mentir l'aperçu.
 
-Il est rendu **une seconde fois**, par un portail React, dans `#impression` — un
+Il est rendu **une seconde fois**, par un portail React, dans `#impression` : un
 conteneur frère de l'application, vide et masqué à l'écran. À l'impression, c'est
 l'application entière qui disparaît et lui seul qui s'affiche. La recette classique
 (`body * { visibility: hidden }` puis réafficher la zone) laisse les éléments masqués
@@ -251,15 +251,15 @@ occuper leur place : le nombre de pages dépendait alors de la hauteur de l'écr
 sous-jacent. Ici, une page, toujours.
 
 Le basculement n'a lieu **que** lorsqu'un document est réellement monté dans cette zone
-— une classe posée sur `<html>` par `ZoneImpression`. Sans ce détail, la règle
+ une classe posée sur `<html>` par `ZoneImpression`. Sans ce détail, la règle
 s'appliquerait en permanence et un `Ctrl+P` n'importe où dans la plateforme sortirait une
 page blanche, y compris sur la page publique de vérification, qu'on peut légitimement
 vouloir imprimer comme preuve de consultation. L'orientation de la feuille est injectée
 avec le document pour la même raison : une règle `@page` ne se laisse pas conditionner
 par une classe.
 
-« Télécharger en PDF » et « Imprimer » ouvrent la même boîte de dialogue — celle du
-navigateur — et c'est délibéré : son moteur produit un texte vectoriel, net à tout
+« Télécharger en PDF » et « Imprimer » ouvrent la même boîte de dialogue : celle du
+navigateur, et c'est délibéré : son moteur produit un texte vectoriel, net à tout
 agrandissement. Les bibliothèques PDF disponibles côté navigateur passent par une capture
 en pixels, plus lourde et floue à l'impression. Ce qui distingue les deux gestes est le
 nom proposé pour le fichier : le titre du document est remplacé par la référence, de
@@ -276,24 +276,24 @@ compte moins que la définition de la vérité, et deux copies d'un schéma fini
 toujours par diverger.
 
 ```
-api/                        le registre, en PHP — celui qui tourne en production
+api/                        le registre, en PHP : celui qui tourne en production
   index.php                 routes, cookies, limitation, masquage des erreurs
   config.exemple.php        le modèle de configuration ; config.php reste sur le serveur
   lib/Base.php              ouverture SQLite, pragmas, migrations
   lib/Comptes.php           mots de passe, sessions, liens à usage unique
-  lib/Autorisations.php     qui a le droit de quoi — le remplaçant de RLS
+  lib/Autorisations.php     qui a le droit de quoi : le remplaçant de RLS
   lib/Registre.php          les opérations du registre
   lib/Academie.php          cohortes et candidatures
   lib/Courrier.php          invitation, réinitialisation, avis, candidature
   lib/Chiffrement.php       AES-256-GCM des sauvegardes
   lib/Sauvegarde.php        copie à chaud, vérification, chiffrement, purge
 
-server/                     le registre, en Node — pour un serveur dont on a la main
+server/                     le registre, en Node : pour un serveur dont on a la main
   index.mjs                 serveur HTTP, routes, fichiers statiques
   db.mjs                    ouverture SQLite, pragmas, migrations
-  schema/001_socle.sql      le schéma — LA source, lue aussi par la version PHP
+  schema/001_socle.sql      le schéma, LA source, lue aussi par la version PHP
   comptes.mjs               mots de passe, sessions, liens à usage unique
-  autorisations.mjs         qui a le droit de quoi — le remplaçant de RLS
+  autorisations.mjs         qui a le droit de quoi : le remplaçant de RLS
   registre.mjs              les opérations du registre
   academie.mjs              cohortes et candidatures
   courrier.mjs              invitation, réinitialisation, avis
@@ -302,12 +302,12 @@ src/
   main.jsx                  point d'entrée
   App.jsx                   état applicatif, routage, persistance
   styles.css                interface
-  certificat.css            le document seul — mesures fixes, règles d'impression
+  certificat.css            le document seul : mesures fixes, règles d'impression
   lib/
     registre.js             le client : un fetch, un cookie
     auth.js                 connexion, session, mot de passe
-    mot-de-passe.js         exigences, lecture du lien — partagé avec le serveur
-    permissions.js          rôles et autorisations — partagé avec le serveur
+    mot-de-passe.js         exigences, lecture du lien : partagé avec le serveur
+    permissions.js          rôles et autorisations : partagé avec le serveur
     router.js               correspondance URL ↔ écran
     qr.js                   encodage QR
     certificates.js         effectiveStatus, nextReference, slugify
@@ -330,19 +330,19 @@ scripts/
   sauvegarde.mjs            copie à chaud
   verifier-build.mjs        refuse de construire une démonstration par mégarde
 
-supabase/                   l'ANCIENNE base — histoire, plus lue par personne
+supabase/                   l'ANCIENNE base : histoire, plus lue par personne
 ```
 
 **Deux modules sont partagés entre le navigateur et le serveur** :
 `src/lib/permissions.js` et `src/lib/mot-de-passe.js`. Ce n'est pas une commodité. Si le
 serveur redéclarait sa propre liste d'autorisations, ou ses propres exigences de mot de
-passe, l'écran finirait par cacher une action que le serveur accepte — ou, bien pire, par
+passe, l'écran finirait par cacher une action que le serveur accepte : ou, bien pire, par
 en proposer une qu'il refuse. En les important, la divergence devient impossible.
 
 **`screens/admin/actions.js` mérite une mention.** Chaque écran portait sa propre
 bifurcation « si le registre distant est configuré, appeler l'API ; sinon, modifier
 l'objet local ». Le même raisonnement était donc réécrit dans le formulaire de
-certificat, dans les paramètres, dans l'import — avec des divergences inévitables. La
+certificat, dans les paramètres, dans l'import : avec des divergences inévitables. La
 bifurcation est prise une fois : les écrans appellent toujours la même méthode et
 ignorent d'où vient la donnée.
 
@@ -354,14 +354,13 @@ fonctionne sans rien de particulier.
 
 Ce qui tient la sécurité, dans l'ordre :
 
-1. La session est lue au début de chaque requête, depuis un cookie **HttpOnly** — donc
-   inaccessible au JavaScript de la page, ce qui met les sessions hors de portée d'une
+1. La session est lue au début de chaque requête, depuis un cookie **HttpOnly**, donc    inaccessible au JavaScript de la page, ce qui met les sessions hors de portée d'une
    injection dans l'interface. **SameSite=Lax** ferme la falsification de requête
    inter-site sans qu'il faille gérer de jeton anti-CSRF.
 2. Chaque route déclare si elle est publique. **Une route qui ne le déclare pas exige une
    session** : l'oubli penche du bon côté.
 3. L'autorisation fine est demandée à `server/autorisations.mjs`, **qui lève au lieu de
-   rendre un booléen**. Une fonction qui rend `false` se laisse oublier — `if (peut(…))`
+   rendre un booléen**. Une fonction qui rend `false` se laisse oublier, `if (peut(…))`
    sans `else` est une faille muette. Une fonction qui lève interrompt la route.
 4. Les erreurs inattendues ne sortent jamais telles quelles : elles sont journalisées
    côté serveur et répondues en « une erreur interne ». Un message de SQLite renseignerait
@@ -376,7 +375,7 @@ vue, sept déclencheurs.
 
 Ce que la base refuse, aucune application ne peut le contourner : clés étrangères,
 unicité, CHECK. Un statut hors liste, une référence en double, un certificat sans
-titulaire, une révocation sans motif — refusés par le moteur.
+titulaire, une révocation sans motif : refusés par le moteur.
 
 Deux contraintes structurent le produit :
 
@@ -409,14 +408,14 @@ C'est le changement le plus important, et il mérite d'être dit clairement.
 
 Avec Supabase, le paquet livré au navigateur devait embarquer la clé publiable du projet.
 Tout un garde-fou de construction existait pour éviter qu'une clé **secrète** s'y glisse
-par mégarde — garde-fou ajouté après trois incidents réels : une clé absente, une clé
+par mégarde : garde-fou ajouté après trois incidents réels : une clé absente, une clé
 secrète livrée au navigateur, une clé tronquée au collage qui avait produit un
 déploiement d'apparence saine sur lequel chaque vérification répondait « Invalid API
 key ».
 
 Ces trois incidents ne peuvent plus se produire. Les identifiants du registre ne quittent
 pas le serveur, et la session est un cookie que la page ne peut même pas lire. Une
-catégorie entière d'accidents a disparu avec la dépendance qui l'apportait — et avec
+catégorie entière d'accidents a disparu avec la dépendance qui l'apportait, et avec
 elle 217 ko de paquet.
 
 ### Les mots de passe
@@ -467,8 +466,8 @@ Trois garde-fous, parce qu'un lien de réinitialisation est une clé du compte :
 - **Seule l'empreinte du jeton est stockée.** Le fichier de base est copié pour les
   sauvegardes ; s'il contenait des jetons utilisables, toute sauvegarde égarée donnerait
   accès aux comptes.
-- **Le lien expire** — une heure pour une réinitialisation, sept jours pour une
-  invitation — **et ne sert qu'une fois.** Sans cela, un lien qui traîne dans une boîte
+- **Le lien expire** : une heure pour une réinitialisation, sept jours pour une
+  invitation, **et ne sert qu'une fois.** Sans cela, un lien qui traîne dans une boîte
   de réception reste une clé, des années durant.
 - **Demander un second lien invalide le premier.** Deux liens valides en circulation,
   c'est une porte de plus, et la plus ancienne est celle qui a eu le plus de temps pour
@@ -485,11 +484,11 @@ soupçonne que le compte est compromis.
 ### Les courriers
 
 Quatre messages : invitation, réinitialisation, certification attribuée, profil modifié.
-Un seul gabarit, en tableaux — ce qui survit aux clients de messagerie, qui ignorent
+Un seul gabarit, en tableaux : ce qui survit aux clients de messagerie, qui ignorent
 flexbox et une bonne part du CSS.
 
 Sans `RESEND_API_KEY`, l'envoi **n'échoue pas** : la notification est inscrite en attente,
-l'écran Notifications la montre, et le lien est imprimé dans la console du serveur — ce
+l'écran Notifications la montre, et le lien est imprimé dans la console du serveur : ce
 qui rend la chaîne d'invitation éprouvable sans compte tiers. Attribuer un certificat ne
 doit pas échouer parce qu'un e-mail n'a pas pu partir : le certificat est délivré, et
 déjà visible dans l'espace du titulaire.
@@ -502,7 +501,7 @@ l'adresse de l'API suffirait à envoyer du courrier au nom de VIZDATA à n'impor
 `/academie` est la page de vente de la formation Excel + Power BI : huit jours en
 présentiel à Abidjan, en cohortes trimestrielles. Elle vit dans la même application que
 le registre parce qu'elle partage sa marque, sa base, son déploiement et son
-espace d'administration — mais c'est un second métier, et le code le dit : son contenu,
+espace d'administration, mais c'est un second métier, et le code le dit : son contenu,
 ses styles et son accès distant sont dans `src/academie/`, ses écrans dans
 `src/screens/academie/`, et ses deux écrans d'administration forment leur propre groupe
 dans la barre latérale.
@@ -512,7 +511,7 @@ dans la barre latérale.
 Trois informations ne sont écrites nulle part dans le code : **les dates de session, le
 nombre de places et les tarifs**. Elles vivent dans la table `cohortes`, modifiables
 depuis `Administration → Cohortes`. Sans cohorte publiée, la page affiche le programme
-sans date et invite à écrire sur WhatsApp — c'est préférable à une date inventée qu'il
+sans date et invite à écrire sur WhatsApp : c'est préférable à une date inventée qu'il
 faudrait ensuite démentir.
 
 Il n'y a pas non plus de section « témoignages » : il n'y a pas de témoignage à publier.
@@ -526,7 +525,7 @@ Il n'y a pas non plus de section « témoignages » : il n'y a pas de témoignag
    `CDA-2026-0001`. **Aucune route publique ne lit cette table** : une candidature porte
    un nom, un numéro de téléphone et une adresse e-mail. Les deux engagements du
    candidat sont exigés par la base autant que par le formulaire, et trois candidatures
-   par adresse et par jour suffisent — au-delà, le formulaire public servirait à remplir
+   par adresse et par jour suffisent : au-delà, le formulaire public servirait à remplir
    la table.
 3. Le même appel envoie **l'accusé de réception au candidat** et **l'alerte à VIZDATA**,
    puis rend le verdict de l'accusé.
@@ -542,7 +541,7 @@ Un envoi demande une clé d'API, et une clé d'API dans un paquet navigateur est
 publique. Le registre compose donc les deux messages lui-même, dans la requête qui
 enregistre la candidature. Il y avait auparavant un appel séparé depuis le navigateur
 vers une fonction de notification : au-delà de la clé, cette séparation laissait un cas
-gênant — candidature enregistrée, second appel perdu, candidat sans accusé et VIZDATA
+gênant : candidature enregistrée, second appel perdu, candidat sans accusé et VIZDATA
 sans alerte. Un seul aller-retour supprime ce cas.
 
 Seul le booléen « parti / pas parti » revient au navigateur. La raison d'un échec parle
@@ -554,14 +553,14 @@ l'administration consulte.
 1. **Rien à migrer** : les tables `cohortes` et `candidatures` font partie du socle,
    appliqué au premier démarrage du serveur.
 2. **Créer la première cohorte** dans `Administration → Cohortes`, puis la publier.
-   Sans cohorte publiée, la page affiche le programme sans date — c'est préférable à une
+   Sans cohorte publiée, la page affiche le programme sans date : c'est préférable à une
    date inventée qu'il faudrait ensuite démentir.
 3. **Les e-mails** (facultatif) : `RESEND_API_KEY` sur le serveur. Aucune variable du
    registre ne porte le préfixe `VITE_`, donc aucune n'entre dans le paquet livré au
    navigateur.
-4. **Les photographies** : déposer les portraits officiels dans `public/academie/` —
+4. **Les photographies** : déposer les portraits officiels dans `public/academie/`
    voir [docs/visuels-academie.md](docs/visuels-academie.md). En leur absence, la page
-   affiche les initiales sur un fond de marque — jamais une image cassée, jamais un
+   affiche les initiales sur un fond de marque : jamais une image cassée, jamais un
    portrait de banque d'images qui ferait passer un inconnu pour un formateur.
 
 ### Les couleurs du graphique ne sont pas celles du logo
@@ -569,7 +568,7 @@ l'administration consulte.
 L'aperçu de tableau de bord du hero est dessiné en SVG. Ses marques de données
 utilisent `#1578A6`, `#D9700F` et `#7A4C9E`, et non le bleu, l'orange et le violet
 exacts du logo : côte à côte, le bleu et le violet de la charte sont indiscernables pour
-une vision deutéranope (ΔE 3,5 — mesuré, pas estimé). Le trio retenu passe les contrôles
+une vision deutéranope (ΔE 3,5 : mesuré, pas estimé). Le trio retenu passe les contrôles
 de séparation, de bande de clarté et de contraste sur fond blanc. Le logo, lui, reste
 intact : il n'est ni redessiné ni recoloré.
 
@@ -579,7 +578,7 @@ intact : il n'est ni redessiné ni recoloré.
 | --- | --- |
 | `/` | accueil, recherche par référence |
 | `/verifier` | saisie d'une référence |
-| `/verifier/{jeton}` | verdict de vérification — **c'est l'adresse imprimée dans le QR code** |
+| `/verifier/{jeton}` | verdict de vérification, **c'est l'adresse imprimée dans le QR code** |
 | `/u/{identifiant}` | profil public d'un certifié |
 | `/a-propos` | présentation du registre |
 | `/academie` | page de vente de la formation CITIZEN DATA ANALYST |
@@ -597,7 +596,7 @@ existe ou non à cette adresse.
 
 Une vérification faite par saisie de référence redirige vers `/verifier/{jeton}` : le
 lien obtenu est donc partageable tel quel. Le certificat déjà résolu voyage avec la
-route, de sorte que la page ne redemande pas ce qu'elle vient d'obtenir — sans quoi une
+route, de sorte que la page ne redemande pas ce qu'elle vient d'obtenir : sans quoi une
 seconde consultation serait comptée.
 
 ### L'API
@@ -633,7 +632,7 @@ navigateur.
 npm test
 ```
 
-**220 tests**, exécutés par le lanceur intégré de Node — aucune dépendance de test dans
+**220 tests**, exécutés par le lanceur intégré de Node : aucune dépendance de test dans
 le projet.
 
 | Ce qui est couvert | Pourquoi |
@@ -652,7 +651,7 @@ Trois remarques sur ce choix de couverture.
 
 **Ces tests couvrent l'implémentation Node, pas la PHP.** Il n'y a pas d'interpréteur
 PHP sur la machine de développement : `npm run php` ne contrôle que la surface des
-fichiers — délimiteurs, chaînes, absence de `?>` final — et le dit. Ce qui tient les deux
+fichiers (délimiteurs, chaînes, absence de `?>` final) et le dit. Ce qui tient les deux
 implémentations ensemble, c'est le **schéma partagé** : les tests de schéma (14) valent
 pour les deux, puisque c'est la base qui refuse. Le reste du registre PHP se vérifie sur
 le serveur, en traversant l'application : connexion, délivrance, vérification publique,
@@ -660,7 +659,7 @@ sauvegarde, restauration. C'est une couverture plus faible, et il faut le savoir
 que de l'ignorer.
 
 **Les tests d'autorisation sont ce que la migration fait gagner.** Les politiques RLS de
-Postgres étaient plus sûres par construction — elles vivaient dans la base — mais elles
+Postgres étaient plus sûres par construction (elles vivaient dans la base) mais elles
 n'ont jamais pu être éprouvées, faute de projet vivant. L'autorisation est passée d'un
 endroit sûr et invérifiable à un endroit ordinaire et entièrement vérifié. Les tests
 unitaires disent que la serrure fonctionne ; les tests d'intégration disent qu'elle est
@@ -680,7 +679,7 @@ dossier web. `npm run paquet` produit l'archive, le gestionnaire de fichiers du 
 décompresse, et une tâche planifiée sauvegarde chaque nuit. Pas de base à administrer, pas
 de service tiers, pas de clé dans le paquet livré au navigateur.
 
-La voie Node — un service derrière nginx, un fichier dans `/var/lib/vizdata-certify/` —
+La voie Node : un service derrière nginx, un fichier dans `/var/lib/vizdata-certify/`
 reste décrite dans le même document, pour un serveur dont on a la main.
 
 ### Sauvegardes
@@ -697,10 +696,10 @@ registre.
 
 | | Ce que ça évite |
 | --- | --- |
-| **À chaud** | `cp certify.db` pendant une écriture produit un fichier incohérent — SQLite tient une partie des données dans un journal séparé, et la copie peut attraper l'un sans l'autre. On s'en aperçoit le jour de la restauration. |
+| **À chaud** | `cp certify.db` pendant une écriture produit un fichier incohérent, SQLite tient une partie des données dans un journal séparé, et la copie peut attraper l'un sans l'autre. On s'en aperçoit le jour de la restauration. |
 | **Vérifiée** | une sauvegarde jamais relue est un espoir. Celle-ci est rouverte, contrôlée page par page, et l'on s'assure qu'elle contient bien les tables du registre. En cas de doute, **rien n'est laissé en place** : un fichier inexploitable rassure à tort. |
 | **Chiffrée** | elle contient noms, téléphones et empreintes de mots de passe. AES-256-GCM, clé dérivée par scrypt, paramètres inscrits dans le fichier pour qu'il reste lisible dans cinq ans. |
-| **Expédiée** | l'étape « pense à la copier ailleurs » ne se fait jamais. Elle est confiée à une commande que le script lance lui-même — scp, rclone, ou un `git push` vers un dépôt privé. |
+| **Expédiée** | l'étape « pense à la copier ailleurs » ne se fait jamais. Elle est confiée à une commande que le script lance lui-même : scp, rclone, ou un `git push` vers un dépôt privé. |
 
 Le script **refuse d'expédier une sauvegarde non chiffrée** : régler un problème de
 disponibilité en créant une fuite serait un mauvais échange.
@@ -713,7 +712,7 @@ npm run restaurer -- <fichier>
 
 Sans `--oui`, elle ne touche à rien : elle déchiffre, vérifie, et affiche ce que contient
 la sauvegarde **en regard de ce que contient la base actuelle**. On voit ce qu'on
-s'apprête à remplacer. Avec `--oui`, la base en place est d'abord mise de côté — restaurer
+s'apprête à remplacer. Avec `--oui`, la base en place est d'abord mise de côté : restaurer
 la mauvaise sauvegarde est une erreur banale, la rendre irréversible serait une faute.
 
 Tout cela est éprouvé par des tests qui détruisent réellement une base et la restaurent,
@@ -758,7 +757,7 @@ les balises avant d'envoyer `index.html`. Ce n'est pas fait.
 `supabase/` est conservé tel quel : six migrations Postgres, deux fonctions Edge, et le
 socle reconstruit en novembre 2026 après la disparition du projet. **Rien dans le code ne
 les lit plus.** C'est l'histoire de la base précédente, gardée parce qu'un registre ne
-jette pas ses archives — et parce que les deux schémas se correspondent table pour table,
+jette pas ses archives, et parce que les deux schémas se correspondent table pour table,
 si des données devaient un jour en être reprises.
 
 ## Limites connues
@@ -777,12 +776,12 @@ si des données devaient un jour en être reprises.
   passent par une capture en pixels.
 - **Les onglets internes ne sont pas dans l'URL.** `/administration` et `/espace` ouvrent
   toujours leur premier onglet.
-- **Authentification factice en démonstration.** À ne jamais déployer dans cet état — le
+- **Authentification factice en démonstration.** À ne jamais déployer dans cet état : le
   garde-fou de construction le refuse.
 - **La page de vente charge toute l'application.** Un visiteur de `/academie` télécharge
   aussi les écrans d'administration. Un découpage par route (`React.lazy`) en retirerait
   une part ; il n'a pas été fait pour ne pas toucher au routage à cette occasion.
 - **Les composants ne sont pas testés automatiquement.** Les enchaînements d'écrans ont
-  été éprouvés à la main, dans un navigateur, contre le vrai serveur et la vraie base —
+  été éprouvés à la main, dans un navigateur, contre le vrai serveur et la vraie base
   invitation du premier administrateur, création d'une certifiée, attribution,
   vérification publique, document A4. Ce n'est pas une suite de tests.

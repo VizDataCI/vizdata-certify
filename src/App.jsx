@@ -56,7 +56,7 @@ export default function App() {
 
   /** Profil applicatif du compte connecté.
    *
-   *  Le registre rend le profil complet — rôle et autorisations compris — dès
+   *  Le registre rend le profil complet (rôle et autorisations compris) dès
    *  la connexion : il n'y a plus de compte d'authentification à rapprocher
    *  d'un profil en un second aller-retour, comme du temps où les deux
    *  vivaient dans des tables séparées. En démonstration, le profil se cherche
@@ -118,7 +118,7 @@ export default function App() {
    * Quand le compte porte un second facteur, le serveur ne rend pas de profil
    * mais un défi : aucune session n'est ouverte, et c'est l'écran de connexion
    * qui demande le code. On lui rend la réponse telle quelle plutôt que de
-   * l'interpréter ici — la décision d'afficher un champ de plus lui appartient.
+   * l'interpréter ici : la décision d'afficher un champ de plus lui appartient.
    */
   const login = async (email, password) => {
     const account = await signIn(email, password);
@@ -132,7 +132,7 @@ export default function App() {
      Le registre refusait déjà les essais en masse, mais EN SILENCE : on
      pouvait passer la nuit à essayer des mots de passe sur le compte
      d'administration sans que personne ne l'apprenne jamais. Le chiffre est
-     annoncé à l'entrée, une fois, et seulement s'il y a quelque chose à dire —
+     annoncé à l'entrée, une fois, et seulement s'il y a quelque chose à dire
      un seul échec est le plus souvent une faute de frappe, et crier au loup
      chaque fois apprendrait surtout à ne plus écouter. */
   const avertirDesEchecs = (account) => {
@@ -164,7 +164,7 @@ export default function App() {
 
   /* La déconnexion automatique ramène à l'écran de connexion, et non à
      l'accueil : on y était pour travailler, on veut y revenir. Et elle le
-     DIT — une session qui disparaît sans un mot se lit comme une panne, et
+     DIT : une session qui disparaît sans un mot se lit comme une panne, et
      l'on recommence en se demandant ce qu'on a cassé. */
   const expirerParInactivite = async () => {
     await signOut();
@@ -188,7 +188,7 @@ export default function App() {
   /* L'adresse est construite par le routeur, jamais à la main : c'est elle qui
      part dans les QR codes imprimés, et un chemin périmé y resterait gravé.
      Le lien a un temps pointé vers /verify/ alors que le routage attendait
-     /verifier/ — un certificat imprimé entre-temps aurait été invérifiable. */
+     /verifier/ : un certificat imprimé entre-temps aurait été invérifiable. */
   const verifyUrl = (c) => BASE_URL + toPath({ view: "verifyResult", token: c.public_token });
 
   /* Le prochain identifiant est le PLUS GRAND plus un, jamais « celui du

@@ -7,7 +7,7 @@
  *
  * Sous Supabase, cette séparation tenait à des politiques RLS et à deux
  * fonctions `security definer`. Elle tient désormais au fait qu'il n'existe
- * pas de route publique pour lire ces tables — ce qui se vérifie en lisant la
+ * pas de route publique pour lire ces tables : ce qui se vérifie en lisant la
  * table des routes du serveur.
  */
 
@@ -24,7 +24,7 @@ const estBranchee = registreDistant;
  * `null` est un cas normal, pas une panne : tant qu'aucune session n'est
  * publiée, la page affiche le programme et les tarifs de référence sans
  * annoncer de date. Une page de vente qui tomberait parce qu'aucune session
- * n'est ouverte serait absurde — d'où le rattrapage silencieux.
+ * n'est ouverte serait absurde : d'où le rattrapage silencieux.
  */
 async function cohortePubliee() {
   if (!estBranchee) return null;
@@ -38,15 +38,15 @@ async function cohortePubliee() {
 /**
  * Enregistre une candidature et rend sa référence (« CDA-2026-0001 »).
  *
- * La candidature normalisée est attendue — voir normaliserCandidature().
+ * La candidature normalisée est attendue : voir normaliserCandidature().
  *
- * Les deux courriers — l'accusé au candidat, l'alerte à VIZDATA — partent du
+ * Les deux courriers (l'accusé au candidat, l'alerte à VIZDATA) partent du
  * serveur, dans la même requête. Ils ne peuvent pas partir d'ici : un envoi
  * demande une clé d'API, et une clé d'API dans un paquet navigateur est une
  * clé publique. Il y avait auparavant un second appel du navigateur vers une
  * fonction de notification ; le registre s'en charge désormais, ce qui ferme
  * au passage le cas gênant où la candidature était enregistrée et l'appel
- * suivant perdu — un candidat sans accusé, et VIZDATA sans alerte.
+ * suivant perdu : un candidat sans accusé, et VIZDATA sans alerte.
  *
  * @returns {Promise<{reference: string, courriel: {envoye: boolean}}>}
  */

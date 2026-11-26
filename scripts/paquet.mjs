@@ -4,7 +4,7 @@
  *
  * L'hébergement de VIZDATA est un mutualisé Plesk : PHP 8.4, pas de Node, pas
  * d'accès SSH. Le déploiement se fait donc par le gestionnaire de fichiers du
- * panneau — on dépose une archive, on la décompresse, et c'est tout.
+ * panneau : on dépose une archive, on la décompresse, et c'est tout.
  *
  * Ce que contient le paquet
  * -------------------------
@@ -19,7 +19,7 @@
  * jamais porter de données personnelles ni de clé. `config.php` est écrit sur
  * le serveur, et lui seul.
  *
- * Le schéma vient de server/schema/ — un seul fichier dans le dépôt, recopié
+ * Le schéma vient de server/schema/ : un seul fichier dans le dépôt, recopié
  * ici. Les deux implémentations du registre partagent donc leur définition de
  * la vérité.
  */
@@ -50,14 +50,14 @@ const CONTENU = [
   ["server/schema", "api/schema"],
 ];
 
-const LISEZMOI = `# VIZDATA CERTIFY — paquet de déploiement
+const LISEZMOI = `# VIZDATA CERTIFY : paquet de déploiement
 
 Pour un hébergement mutualisé : PHP 8.4, SQLite, pas de ligne de commande.
 **Aucune dépendance à installer.**
 
 ## 1. Déposer les fichiers
 
-Décompressez tout à la racine du site — là où se trouvent aujourd'hui
+Décompressez tout à la racine du site : là où se trouvent aujourd'hui
 \`index.html\` et \`assets/\`. Vous pouvez écraser l'ancienne version : elle est
 entièrement remplacée.
 
@@ -67,8 +67,8 @@ Après décompression, la racine contient :
 
 ## 2. Créer le dossier de la base, HORS du dossier web
 
-Dans le gestionnaire de fichiers, remontez d'un niveau — au-dessus de
-\`certify.vizdata.ci\` — et créez un dossier \`certify-registre\`.
+Dans le gestionnaire de fichiers, remontez d'un niveau : au-dessus de
+\`certify.vizdata.ci\`, et créez un dossier \`certify-registre\`.
 
 **C'est important.** La base contient les adresses, les téléphones et les
 empreintes des mots de passe. Un fichier servi par erreur livrerait tout le
@@ -79,7 +79,7 @@ registre d'un coup.
 Copiez \`api/config.exemple.php\` en \`api/config.php\`, puis renseignez :
 
 - \`CHEMIN_BASE\` et \`DOSSIER_SAUVEGARDES\` : dans \`certify-registre\`
-- \`SAUVEGARDE_CLE\` : une longue phrase aléatoire — **conservez-en une copie
+- \`SAUVEGARDE_CLE\` : une longue phrase aléatoire, **conservez-en une copie
   ailleurs que sur ce serveur**, sans elle les sauvegardes sont illisibles
 - \`JETON_INSTALLATION\` : une autre phrase aléatoire, le temps de l'étape 4
 
@@ -135,11 +135,11 @@ const lisible = (o) => (o < 1024 * 1024 ? `${(o / 1024).toFixed(0)} ko` : `${(o 
 
 /* --- lire la liste des fichiers d'une archive ----------------------------
    Pourquoi ce code existe : sur Windows, `tar -a -c -f x.zip` produit un zip
-   valide dont les noms portent des ANTISLASHES. Décompressé sur le serveur —
-   Linux —, on obtient des fichiers nommés « api\lib\Base.php » à la racine :
+   valide dont les noms portent des ANTISLASHES. Décompressé sur le serveur
+   Linux , on obtient des fichiers nommés « api\lib\Base.php » à la racine :
    le site répond 404 partout, et rien n'indique pourquoi. L'archive avait
    « réussi ». Compress-Archive, de son côté, a selon les versions l'habitude
-   d'ignorer les fichiers cachés — et `.htaccess` est un fichier caché.
+   d'ignorer les fichiers cachés, et `.htaccess` est un fichier caché.
    Deux pannes silencieuses, un même remède : relire l'archive produite.
    Aucune dépendance pour cela : les deux formats se lisent à la main. */
 
@@ -190,11 +190,11 @@ function entreesTarGz(chemin) {
    autant l'écrire, et savoir exactement ce qui sort.
 
    Ce qui est délibéré ici :
-   — les noms portent des barres obliques, parce que c'est ce que le format
+   - les noms portent des barres obliques, parce que c'est ce que le format
      demande et ce que les extracteurs des serveurs attendent ;
-   — aucune entrée de dossier : les extracteurs créent les dossiers manquants,
+   - aucune entrée de dossier : les extracteurs créent les dossiers manquants,
      et une entrée de dossier mal nommée est une source de surprises ;
-   — les fichiers cachés sont inclus comme les autres. `.htaccess` est caché,
+   - les fichiers cachés sont inclus comme les autres. `.htaccess` est caché,
      et c'est lui qui route tout le site. */
 
 const TABLE_CRC = (() => {
@@ -232,7 +232,7 @@ function ecrireZip(dossier, destination) {
   for (const nom of fichiersDe(dossier).sort()) {
     const brut = readFileSync(join(dossier, nom));
     const comprime = deflateRawSync(brut, { level: 9 });
-    /* Un fichier déjà compressé — une image, un .js minifié — grossit parfois
+    /* Un fichier déjà compressé (une image, un .js minifié) grossit parfois
        en passant par deflate : on le stocke tel quel dans ce cas. */
     const gagne = comprime.length < brut.length;
     const corps = gagne ? comprime : brut;
@@ -317,7 +317,7 @@ function verifier(chemin) {
  *
  * Une migration s'applique UNE FOIS et se marque appliquée, par son nom de
  * fichier. Un brouillon emporté par mégarde crée donc ses tables en
- * production, définitivement — et la vraie version, livrée plus tard sous le
+ * production, définitivement, et la vraie version, livrée plus tard sous le
  * même nom, ne sera jamais exécutée. Il n'y a pas de marche arrière.
  *
  * Le critère est le dépôt, pas une liste d'exceptions : un fichier non suivi
@@ -398,7 +398,7 @@ function construire() {
   const ecarte = elaguerSchema();
   if (ecarte === null) return 1;
   for (const nom of ecarte) {
-    console.log(`  Écarté  : api/schema/${nom} — migration non commitée, elle n'a rien à faire en production`);
+    console.log(`  Écarté  : api/schema/${nom} : migration non commitée, elle n'a rien à faire en production`);
   }
 
   writeFileSync(join(ETAPE, "LISEZ-MOI-DEPLOIEMENT.md"), LISEZMOI);
