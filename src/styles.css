@@ -92,8 +92,13 @@
   --gris-300:#C8D2DE;
   --trait:#DDE5EE;
   --trait-fort:#CBD6E2;
-  --surface:#F4F7FB;
-  --surface-2:#EBF1F8;
+  /* Les deux fonds de l'application. Ils tiraient vers le bleu — #F4F7FB —,
+     ce qui mettait une teinte froide sous chaque tableau, chaque entête et
+     chaque champ, et empêchait les pages de l'application de se raccorder aux
+     pages publiques, elles neutres. Deux points de bleu en moins : la nuance
+     reste, le cast disparaît. */
+  --surface:#F4F6F9;
+  --surface-2:#EAEEF4;
   --blanc:#FFFFFF;
 
   /* Le fond des pages publiques. Presque blanc, et volontairement plus neutre
@@ -161,6 +166,13 @@
 /* Un anneau de focus net, et seulement au clavier : visible pour qui en a
    besoin, invisible pour qui clique. */
 .vz :focus-visible{outline:2px solid var(--bleu-400);outline-offset:2px;border-radius:4px}
+/* Sur les deux fonds sombres — la barre latérale et la scène de l'accueil —,
+   un anneau bleu sur bleu nuit ne se voit pas. Or c'est précisément là que
+   l'anneau sert : quelqu'un qui navigue au clavier doit savoir où il est, et
+   il n'a pas d'autre repère. Blanc, donc, sur ces deux fonds-là. */
+.vz-side :focus-visible,
+.vz-scene :focus-visible,
+.vz-public-bar.clair :focus-visible{outline-color:#fff}
 
 /* --- l'échelle d'affichage -----------------------------------------------
    Les titres de l'application vont de 15 à 25 px : c'est l'échelle du travail,
@@ -1252,10 +1264,26 @@
   .vz-certcard-actions{grid-template-columns:1fr}
   .vz-certcard-actions .vz-btn{height:40px}
   .vz-certcard-liens{justify-content:space-between}
-  .vz-filtres{flex-direction:column;align-items:stretch}
-  .vz-filtres .vz-input,.vz-filtres .vz-select{max-width:none!important;width:100%}
-  .vz-filtre-date{justify-content:space-between}
-  .vz-filtre-date .vz-input{flex:1}
+  /* La barre de filtres débordait de sa carte de 46 px sur un écran de 375,
+     et faisait défiler la PAGE ENTIÈRE latéralement : un champ de date natif
+     a une largeur intrinsèque minimale qu'il impose à son conteneur, et
+     `width:auto` sur les listes déroulantes les laissait prendre la largeur de
+     leur plus longue option. Tout s'étire sur une colonne, et `min-width:0`
+     autorise enfin les enfants à rétrécir — sans lui, un enfant flexible
+     refuse de passer sous sa largeur de contenu, et c'est la cause de presque
+     tous les débordements horizontaux. */
+  .vz-filtres{flex-direction:column;align-items:stretch;min-width:0}
+  /* `max-width:100%`, et non `none`. La règle disait `none!important` pour
+     annuler le `maxWidth:290` posé en ligne sur le champ de recherche — mais
+     elle retirait du même coup TOUT plafond aux listes déroulantes, qui
+     prennent alors la largeur de leur plus longue option : « Excel : Tableaux
+     croisés dynamiques » faisait 355 px dans une carte de 327. C'est de là que
+     venait le défilement latéral de la page entière. */
+  .vz-filtres > *{min-width:0;max-width:100%!important;width:100%}
+  .vz-filtres .vz-input,.vz-filtres .vz-select{max-width:100%!important;width:100%;min-width:0}
+  .vz-filtre-date{display:flex;align-items:center;gap:8px;justify-content:space-between}
+  .vz-filtre-date > span{flex:0 0 auto}
+  .vz-filtre-date .vz-input{flex:1;min-width:0}
   .vz-modal-bg{padding:14px 10px}
   .vz-modal-foot{flex-wrap:wrap}
   .vz-modal-foot .vz-btn{flex:1 1 auto}

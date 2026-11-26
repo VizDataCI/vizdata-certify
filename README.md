@@ -104,6 +104,35 @@ Les références suivent le format `VIZ-{ANNÉE}-{CODE-PROGRAMME}-{NUMÉRO}`, pa
 `VIZ-2026-EXCEL-AVA-000125`. Chaque certificat porte en plus un `public_token` opaque,
 qui est ce qui figure dans l'URL de vérification et dans le QR code.
 
+## La scène de l'accueil
+
+Le fond de la page d'accueil accueille une séquence de remise de diplômes. Elle n'est
+pas fournie avec le dépôt : trois fichiers sont attendus dans `public/`, et **la page
+est complète même si aucun n'est présent**.
+
+| Fichier | Rôle | Contrainte |
+|---|---|---|
+| `accueil-graduation.mp4` | la séquence | H.264, 6 à 10 s, bouclable, **muette**, ≤ 1 Mo, 1600 × 900 ou 1920 × 1080 |
+| `accueil-graduation.webm` | facultatif | VP9, même plan, souvent 30 % plus léger |
+| `accueil-graduation.jpg` | l'affiche | une image clé de la séquence, ≤ 250 Ko |
+
+Trois niveaux, et la page se tient à chacun :
+
+1. **Aucun fichier** — le champ de nuit VIZDATA avec sa vignette.
+2. **L'affiche seule** — l'image fixe s'affiche.
+3. **La vidéo** — la séquence joue, muette et en boucle.
+
+**Pourquoi un MP4 et non un GIF.** Un GIF de six secondes en 1600 px pèse huit à douze
+mégaoctets, ne connaît que 256 couleurs — les dégradés d'une salle de cérémonie y
+deviennent des bandes — et se décode par le processeur. Le même plan en H.264 pèse 400
+à 800 kilooctets, garde ses couleurs, et se décode par la puce vidéo. Sur une connexion
+abidjanaise, c'est la différence entre une page qui s'ouvre et une page qu'on abandonne.
+
+**Le cadrage.** Le tiers gauche doit rester calme : c'est là que le titre se pose. Un
+plan fixe ou un travelling lent, jamais un plan agité — du texte sur une image qui
+bouge vite est illisible. Et la séquence ne joue pas pour qui a demandé moins
+d'animations : l'affiche la remplace.
+
 ## Domaines et programmes
 
 Le registre ne connaissait qu'une liste plate de « types » : `EXCEL`, `PBI`, `DATA`. Or

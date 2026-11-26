@@ -312,7 +312,11 @@ function AdminDashboard(p) {
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 15 }}>
                 {parProgramme.map((x) => (
-                  <Jauge key={x.code} nom={x.nom} n={x.n} max={maxProgramme} couleur="var(--violet)" />
+                  /* Même couleur que « Par domaine » : les deux panneaux
+                      comptent LA MÊME CHOSE — des certifications délivrées —,
+                      et les peindre de deux teintes laissait croire à deux
+                      mesures différentes posées côte à côte. */
+                  <Jauge key={x.code} nom={x.nom} n={x.n} max={maxProgramme} couleur="var(--bleu)" />
                 ))}
               </div>
             )}
