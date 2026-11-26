@@ -1,8 +1,20 @@
-/* Saisie d'une référence à vérifier. */
+/* Saisie d'une référence à vérifier.
+ *
+ * C'est la page d'un employeur qui tient un certificat en main. Elle n'a qu'un
+ * travail : lui faire poser la question en une fois. Tout ce qui n'y concourt
+ * pas en a été retiré.
+ *
+ * Elle se présentait comme une boîte de connexion : un sceau de marque, un
+ * titre centré, un champ étroit au milieu d'une carte de 440 px. Rien ne
+ * disait OÙ trouver la référence qu'on lui demandait, et c'est pourtant la
+ * seule chose qu'il ignore. Le libellé le dit désormais, et le QR code — qui
+ * est le chemin le plus court, et celui que l'on prend de toute façon — est
+ * nommé à côté du champ plutôt que laissé deviner.
+ */
 
 import { useState, useEffect, useRef } from "react";
 import { REFERENCE_EXEMPLE } from "../../data/seed.js";
-import { EnteteForm } from "../../ui/primitives.jsx";
+import { IconeQr } from "../../ui/icones.jsx";
 import { PublicShell } from "./PublicShell.jsx";
 
 function VerifySearch(p) {
@@ -44,28 +56,53 @@ function VerifySearch(p) {
 
   return (
     <PublicShell {...p}>
-      <div className="vz-public-body">
-        <div className="vz-slip" style={{ maxWidth: 440 }}>
-          <div className="vz-card-body" style={{ padding: "44px 40px 34px" }}>
-            <EnteteForm titre="Vérifier un certificat">
-              Entrez la référence figurant sur le certificat.
-            </EnteteForm>
-            <input
-              className="vz-input"
-              style={{ height: 44, fontFamily: "var(--mono)", letterSpacing: ".04em", textAlign: "center" }}
-              placeholder={REFERENCE_EXEMPLE}
-              value={ref}
-              onChange={(e) => { setRef(e.target.value); setErr(""); }}
-              onKeyDown={(e) => e.key === "Enter" && submit()}
-              aria-label="Référence du certificat"
-            />
-            {err && <div className="vz-alert err" style={{ marginTop: 12 }}>{err}</div>}
-            <button className="vz-btn vz-btn-primary vz-btn-lg" style={{ width: "100%", marginTop: 14 }} onClick={() => submit()} disabled={busy}>
-              {busy ? "Vérification…" : "Vérifier"}
-            </button>
-            <p className="vz-small vz-muted" style={{ marginTop: 16, lineHeight: 1.6, textAlign: "center" }}>
-              Exemple de référence valide : <span className="vz-ref">{REFERENCE_EXEMPLE}</span>
-            </p>
+      <div className="vz-verif">
+        <div className="vz-verif-tete">
+          <div className="vz-eyebrow">Registre officiel VIZDATA</div>
+          <h1 className="vz-titre-section">Vérifier un certificat</h1>
+          <p className="vz-chapeau">
+            Toute certification délivrée par VIZDATA porte une référence unique. Saisissez-la pour
+            consulter son statut au registre — aucun compte n'est nécessaire.
+          </p>
+        </div>
+
+        <div className="vz-verif-champ">
+          <label className="vz-label" htmlFor="vz-ref-verif">Référence du certificat</label>
+          <input
+            id="vz-ref-verif"
+            className="vz-input vz-input-ref"
+            placeholder={REFERENCE_EXEMPLE}
+            value={ref}
+            onChange={(e) => { setRef(e.target.value); setErr(""); }}
+            onKeyDown={(e) => e.key === "Enter" && submit()}
+            autoComplete="off"
+            spellCheck="false"
+            autoFocus
+          />
+          <p className="vz-verif-aide">
+            Elle est imprimée en haut à droite du certificat, sous la mention « Certificat n° ».
+          </p>
+
+          {err && <div className="vz-alert err" style={{ marginTop: 14 }}>{err}</div>}
+
+          <button
+            className="vz-btn vz-btn-primary vz-btn-lg"
+            style={{ width: "100%", marginTop: 16 }}
+            onClick={() => submit()}
+            disabled={busy}
+          >
+            {busy ? "Vérification…" : "Vérifier au registre"}
+          </button>
+        </div>
+
+        {/* Le QR code est le chemin le plus court, et celui qu'on prend de
+            toute façon : le dire ici évite de ressaisir vingt-cinq signes à
+            celui qui a le document sous les yeux. */}
+        <div className="vz-verif-qr">
+          <IconeQr size={19} />
+          <div>
+            <strong>Le certificat porte un QR code</strong>
+            <p>Scannez-le avec l'appareil photo du téléphone : il ouvre directement cette vérification.</p>
           </div>
         </div>
       </div>

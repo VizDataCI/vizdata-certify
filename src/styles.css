@@ -96,6 +96,13 @@
   --surface-2:#EBF1F8;
   --blanc:#FFFFFF;
 
+  /* Le fond des pages publiques. Presque blanc, et volontairement plus neutre
+     que `--surface`, qui tire vers le bleu : ces pages portent un document
+     officiel, et un document se lit sur une table claire, pas sur une teinte.
+     Deux points d'écart avec le blanc suffisent à détacher une carte — en
+     dessous, le filet d'un pixel fait tout le travail et la carte flotte. */
+  --papier:#F7F8FA;
+
   /* --- typographie -------------------------------------------------------- */
   --sans:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display','Inter',
          'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
@@ -104,15 +111,25 @@
   /* --- espacement : une seule échelle ------------------------------------- */
   --e1:4px; --e2:8px; --e3:12px; --e4:16px; --e5:20px; --e6:24px; --e8:32px; --e10:40px;
 
-  /* --- arrondis ----------------------------------------------------------- */
-  /* Le CRM arrondit franchement : 11 px pour un champ, 20 px pour une carte.
-     C'est ce qui lui donne son air posé, et c'est reproduit ici. */
-  --r-s:10px; --r-m:12px; --r-l:16px; --r-xl:20px; --r-pilule:999px;
+  /* --- arrondis ------------------------------------------------------------
+     Resserrés d'environ trois points. À 20 px, une carte de six cents pixels
+     de large prend un air de bulle : l'arrondi se lit avant son contenu, et
+     c'est la signature des interfaces dessinées à la hâte. Un rayon doit
+     adoucir l'angle, pas devenir la forme. Les champs restent les plus
+     arrondis de tous, parce qu'eux doivent appeler le doigt. */
+  --r-s:8px; --r-m:10px; --r-l:13px; --r-xl:16px; --r-pilule:999px;
 
-  /* --- ombres : trois niveaux, pas plus ----------------------------------- */
-  --ombre-1:0 1px 2px rgba(11,28,44,.04);
-  --ombre-2:0 1px 2px rgba(11,28,44,.04), 0 10px 28px -12px rgba(11,28,44,.14);
-  --ombre-3:0 1px 2px rgba(11,28,44,.04), 0 18px 48px -14px rgba(11,28,44,.16);
+  /* --- élévation -----------------------------------------------------------
+     Trois niveaux, et toujours le même principe : un filet d'un pixel porte
+     le contour, l'ombre ne porte que la distance au fond. Une ombre qui
+     dessine le bord à la place du filet donne ce flou gris caractéristique
+     des maquettes trop vite faites.
+
+     Les trois ont été allégées : la lumière vient du haut, elle est diffuse,
+     et une carte posée sur un fond presque blanc ne projette presque rien. */
+  --ombre-1:0 1px 1px rgba(11,28,44,.035);
+  --ombre-2:0 1px 2px rgba(11,28,44,.04), 0 8px 24px -14px rgba(11,28,44,.16);
+  --ombre-3:0 1px 2px rgba(11,28,44,.04), 0 24px 56px -22px rgba(11,28,44,.20);
 
   /* --- mouvement ---------------------------------------------------------- */
   --vite:120ms cubic-bezier(.2,.7,.4,1);
@@ -144,6 +161,51 @@
 /* Un anneau de focus net, et seulement au clavier : visible pour qui en a
    besoin, invisible pour qui clique. */
 .vz :focus-visible{outline:2px solid var(--bleu-400);outline-offset:2px;border-radius:4px}
+
+/* --- l'échelle d'affichage -----------------------------------------------
+   Les titres de l'application vont de 15 à 25 px : c'est l'échelle du travail,
+   et elle est juste. Les pages PUBLIQUES, elles, ont besoin d'une voix plus
+   haute — mais une voix, pas un cri.
+
+   Trois règles tiennent cette échelle, et ce sont les mêmes que suivent les
+   fonderies depuis toujours :
+
+   1. Plus le corps grandit, plus l'interlettrage se resserre. À 52 px, le
+      chasse par défaut d'Inter laisse des trous entre les lettres ; à −0,04 em
+      le mot redevient un bloc. C'est la différence la plus visible entre un
+      titre composé et un titre agrandi.
+   2. Plus le corps grandit, plus l'interligne se rapproche de 1. Un titre de
+      trois lignes à 1,5 d'interligne se lit comme trois phrases séparées.
+   3. La taille suit la fenêtre, entre deux bornes. `clamp` évite les deux
+      défauts opposés : le titre qui déborde sur téléphone, et le titre figé
+      qui paraît minuscule sur un grand écran.
+
+   Rien ici n'est décoratif : ce sont les trois réglages qui font qu'un texte
+   paraît composé plutôt que saisi. */
+.vz-display{
+  font-size:clamp(32px, 4.6vw, 50px);
+  line-height:1.06;
+  letter-spacing:-.04em;
+  font-weight:600;
+  text-wrap:balance;
+}
+.vz-titre-section{
+  font-size:clamp(22px, 2.6vw, 29px);
+  line-height:1.18;
+  letter-spacing:-.028em;
+  font-weight:600;
+  text-wrap:balance;
+}
+/* Le texte d'accompagnement d'un grand titre. Mesuré en « ch » plutôt qu'en
+   pixels : la ligne idéale tient entre 60 et 75 signes, quelle que soit la
+   taille du corps, et c'est le nombre de SIGNES qui fatigue l'œil. */
+.vz-chapeau{
+  font-size:clamp(15px, 1.5vw, 17.5px);
+  line-height:1.6;
+  color:var(--gris);
+  max-width:62ch;
+  text-wrap:pretty;
+}
 
 /* --- typographie utilitaire ---------------------------------------------- */
 .vz-eyebrow{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--gris)}
@@ -187,6 +249,22 @@
 
 .vz-btn-ghost{background:transparent;border-color:transparent;box-shadow:none;color:var(--gris)}
 .vz-btn-ghost:hover{background:var(--surface-2);color:var(--encre)}
+
+/* Les deux boutons qui vivent sur fond sombre. Un bouton blanc ordinaire y
+   paraît découpé au ciseau, et un bouton bleu s'y noie : il faut un plein
+   blanc pour l'action secondaire, et un contour translucide pour la
+   tertiaire. Le verre translucide est volontairement très léger — un vrai
+   effet de verre dépoli sur un bouton est l'ornement qui trahit la maquette. */
+.vz-btn-clair{
+  background:#fff;border-color:transparent;color:var(--nuit);
+  box-shadow:0 1px 2px rgba(0,0,0,.18);
+}
+.vz-btn-clair:hover{background:#fff;border-color:transparent;color:#07202E;box-shadow:0 2px 10px -2px rgba(0,0,0,.3)}
+.vz-btn-fantome-clair{
+  background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.28);
+  color:#fff;box-shadow:none;
+}
+.vz-btn-fantome-clair:hover{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.45);color:#fff}
 
 .vz-btn-danger{color:var(--rouge);border-color:var(--rouge-100);background:var(--blanc)}
 .vz-btn-danger:hover{background:var(--rouge-050);border-color:#EDBDB8;color:var(--rouge-700)}
@@ -492,26 +570,29 @@
 /* --- trois points sous la recherche -----------------------------------------
    Ils décrivent le service, ils ne le vantent pas. La grille se replie en une
    colonne sur téléphone plutôt que de rétrécir trois colonnes illisibles. */
+/* Trois faits, séparés par un filet et non par trois cartes. Une carte promet
+   qu'on pourra cliquer dessus ; ces trois-là ne mènent nulle part, et leur
+   donner un cadre, une ombre et un soulèvement au survol était une promesse
+   que rien ne tenait. Un filet vertical suffit à les distinguer, et la page y
+   gagne le calme qu'on attend d'un registre. */
 .vz-points{
-  max-width:1000px;margin:0 auto;padding:0 20px 80px;
-  display:grid;grid-template-columns:repeat(3,1fr);gap:18px;
+  max-width:1180px;margin:0 auto;padding:60px 32px 84px;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:0;
 }
-.vz-point{
-  background:var(--blanc);border:1px solid var(--trait);border-radius:var(--r-l);
-  padding:20px 21px;box-shadow:var(--ombre-1);
-  transition:box-shadow var(--normal),transform var(--normal),border-color var(--normal);
-}
-.vz-point:hover{box-shadow:var(--ombre-2);transform:translateY(-2px);border-color:var(--trait-fort)}
+.vz-point{padding:0 34px;border-left:1px solid var(--trait)}
+.vz-point:first-child{padding-left:0;border-left:0}
+.vz-point:last-child{padding-right:0}
 .vz-point-icone{
-  width:38px;height:38px;border-radius:11px;margin-bottom:13px;
-  background:var(--bleu-050);color:var(--bleu);
   display:flex;align-items:center;justify-content:center;
+  width:34px;height:34px;border-radius:var(--r-s);margin-bottom:14px;
+  background:var(--bleu-050);color:var(--bleu);
 }
-.vz-point h3{font-size:15px;margin-bottom:7px}
-.vz-point p{font-size:13.5px;color:var(--gris);line-height:1.6}
+.vz-point h3{font-size:15.5px;margin-bottom:8px}
+.vz-point p{font-size:13.5px;color:var(--gris);line-height:1.65;max-width:38ch}
 @media (max-width:860px){
-  .vz-points{grid-template-columns:1fr;padding-bottom:56px;gap:12px}
-  .vz-point:hover{transform:none}
+  .vz-points{grid-template-columns:1fr;gap:26px;padding:44px 20px 60px}
+  .vz-point{padding:0;border-left:0;border-top:1px solid var(--trait);padding-top:26px}
+  .vz-point:first-child{border-top:0;padding-top:0}
 }
 /* ===========================================================================
    VÉRIFICATION PUBLIQUE
@@ -521,15 +602,19 @@
    qu'ailleurs dans l'application.
    ========================================================================= */
 
-/* Deux halos de marque, très pâles, repris du CRM : un bleu en haut à gauche,
-   un violet en bas à droite. Ils donnent au fond une profondeur que le gris
-   plat n'a pas, sans jamais gêner la lecture de ce qui est posé dessus. */
+/* Le fond portait deux halos de marque, un bleu en haut à gauche, un violet en
+   bas à droite. Ils donnaient de la profondeur à peu de frais — et c'est
+   précisément le problème : un dégradé bleu-violet en fond de page est devenu
+   la signature de l'interface produite à la chaîne. On l'a vu partout, il ne
+   dit plus rien de VIZDATA, et il met une teinte sous CHAQUE chose posée
+   dessus, ce qui interdit au blanc d'être blanc.
+
+   Le fond est donc désormais un presque-blanc neutre, et la profondeur vient
+   de ce qu'elle doit venir : la hiérarchie, les filets, et l'écart entre les
+   plans. Un document officiel se présente sur une table claire. */
 .vz-public{
   min-height:100vh;display:flex;flex-direction:column;
-  background:
-    radial-gradient(1100px 620px at 14% -8%, rgba(30,127,166,.13), transparent 62%),
-    radial-gradient(900px 560px at 88% 108%, rgba(74,42,99,.12), transparent 60%),
-    var(--surface);
+  background:var(--papier);
 }
 .vz-public-bar{
   height:62px;background:rgba(255,255,255,.88);border-bottom:1px solid var(--trait);
@@ -537,6 +622,34 @@
   display:flex;align-items:center;justify-content:space-between;padding:0 22px;
   position:sticky;top:0;z-index:20;
 }
+.vz-public-nav{display:flex;gap:4px;align-items:center}
+.vz-public-nav .vz-linkbtn{padding:7px 11px;border-radius:var(--r-s);white-space:nowrap}
+/* Sous 420 px, « À propos » se coupait en deux lignes et désalignait la barre.
+   Le lien part : la même page est au bout de « Découvrir la plateforme », et
+   une barre de navigation qui se casse coûte plus qu'un raccourci en moins. */
+@media (max-width:420px){
+  .vz-public-nav .vz-lien-apropos{display:none}
+}
+
+/* Au-dessus d'une scène sombre, la barre se pose SUR l'image, sans fond ni
+   filet : une bande blanche en travers d'une photo coupe en deux ce qui doit
+   se lire d'un bloc. Elle n'est plus collante non plus — elle appartient à la
+   scène, et suit donc la scène quand on descend. */
+.vz-public-scene .vz-public-bar.clair{
+  position:absolute;top:0;left:0;right:0;z-index:30;
+  background:transparent;border-bottom-color:transparent;
+  backdrop-filter:none;-webkit-backdrop-filter:none;
+}
+.vz-public-scene{position:relative}
+.vz-public-bar.clair .vz-mark-word{color:#fff}
+.vz-public-bar.clair .vz-mark-div{background:rgba(255,255,255,.22)}
+.vz-public-bar.clair .vz-mark-text{color:rgba(255,255,255,.58)}
+.vz-public-bar.clair .vz-linkbtn{color:rgba(255,255,255,.80)}
+.vz-public-bar.clair .vz-linkbtn:hover{color:#fff;background:rgba(255,255,255,.12)}
+.vz-public-bar.clair .vz-btn{
+  background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.30);color:#fff;box-shadow:none;
+}
+.vz-public-bar.clair .vz-btn:hover{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.48);color:#fff}
 /* `align-items:flex-start` : sans cela, le conteneur étire son contenu sur
    toute la hauteur disponible, et une carte de vérification courte s'affichait
    comme un panneau vide de huit cents pixels. */
@@ -554,13 +667,106 @@
 .vz-verdict.ok{background:linear-gradient(180deg,var(--vert-050),var(--blanc))}
 .vz-verdict.ko{background:linear-gradient(180deg,var(--rouge-050),var(--blanc))}
 .vz-verdict.attente{background:linear-gradient(180deg,var(--orange-050),var(--blanc))}
+/* L'encart de verdict ne sert plus qu'aux états de passage — recherche en
+   cours, lien introuvable, registre injoignable. Son disque a maigri de 46 à
+   38 px et perdu son ombre portée : une pastille de couleur avec une ombre est
+   l'ornement par excellence, et ces trois états n'ont rien à célébrer. */
 .vz-verdict-icon{
-  width:46px;height:46px;flex:0 0 46px;border-radius:50%;
+  width:38px;height:38px;flex:0 0 38px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;color:#fff;
-  box-shadow:0 4px 12px -2px rgba(12,23,38,.22);
 }
 .vz-verdict h2{font-size:20px;margin-bottom:5px}
 .vz-verdict p{font-size:13.5px;color:var(--encre-700);line-height:1.55}
+/* --- une page de texte --------------------------------------------------------
+   Pour « À propos », et pour tout ce qui se lit plutôt que se remplit. La
+   mesure est bornée en signes et non en pixels : au-delà de 70 signes par
+   ligne, l'œil perd le début de la suivante, quelle que soit la largeur de
+   l'écran. C'est la plus ancienne règle de la composition, et la plus souvent
+   oubliée sur le web. */
+.vz-page-texte{width:100%;max-width:640px;margin:0 auto;padding:12px 4px 0}
+.vz-page-texte h1{margin-top:12px}
+.vz-prose{margin-top:20px;display:flex;flex-direction:column;gap:14px}
+.vz-prose p{font-size:15px;line-height:1.72;color:var(--encre-700);max-width:70ch;text-wrap:pretty}
+.vz-page-texte-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}
+
+/* --- la demande de vérification ----------------------------------------------
+   Pas une carte posée au milieu de l'écran : une page. La carte donnait à ce
+   geste l'allure d'une boîte de connexion, alors qu'il n'y a rien à ouvrir —
+   on pose une question au registre, publiquement, et la page doit avoir la
+   tenue d'un guichet plutôt que d'un formulaire.
+
+   Le champ est seul, grand, à chasse fixe : une référence est une suite de
+   signes qu'on recopie, et le monospace est ce qui permet de la relire. */
+.vz-verif{width:100%;max-width:540px;margin:0 auto;padding:12px 4px 0}
+.vz-verif-tete{margin-bottom:28px}
+.vz-verif-tete h1{margin-top:12px}
+.vz-verif-tete .vz-chapeau{margin-top:12px}
+
+.vz-verif-champ{
+  background:var(--blanc);border:1px solid var(--trait);border-radius:var(--r-l);
+  padding:22px;box-shadow:var(--ombre-1);
+}
+.vz-input-ref{
+  height:52px;font-family:var(--mono);font-size:15px;letter-spacing:.04em;
+  text-align:center;border-radius:var(--r-m);
+}
+.vz-verif-aide{margin-top:9px;font-size:12.5px;color:var(--gris);line-height:1.55}
+
+.vz-verif-qr{
+  display:flex;gap:13px;align-items:flex-start;margin-top:18px;
+  padding:16px 18px;border:1px solid var(--trait);border-radius:var(--r-l);
+  background:var(--surface);
+}
+.vz-verif-qr svg{flex:0 0 auto;color:var(--bleu);margin-top:1px}
+.vz-verif-qr strong{display:block;font-size:13.5px}
+.vz-verif-qr p{margin-top:4px;font-size:13px;color:var(--gris);line-height:1.55}
+
+/* --- l'attestation vérifiée --------------------------------------------------
+   Ce que cette page affirme, elle l'affirme dans cet ordre : c'est vrai, et
+   c'est à cette personne. La référence vient après — elle sert à retrouver le
+   document, elle n'est pas le document.
+
+   L'ancienne mise en page faisait l'inverse : un disque de couleur de 46 px,
+   un titre de verdict, puis la référence en monospace bleu de 22 px, et le NOM
+   du titulaire en petit, aligné à droite dans un tableau. Une page qui met la
+   référence en tête parle au greffier, pas à la personne qui a travaillé pour
+   l'obtenir ni à celle qui la recrute. */
+.vz-atteste{max-width:620px}
+
+/* Le ruban de verdict : une ligne, un filet épais de la couleur du statut sur
+   le bord gauche, et rien d'autre. Il se lit avant d'être lu, ce qui est tout
+   ce qu'on lui demande. */
+.vz-atteste-ruban{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:14px 26px;border-bottom:1px solid var(--trait);
+  font-size:13px;line-height:1.5;
+  background:var(--surface);color:var(--encre-700);
+  box-shadow:inset 3px 0 0 var(--gris-400);
+}
+.vz-atteste-ruban strong{font-size:13.5px;color:var(--encre)}
+.vz-atteste-ruban span{color:var(--gris)}
+.vz-atteste-ruban svg{flex:0 0 auto;color:var(--gris)}
+.vz-atteste-ruban.ok{background:var(--vert-050);box-shadow:inset 3px 0 0 var(--vert)}
+.vz-atteste-ruban.ok svg{color:var(--vert)}
+.vz-atteste-ruban.ko{background:var(--rouge-050);box-shadow:inset 3px 0 0 var(--rouge)}
+.vz-atteste-ruban.ko svg{color:var(--rouge)}
+.vz-atteste-ruban.attente{background:var(--orange-050);box-shadow:inset 3px 0 0 var(--marque)}
+.vz-atteste-ruban.attente svg{color:var(--orange)}
+
+.vz-atteste-tete{padding:28px 26px 24px;border-bottom:1px solid var(--trait)}
+/* Le nom tient sur deux lignes au maximum sans rapetisser : `clamp` descend
+   avec la fenêtre, et l'interlettrage se resserre à mesure — un nom ivoirien
+   complet dépasse facilement vingt-cinq signes. */
+.vz-atteste-nom{
+  font-size:clamp(26px, 4vw, 34px);line-height:1.12;letter-spacing:-.032em;
+  margin-top:10px;text-wrap:balance;
+}
+.vz-atteste-programme{
+  margin-top:9px;font-size:16px;font-weight:500;color:var(--bleu-700);line-height:1.4;
+}
+.vz-atteste-chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:16px}
+.vz-atteste-motif{padding:18px 26px;border-bottom:1px solid var(--trait)}
+
 .vz-refblock{padding:22px 26px;border-bottom:1px solid var(--trait);background:var(--surface)}
 .vz-refblock .vz-bigref{
   font-family:var(--mono);font-size:22px;font-weight:600;letter-spacing:.04em;
@@ -582,6 +788,18 @@
 .vz-acquis li{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;line-height:1.55;color:var(--encre-700)}
 .vz-acquis li svg{flex:0 0 auto;color:var(--vert);margin-top:1px}
 
+/* Les causes probables d'un lien qui ne mène nulle part. Des puces discrètes
+   plutôt que des coches vertes : il n'y a rien à valider, il y a trois pistes
+   à lire. */
+.vz-raisons{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:9px}
+.vz-raisons li{
+  position:relative;padding-left:16px;font-size:13.5px;line-height:1.6;color:var(--encre-700);
+}
+.vz-raisons li::before{
+  content:"";position:absolute;left:0;top:8px;
+  width:5px;height:5px;border-radius:50%;background:var(--gris-300);
+}
+
 /* --- pied signé de la page de vérification ------------------------------- */
 .vz-foot-signe{display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .vz-foot-marque{display:flex;gap:11px;align-items:center;flex:1 1 230px;min-width:0}
@@ -593,13 +811,88 @@
    ACCUEIL PUBLIC
    ========================================================================= */
 
-.vz-hero{max-width:660px;margin:0 auto;padding:88px 20px 44px;text-align:center}
-.vz-hero h1{font-size:40px;letter-spacing:-.038em;line-height:1.1;margin-bottom:16px}
-.vz-hero p{color:var(--gris);font-size:16px;max-width:460px;margin:0 auto 30px;line-height:1.6}
-.vz-hero-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.vz-searchbox{display:flex;gap:9px;margin-top:28px}
-.vz-searchbox .vz-input{height:48px;font-family:var(--mono);letter-spacing:.03em;font-size:14px;border-radius:var(--r-m)}
-.vz-searchbox .vz-btn{height:48px}
+/* --- la scène ----------------------------------------------------------------
+   Le fond de l'accueil : une séquence de remise de diplômes, ou, tant qu'aucun
+   fichier n'est déposé, le champ de nuit VIZDATA. Voir l'entête de Home.jsx
+   pour les fichiers attendus.
+
+   Le texte est à GAUCHE, pas au centre. Un titre centré sur une image oblige à
+   voiler l'image entière pour rester lisible ; aligné à gauche, il n'a besoin
+   que d'un voile de son côté, et la scène reste visible de l'autre. C'est
+   aussi le sens de lecture : l'œil n'a pas à chercher où commence la phrase. */
+.vz-scene{
+  position:relative;
+  display:flex;align-items:center;
+  min-height:min(620px, 82vh);
+  padding:96px 0 72px;
+  background:var(--nuit);
+  overflow:hidden;
+  isolation:isolate;
+}
+.vz-scene-media{position:absolute;inset:0;z-index:-2}
+.vz-scene-video{width:100%;height:100%;object-fit:cover;display:block}
+/* Qui a demandé moins d'animations reçoit l'affiche, pas la séquence : la
+   vidéo est masquée et le `poster` reste, posé par l'élément lui-même. */
+@media (prefers-reduced-motion:reduce){
+  .vz-scene-video{visibility:hidden}
+  .vz-scene-media{
+    background:var(--nuit) url('/accueil-graduation.jpg') center/cover no-repeat;
+  }
+}
+
+/* Le voile, en deux couches qui ne font pas le même travail :
+   — un dégradé horizontal, dense à gauche où se pose le texte, presque nul à
+     droite, pour ne pas éteindre l'image qu'on a pris la peine de mettre ;
+   — une base très légère sur toute la surface, qui garantit le contraste même
+     si l'image déposée est claire. Sans elle, une photo surexposée rendrait le
+     titre illisible, et personne ne s'en apercevrait avant la mise en ligne. */
+.vz-scene-voile{
+  position:absolute;inset:0;z-index:-1;
+  background:
+    linear-gradient(90deg, rgba(8,32,46,.92) 0%, rgba(8,32,46,.78) 38%, rgba(8,32,46,.34) 72%, rgba(8,32,46,.22) 100%),
+    linear-gradient(180deg, rgba(8,32,46,.45) 0%, rgba(8,32,46,.18) 30%, rgba(8,32,46,.52) 100%);
+}
+
+.vz-scene-contenu{
+  position:relative;width:100%;max-width:1180px;margin:0 auto;padding:0 32px;
+  color:#fff;
+}
+.vz-scene-eyebrow{
+  font-size:11px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;
+  color:rgba(255,255,255,.62);
+}
+.vz-scene-titre{max-width:17ch;margin-top:18px;color:#fff}
+.vz-scene-chapeau{margin-top:16px;color:rgba(255,255,255,.80);max-width:52ch}
+
+/* Le champ de vérification, posé dans la scène plutôt qu'en dessous : c'est
+   l'action la plus urgente de la page, et la faire descendre sous la ligne de
+   flottaison reviendrait à la cacher derrière une belle image. */
+.vz-scene-recherche{margin-top:32px;max-width:520px}
+.vz-scene-label{
+  display:block;font-size:12px;font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;color:rgba(255,255,255,.70);margin-bottom:9px;
+}
+.vz-scene-aide{margin-top:10px;font-size:12.5px;color:rgba(255,255,255,.58);line-height:1.5}
+.vz-scene-aide .vz-mono{color:rgba(255,255,255,.78)}
+.vz-scene-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}
+
+.vz-searchbox{display:flex;gap:9px}
+.vz-searchbox .vz-input{
+  height:49px;font-family:var(--mono);letter-spacing:.03em;font-size:14px;
+  border-radius:var(--r-m);
+}
+.vz-searchbox .vz-btn{height:49px}
+
+/* Sur téléphone, le champ et son bouton s'empilent : côte à côte, le bouton
+   mange la moitié de la largeur et il ne reste plus la place d'une référence
+   de vingt-cinq signes. */
+@media (max-width:620px){
+  .vz-scene{min-height:0;padding:84px 0 48px}
+  .vz-scene-contenu{padding:0 20px}
+  .vz-searchbox{flex-direction:column}
+  .vz-searchbox .vz-btn{width:100%}
+  .vz-scene-actions .vz-btn{flex:1 1 100%}
+}
 
 /* ===========================================================================
    DIVERS

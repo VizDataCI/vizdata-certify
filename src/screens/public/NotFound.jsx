@@ -3,6 +3,7 @@
    Volontairement sobre : un registre officiel ne plaisante pas sur une page
    introuvable, et l'on ne dit rien de ce qui existe ou non à cette adresse. */
 
+import { IconeInfo } from "../../ui/icones.jsx";
 import { PublicShell } from "./PublicShell.jsx";
 
 function NotFound(p) {
@@ -10,8 +11,14 @@ function NotFound(p) {
     <PublicShell {...p}>
       <div className="vz-public-body">
         <div className="vz-slip" style={{ maxWidth: 480 }}>
+          {/* Le point d'interrogation était un CARACTÈRE posé dans un disque de
+              couleur : il changeait de dessin et de position d'une police à
+              l'autre, et se retrouvait souvent décentré. Une icône du jeu
+              commun, comme partout ailleurs. */}
           <div className="vz-verdict" style={{ borderBottom: 0 }}>
-            <div className="vz-verdict-icon" style={{ background: "var(--gris)" }}>?</div>
+            <div className="vz-verdict-icon" style={{ background: "var(--gris)" }}>
+              <IconeInfo size={19} />
+            </div>
             <div>
               <h2>Page introuvable</h2>
               <p>Cette adresse ne correspond à aucune page du registre VIZDATA.</p>

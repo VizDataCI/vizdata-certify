@@ -43,7 +43,6 @@ const HEADINGS = {
    d'une police à l'autre, et la croix de la révocation finissait par ressembler
    à une fermeture de fenêtre. */
 const ICONES = { ACTIVE: IconeAuthentique, EXPIRED: IconeHeure, REVOKED: IconeRevoquer, CANCELLED: IconeInfo };
-const FONDS = { vert: "var(--vert)", orange: "var(--orange)", rouge: "var(--rouge)", gris: "var(--gris)" };
 const AMBIANCE = { vert: "ok", rouge: "ko", orange: "attente", gris: "" };
 
 /** Encart de verdict, utilisé aussi pour les cas d'échec. */
@@ -118,8 +117,20 @@ function VerifyResult(p) {
         title="Certificat introuvable"
         text="Ce lien ne correspond à aucun certificat du registre VIZDATA."
       >
+        {/* Un état d'erreur qui ne dit QUE « introuvable » laisse croire à une
+            panne, et la panne est le plus souvent une virgule. Trois causes,
+            dans l'ordre de leur fréquence, et aucune n'accuse personne : la
+            plus courante est un lien recopié à la main. */}
+        <div className="vz-valeur">
+          <h3>Ce que cela peut vouloir dire</h3>
+          <ul className="vz-raisons">
+            <li>Le lien a été recopié ou tronqué en chemin. Scannez à nouveau le QR code du certificat.</li>
+            <li>La référence imprimée sur le document n'a pas été saisie exactement, tirets compris.</li>
+            <li>Ce certificat n'a pas été délivré par VIZDATA.</li>
+          </ul>
+        </div>
         <div className="vz-slip-actions">
-          <button className="vz-btn" onClick={() => p.go({ view: "verify" })}>
+          <button className="vz-btn vz-btn-primary" onClick={() => p.go({ view: "verify" })}>
             <IconeRecherche size={16} /> Vérifier par référence
           </button>
         </div>
@@ -141,39 +152,43 @@ function VerifyResult(p) {
   return (
     <PublicShell {...p}>
       <div className="vz-public-body">
-        <div className="vz-slip">
-          <div className={"vz-verdict " + (AMBIANCE[meta.tone] || "")}>
-            <div className="vz-verdict-icon" style={{ background: FONDS[meta.tone] }}><Icone size={23} /></div>
-            <div>
-              <h2>{heading[0]}</h2>
-              <p>{heading[1]}</p>
+        <article className="vz-slip vz-atteste">
+          {/* Le verdict d'abord, mais en une ligne : un ruban de la couleur du
+              statut et la phrase qui l'explique. L'encart de verdict occupait
+              un quart de l'écran avec son disque de couleur, et repoussait sous
+              la ligne de flottaison le NOM, qui est pourtant ce que cette page
+              existe pour affirmer. */}
+          <div className={"vz-atteste-ruban " + (AMBIANCE[meta.tone] || "")}>
+            <Icone size={17} />
+            <strong>{heading[0]}</strong>
+            <span>{heading[1]}</span>
+          </div>
+
+          {/* Le titulaire, en grand. C'est lui le sujet du document : une page
+              qui met la référence en tête et le nom en petit dans un tableau
+              parle au greffier, pas à la personne qui a travaillé pour
+              l'obtenir ni à celle qui la recrute. */}
+          <header className="vz-atteste-tete">
+            <div className="vz-eyebrow">{typeCertificat(cert.kind).label}</div>
+            <h1 className="vz-atteste-nom">{cert.holder_name}</h1>
+            <p className="vz-atteste-programme">{cert.certification}</p>
+            <div className="vz-atteste-chips">
+              {cert.domain && <span className="vz-chip">{cert.domain}</span>}
+              <span className="vz-chip">Délivré le {fmtLong(cert.issue_date)}</span>
+              {cert.duration > 0 && <span className="vz-chip">{cert.duration} heures</span>}
             </div>
-          </div>
+          </header>
 
-          <div className="vz-refblock">
-            <div className="vz-eyebrow">Référence du certificat</div>
-            <div className="vz-bigref">{cert.reference}</div>
-          </div>
-
-          {/* Ce qui est affiché, et rien de plus. Pas de date d'expiration, pas
-              de score : ces deux mentions ont quitté le produit, et le registre
-              ne les renvoie même plus. Aucune information privée du compte
-              n'apparaît ici : ni adresse e-mail, ni téléphone, ni identifiant. */}
+          {/* Les faits, dans l'ordre où l'on se les demande. Rien de privé n'y
+              figure : ni adresse, ni téléphone, ni identifiant de compte. */}
           <dl className="vz-dl">
-            <div className="vz-dl-row"><dt>Titulaire</dt><dd>{cert.holder_name}</dd></div>
-            <div className="vz-dl-row"><dt>Certification</dt><dd>{cert.certification}</dd></div>
-            {/* Ce que le certificat atteste : la participation au programme, ou
-                la validation des compétences qu'il enseigne. Celui qui vérifie
-                a besoin de la distinction — c'est la question même qu'il pose. */}
-            <div className="vz-dl-row"><dt>Type de certificat</dt><dd>{typeCertificat(cert.kind).label}</dd></div>
-            {cert.domain && <div className="vz-dl-row"><dt>Domaine</dt><dd>{cert.domain}</dd></div>}
+            <div className="vz-dl-row"><dt>Référence</dt><dd className="vz-mono">{cert.reference}</dd></div>
             <div className="vz-dl-row"><dt>Organisme émetteur</dt><dd>{cert.issuer || "VIZDATA"}</dd></div>
-            <div className="vz-dl-row"><dt>Date de délivrance</dt><dd>{fmtLong(cert.issue_date)}</dd></div>
             <div className="vz-dl-row"><dt>Statut d'authenticité</dt><dd><Badge status={st} /></dd></div>
           </dl>
 
           {cert.revoke_reason && st === "REVOKED" && (
-            <div style={{ padding: "18px 26px", borderBottom: "1px solid var(--trait)" }}>
+            <div className="vz-atteste-motif">
               <div className="vz-alert err">
                 <IconeRevoquer size={17} />
                 <span>Ce certificat a été révoqué par VIZDATA. Motif : {cert.revoke_reason}</span>
@@ -181,17 +196,12 @@ function VerifyResult(p) {
             </div>
           )}
 
-          {/* Une seule section, et courte.
-              Trois paragraphes de valorisation tenaient ici, suivis d'un second
-              encart pour les acquis : l'essentiel passait sous la ligne de
-              flottaison, et celui qui vérifie faisait défiler pour rien. La
-              phrase qui engage VIZDATA est gardée, le reste est parti.
-
-              Rien n'est déduit. Les acquis affichés sont ceux rattachés au
+          {/* Rien n'est déduit. Les acquis affichés sont ceux rattachés au
               certificat au moment de la délivrance ; à défaut, la description
               du programme, écrite par VIZDATA. Annoncer des compétences que la
               formation ne couvre pas ferait de ce registre un argument de
-              vente, ce qu'il n'est pas. */}
+              vente, ce qu'il n'est pas. Et rien n'est valorisé pour un
+              certificat qui n'est plus en vigueur. */}
           {enVigueur && (
             <div className="vz-valeur">
               <h3>Ce que ce certificat atteste</h3>
@@ -219,18 +229,13 @@ function VerifyResult(p) {
               ) : (
                 cert.description && <p style={{ marginTop: 10 }}>{cert.description}</p>
               )}
-              {cert.duration > 0 && (
-                <p className="vz-small vz-muted" style={{ marginTop: 12 }}>
-                  Parcours de {cert.duration} heures de formation.
-                </p>
-              )}
             </div>
           )}
 
-          {/* Consultation seule. Ni téléchargement ni partage : celui qui vérifie
-              constate l'authenticité, il n'a pas à repartir avec l'attestation
-              d'autrui. Ces deux actions appartiennent au titulaire, depuis son
-              espace, et à VIZDATA depuis l'administration. */}
+          {/* Consultation seule. Ni téléchargement ni partage : celui qui
+              vérifie constate l'authenticité, il n'a pas à repartir avec
+              l'attestation d'autrui. Ces deux actions appartiennent au
+              titulaire, depuis son espace. */}
           {full && (
             <div className="vz-slip-actions">
               <button className="vz-btn vz-btn-primary" onClick={() => setShowCert(true)}>
@@ -239,10 +244,7 @@ function VerifyResult(p) {
             </div>
           )}
 
-          {/* Pied signé : la marque, la phrase qui dit d'où vient le document,
-              et le QR code à côté plutôt qu'en dessous. Empilés, ils ajoutaient
-              une hauteur d'écran sur un téléphone. */}
-          <div className="vz-slip-foot vz-foot-signe">
+          <footer className="vz-slip-foot vz-foot-signe">
             <div className="vz-foot-marque">
               <VizdataMark size={22} />
               <span>Délivré par VIZDATA. Vérifiable à tout moment depuis cette page.</span>
@@ -253,8 +255,8 @@ function VerifyResult(p) {
                 <span className="vz-mono">{url}</span>
               </div>
             )}
-          </div>
-        </div>
+          </footer>
+        </article>
       </div>
 
       {showCert && full && <CertificateModal cert={cert} telechargeable={false} {...p} onClose={() => setShowCert(false)} />}
