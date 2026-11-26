@@ -587,8 +587,13 @@
    donner un cadre, une ombre et un soulèvement au survol était une promesse
    que rien ne tenait. Un filet vertical suffit à les distinguer, et la page y
    gagne le calme qu'on attend d'un registre. */
+/* `width:100%` est indispensable, et il n'est pas décoratif : `.vz-public` est
+   un conteneur flex en colonne, et dans un conteneur flex une marge `auto`
+   n'étire pas l'enfant — elle le centre ET le réduit à son contenu. Sur une
+   seule colonne, les trois faits se retrouvaient dans un bloc de 363 px
+   centré au milieu d'une tablette, avec deux cents pixels de vide à gauche. */
 .vz-points{
-  max-width:1180px;margin:0 auto;padding:60px 32px 84px;
+  width:100%;max-width:1180px;margin:0 auto;padding:60px 32px 84px;
   display:grid;grid-template-columns:repeat(3,1fr);gap:0;
 }
 .vz-point{padding:0 34px;border-left:1px solid var(--trait)}
