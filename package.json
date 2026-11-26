@@ -16,7 +16,8 @@
     "test": "node --test \"tests/**/*.test.js\"",
     "restaurer": "node scripts/restaurer.mjs",
     "php": "node scripts/syntaxe-php.mjs",
-    "paquet": "npm run php && npm run build && node scripts/paquet.mjs"
+    "paquet": "npm run php && npm run build && node scripts/paquet.mjs",
+    "production": "npm run paquet && node scripts/branche-production.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.75.0",

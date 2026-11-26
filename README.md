@@ -714,6 +714,51 @@ de service tiers, pas de clé dans le paquet livré au navigateur.
 La voie Node : un service derrière nginx, un fichier dans `/var/lib/vizdata-certify/`
 reste décrite dans le même document, pour un serveur dont on a la main.
 
+### Déploiement par Git
+
+Déposer une archive à la main suppose d'être devant la bonne machine, connecté au
+panneau, et de ne pas se tromper de domaine. Plesk sait tirer une branche tout seul.
+
+```bash
+npm run production     # construit, puis réécrit la branche production
+git push origin production
+```
+
+La branche `production` ne contient **que le résultat** : l'interface construite à la
+racine, le registre PHP dans `api/`. Pas de JSX, pas de `vite.config.js`, rien que
+l'hébergement ne sache lire. Elle est réécrite par `scripts/branche-production.mjs` et
+ne se modifie jamais à la main.
+
+Elle apporte au passage ce qui manquait le plus : **`git log production` dit ce qui est
+en ligne**, et chaque commit nomme celui de `main` dont il sort. Jusqu'ici la seule
+façon de le savoir était de télécharger les fichiers du serveur et de les comparer.
+
+Le script refuse de travailler sur un arbre modifié. Une branche de production
+fabriquée à partir de fichiers non commités ne correspondrait à aucun état du dépôt,
+et le jour où il faut comprendre ce qui tourne, la trace mènerait à un commit qui ne
+contient pas ce qui a été déployé.
+
+**Mise en place, une seule fois, dans Plesk.** Domaine `certify.vizdata.ci`, puis Git :
+dépôt distant `https://github.com/VizDataCI/vizdata-certify.git`, branche `production`,
+dossier cible `httpdocs`. Le dépôt étant privé, Plesk affiche une clé publique SSH :
+elle se colle dans GitHub, *Settings, Deploy keys*, en lecture seule, et l'adresse du
+dépôt passe alors en SSH.
+
+**Trois points à vérifier après la toute première mise en ligne**, parce qu'ils ne se
+voient pas tant qu'ils ne sont pas cassés :
+
+| À vérifier | Pourquoi |
+|---|---|
+| `api/config.php` est toujours là | Il n'est dans **aucune** branche, et pour cause : il porte la clé de chiffrement des sauvegardes. Un `git reset --hard` ne supprime pas les fichiers non suivis, donc il survit, mais cela se constate plutôt que cela ne se suppose. S'il disparaissait, le registre perdrait le chemin de la base et ses clés. |
+| `certify.vizdata.ci/.git/config` répond **404** | Un `.git` servi par le web, c'est l'historique entier téléchargeable, donc toute clé qui y aurait séjourné un jour. Le `.htaccess` bloque `/.git` et `/.env`, mais la règle demande `mod_alias`, et un module absent ne se signale pas. |
+| Le site répond, et `/api/sante` rend du JSON | La vérification habituelle. |
+
+La base, elle, ne risque rien : elle vit dans `certify-registre/`, **au-dessus** de
+`httpdocs`, hors d'atteinte d'un déploiement comme d'un visiteur.
+
+La voie de l'archive reste disponible et décrite ci-dessus. Elle dépanne le jour où
+GitHub est injoignable, ou pour un déploiement depuis une machine qui n'a pas le dépôt.
+
 ### Sauvegardes
 
 **C'est la partie que personne ne fait, et c'est celle qui a coûté le registre

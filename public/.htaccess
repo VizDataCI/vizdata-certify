@@ -61,6 +61,21 @@ Require all denied
 Require all denied
 </FilesMatch>
 
+# Un dossier .git servi par le web, c'est l'historique ENTIER du dépôt
+# téléchargeable par n'importe qui : chaque version de chaque fichier, et donc
+# toute clé qui y aurait séjourné un jour, même retirée depuis. Les dépôts
+# exposés de cette manière se trouvent par balayage automatique, en quelques
+# heures.
+#
+# La règle n'a rien d'hypothétique ici : selon le mode choisi, le déploiement
+# par Git de Plesk dépose son dossier .git dans la racine du site. FilesMatch
+# ne suffirait pas, il ne voit que des fichiers et pas le dossier qui les
+# porte ; RedirectMatch tranche avant, sur le chemin.
+<IfModule mod_alias.c>
+RedirectMatch 404 /\.git
+RedirectMatch 404 /\.env
+</IfModule>
+
 # --- En-têtes de sécurité, sur toutes les réponses --------------------------
 <IfModule mod_headers.c>
 Header always set X-Frame-Options "DENY"
