@@ -8,7 +8,7 @@
 -- Attention : « revoke ... from anon » seul serait sans effet. Le rôle anon
 -- hérite de PUBLIC, à qui Postgres accorde EXECUTE par défaut sur toute
 -- fonction créée. Il faut donc révoquer PUBLIC, puis ré-accorder explicitement
--- à authenticated — dont l'espace d'administration a besoin pour numéroter les
+-- à authenticated, dont l'espace d'administration a besoin pour numéroter les
 -- certificats qu'il crée.
 
 begin;

@@ -38,7 +38,7 @@ final class Config
 
     /* --- courrier ------------------------------------------------------------
        Sans RESEND_API_KEY, les messages partent par la fonction mail() du
-       serveur : qui ne dit pas si la remise a eu lieu. Avec, le fournisseur
+       serveur, qui ne dit pas si la remise a eu lieu. Avec, le fournisseur
        rend un verdict, et les échecs apparaissent dans l'écran Notifications. */
     public const COURRIER_ACTIF = true;
     public const RESEND_API_KEY = '';

@@ -10,7 +10,7 @@
 -- 1. Les candidatures sont des données personnelles. La table reste fermée :
 --    aucune lecture anonyme, aucune lecture par un titulaire certifié. Seule
 --    une fonction `security definer` peut y écrire, et seul un administrateur
---    peut la lire. Le même raisonnement que pour `certificates` — ouvrir la
+--    peut la lire. Le même raisonnement que pour `certificates` : ouvrir la
 --    table en insertion anonyme donnerait aussi la lecture à qui sait lire une
 --    requête REST.
 --
@@ -62,7 +62,7 @@ create table public.cohortes (
   created_at        timestamptz not null default now(),
   updated_at        timestamptz not null default now(),
 
-  /* Une cohorte sans date peut être publiée — la page affiche alors
+  /* Une cohorte sans date peut être publiée : la page affiche alors
      « prochaine session : nous contacter ». En revanche une fin avant le
      début est une faute de saisie, pas une information. */
   constraint cohortes_dates_coherentes check (date_fin is null or date_debut is null or date_fin >= date_debut)
@@ -125,7 +125,7 @@ create trigger candidatures_touch
 
    Les cohortes ne sont pas ouvertes en lecture anonyme non plus, bien que leur
    contenu soit public : la page passe par `cohorte_publique()`, qui ne rend que
-   la session publiée. Une lecture directe exposerait les brouillons — les
+   la session publiée. Une lecture directe exposerait les brouillons : les
    tarifs de la session suivante, par exemple. */
 
 alter table public.cohortes enable row level security;
@@ -145,7 +145,7 @@ create policy candidatures_admin_all
 
 /* --- cohorte publiée ------------------------------------------------------
    Projection publique : ni les brouillons, ni `note_privee`, ni les compteurs
-   internes. Une seule ligne au plus — la plus proche dans le temps. */
+   internes. Une seule ligne au plus : la plus proche dans le temps. */
 
 create function public.cohorte_publique()
 returns table (
@@ -197,7 +197,7 @@ grant execute on function public.cohorte_publique() to anon, authenticated;
 /* --- numérotation ---------------------------------------------------------
    CDA-{ANNÉE}-{NUMÉRO}. La numérotation est annuelle et continue : le numéro
    se déduit du plus grand déjà attribué dans l'année, pas d'un comptage des
-   lignes — une candidature supprimée ne doit pas faire réattribuer sa place. */
+   lignes : une candidature supprimée ne doit pas faire réattribuer sa place. */
 
 create function public.next_candidature_reference(p_year integer)
 returns text

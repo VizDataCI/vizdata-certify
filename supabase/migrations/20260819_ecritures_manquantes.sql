@@ -1,4 +1,4 @@
--- PROPOSITION — non appliquée. Deux manques bloquent la migration des écritures.
+-- PROPOSITION : non appliquée. Deux manques bloquent la migration des écritures.
 --
 -- 1. audit_logs n'a qu'une politique SELECT (audit_admin_read). L'historique
 --    ne peut donc pas être écrit : chaque création, modification ou révocation
@@ -50,7 +50,7 @@ commit;
 -- Reste un point que le SQL ne peut pas régler : public.users.id référence
 -- auth.users(id). Créer un titulaire depuis l'administration suppose donc de
 -- créer d'abord un compte d'authentification, ce que la clé publiable ne permet
--- pas — et ne doit pas permettre. Deux issues :
+-- pas, et ne doit pas permettre. Deux issues :
 --   * inviter les titulaires depuis la console Supabase, puis leur rattacher
 --     des certificats depuis l'application ;
 --   * ou passer par une Edge Function détenant la clé secrète, qui crée le

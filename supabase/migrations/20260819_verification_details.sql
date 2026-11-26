@@ -6,7 +6,7 @@
 -- impossible à construire depuis une vérification par référence, faute de
 -- public_token.
 --
--- Le corps de verify_certificate est repris tel quel — enregistrement de la
+-- Le corps de verify_certificate est repris tel quel : enregistrement de la
 -- consultation, score masqué hors ACTIVE, motif masqué hors REVOKED, statut
 -- calculé par effective_status. Seule la projection s'élargit.
 --

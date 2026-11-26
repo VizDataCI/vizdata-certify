@@ -1,4 +1,4 @@
--- PROPOSITION — délibérément non appliquée. Lisez les réserves avant de l'exécuter.
+-- PROPOSITION : délibérément non appliquée. Lisez les réserves avant de l'exécuter.
 --
 -- CONSTAT
 --
@@ -14,7 +14,7 @@
 --
 -- 1. Faux positifs. Une entreprise entière sort souvent par une seule adresse IP.
 --    Un service RH qui vérifie les certificats de vingt candidats atteindrait le
---    seuil de 30 par minute et se verrait répondre « certificat introuvable » —
+--    seuil de 30 par minute et se verrait répondre « certificat introuvable »
 --    le pire message possible pour un registre officiel, puisqu'il laisse croire
 --    que le certificat est faux. Si vous branchez ce garde-fou, prévoyez un
 --    message distinct pour ce cas, côté application.
@@ -120,7 +120,7 @@ commit;
 --   create extension if not exists pgcrypto with schema extensions;
 -- et ajoutez « extensions » au search_path de la fonction.
 
--- PURGE — à planifier une fois la durée de conservation arrêtée.
+-- PURGE : à planifier une fois la durée de conservation arrêtée.
 -- L'empreinte disparaît, la statistique de consultation est conservée.
 --
 --   update public.verifications

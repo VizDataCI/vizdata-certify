@@ -1,4 +1,4 @@
--- SOCLE DU REGISTRE — reconstruction.
+-- SOCLE DU REGISTRE : reconstruction.
 --
 -- Pourquoi ce fichier existe
 -- --------------------------
@@ -33,7 +33,7 @@
 --    écran d'administration ne peut corriger le nom d'un titulaire.
 --
 -- L'ordre compte : types, tables, fonctions utilitaires, déclencheurs,
--- politiques, puis fonctions du chemin public — ces dernières référencent les
+-- politiques, puis fonctions du chemin public : ces dernières référencent les
 -- tables et les types.
 
 begin;
@@ -293,7 +293,7 @@ create trigger certificates_touch before update on public.certificates
 -- 5. SÉCURITÉ AU NIVEAU DES LIGNES
 -- ============================================================================
 -- RLS est activé sur les neuf tables. Aucune n'est lisible par un visiteur
--- anonyme, à deux exceptions près — les types et les compétences, qui ne
+-- anonyme, à deux exceptions près : les types et les compétences, qui ne
 -- contiennent rien de personnel.
 
 alter table public.users              enable row level security;

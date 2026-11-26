@@ -1,7 +1,7 @@
 /* Accès au registre VIZDATA.
  *
- * Une fonction par geste, et rien d'autre : la décision : qui a le droit de
- * quoi, que faut-il journaliser, quel courrier part : appartient au serveur.
+ * Une fonction par geste, et rien d'autre : la décision (qui a le droit de
+ * quoi, que faut-il journaliser, quel courrier part) appartient au serveur.
  * Ce module n'est qu'un carnet d'adresses.
  *
  * Ce qui a disparu en quittant Supabase, et pourquoi c'est un progrès

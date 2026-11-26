@@ -1,22 +1,22 @@
--- REFONTE FONCTIONNELLE — novembre 2026.
+-- REFONTE FONCTIONNELLE : novembre 2026.
 --
 -- Ce que cette migration change, et pourquoi
 -- ------------------------------------------
 --
 -- 1. CATÉGORISATION À DEUX NIVEAUX. Le registre ne connaissait qu'une liste
 --    plate de « types de certification » : EXCEL, PBI, DATA. Or VIZDATA délivre
---    plusieurs certifications dans un même domaine — Excel débutant,
+--    plusieurs certifications dans un même domaine, Excel débutant,
 --    intermédiaire, avancé, expert, tableaux croisés dynamiques. Un code par
 --    domaine ne suffit donc pas.
 --
 --    Plutôt que de créer une table parallèle, `certificate_types` DEVIENT la
 --    table des programmes : elle portait déjà code, intitulé, description,
 --    durée et statut. On lui ajoute le domaine. Les certificats déjà délivrés
---    gardent leur clé étrangère et restent vérifiables — c'est la raison
+--    gardent leur clé étrangère et restent vérifiables : c'est la raison
 --    décisive de ne pas repartir d'une table neuve.
 --
 --    Domaine  = EXCEL, POWER BI, DATA…      (certification_domains)
---    Programme = « Excel — Niveau avancé »   (certificate_types)
+--    Programme = « Excel, Niveau avancé »   (certificate_types)
 --
 -- 2. TROIS RÔLES. `user_role` ne connaissait qu'ADMIN et CERTIFIED. Le
 --    gestionnaire arrive, avec des autorisations que l'administrateur accorde
@@ -25,7 +25,7 @@
 --
 -- 3. CYCLE DE VIE DU COMPTE. `account_status`, `must_change_password`,
 --    `invited_at`, `activated_at` : un titulaire est invité, active son compte,
---    choisit son mot de passe, et peut être désactivé sans être supprimé —
+--    choisit son mot de passe, et peut être désactivé sans être supprimé
 --    supprimer effacerait les certificats délivrés.
 --
 -- 4. MODÈLES DE CERTIFICAT. `certificate_templates`, référencés par le
@@ -38,14 +38,14 @@
 --    aucune raison d'approcher le navigateur.
 --
 -- 6. L'EXPIRATION ET LE SCORE SORTENT DU CHEMIN PUBLIC. Les deux colonnes
---    restent en base — effacer des données délivrées serait une faute — mais
+--    restent en base (effacer des données délivrées serait une faute) mais
 --    `verify_certificate` ne les renvoie plus. Le domaine, lui, y entre : la
 --    page publique doit l'afficher.
 --
 --    Conséquence assumée : un certificat créé à partir de maintenant n'a pas de
 --    date d'expiration, donc ne basculera jamais en « Expiré ». Les certificats
 --    anciens qui en portent une continuent d'être traités par
---    `effective_status` — on ne réécrit pas le passé.
+--    `effective_status` : on ne réécrit pas le passé.
 --
 -- Rejouable, comme le socle : chaque objet est créé « si absent ».
 
@@ -94,13 +94,13 @@ create table if not exists public.certificate_templates (
 
 insert into public.certificate_templates (code, name, description, orientation)
 values ('VIZDATA-PAYSAGE-2026',
-        'VIZDATA — A4 paysage',
+        'VIZDATA, A4 paysage',
         'Modèle institutionnel officiel : format A4 paysage, logo VIZDATA, QR code de vérification.',
         'landscape')
 on conflict (code) do nothing;
 
 -- ============================================================================
--- 3. LE PROGRAMME — certificate_types enrichi
+-- 3. LE PROGRAMME : certificate_types enrichi
 -- ============================================================================
 
 alter table public.certificate_types
@@ -151,16 +151,16 @@ update public.certificate_types t
 insert into public.certificate_types (domain_id, template_id, code, name, description, default_duration, validity_period, status, sort_order)
 select d.id, m.id, v.code, v.name, v.description, v.duree, null, 'ACTIVE', v.rang
   from (values
-    ('EXCEL',   'EXCEL-DEB',  'Excel — Niveau débutant',                     'Prise en main du tableur, saisie, calculs et mise en forme.',                    20, 10),
-    ('EXCEL',   'EXCEL-INT',  'Excel — Niveau intermédiaire',                'Formules, fonctions de recherche, mise en forme conditionnelle, graphiques.',    25, 20),
-    ('EXCEL',   'EXCEL-AVA',  'Excel — Niveau avancé',                       'Fonctions imbriquées, bases de données, consolidation et automatisation.',       30, 30),
-    ('EXCEL',   'EXCEL-EXP',  'Excel — Expert',                              'Maîtrise experte du tableur : modélisation, Power Query, outils d''analyse.',     40, 40),
-    ('EXCEL',   'EXCEL-TCD',  'Excel — Tableaux croisés dynamiques',         'Conception et exploitation des tableaux croisés dynamiques.',                    15, 50),
-    ('EXCEL',   'EXCEL-STR',  'Excel — Structuration et analyse des données','Structuration des données, nettoyage, analyse et restitution.',                  25, 60),
-    ('POWERBI', 'PBI-INI',    'Power BI — Initiation',                       'Découverte de Power BI Desktop, premiers rapports.',                             20, 10),
-    ('POWERBI', 'PBI-ANA',    'Power BI — Analyse et visualisation',         'Visuels, interactions, mise en récit des données.',                              25, 20),
-    ('POWERBI', 'PBI-MOD',    'Power BI — Modélisation des données',         'Modèle en étoile, relations, mesures DAX.',                                      30, 30),
-    ('POWERBI', 'PBI-AVA',    'Power BI — Niveau avancé',                    'DAX avancé, performance, sécurité au niveau des lignes, publication.',           35, 40)
+    ('EXCEL',   'EXCEL-DEB',  'Excel, Niveau débutant',                     'Prise en main du tableur, saisie, calculs et mise en forme.',                    20, 10),
+    ('EXCEL',   'EXCEL-INT',  'Excel, Niveau intermédiaire',                'Formules, fonctions de recherche, mise en forme conditionnelle, graphiques.',    25, 20),
+    ('EXCEL',   'EXCEL-AVA',  'Excel, Niveau avancé',                       'Fonctions imbriquées, bases de données, consolidation et automatisation.',       30, 30),
+    ('EXCEL',   'EXCEL-EXP',  'Excel, Expert',                              'Maîtrise experte du tableur : modélisation, Power Query, outils d''analyse.',     40, 40),
+    ('EXCEL',   'EXCEL-TCD',  'Excel, Tableaux croisés dynamiques',         'Conception et exploitation des tableaux croisés dynamiques.',                    15, 50),
+    ('EXCEL',   'EXCEL-STR',  'Excel, Structuration et analyse des données','Structuration des données, nettoyage, analyse et restitution.',                  25, 60),
+    ('POWERBI', 'PBI-INI',    'Power BI, Initiation',                       'Découverte de Power BI Desktop, premiers rapports.',                             20, 10),
+    ('POWERBI', 'PBI-ANA',    'Power BI, Analyse et visualisation',         'Visuels, interactions, mise en récit des données.',                              25, 20),
+    ('POWERBI', 'PBI-MOD',    'Power BI, Modélisation des données',         'Modèle en étoile, relations, mesures DAX.',                                      30, 30),
+    ('POWERBI', 'PBI-AVA',    'Power BI, Niveau avancé',                    'DAX avancé, performance, sécurité au niveau des lignes, publication.',           35, 40)
   ) as v(domaine, code, name, description, duree, rang)
   join public.certification_domains d on d.code = v.domaine
   join public.certificate_templates m on m.code = 'VIZDATA-PAYSAGE-2026'
@@ -286,7 +286,7 @@ update public.certificates c
 
 -- Un même titulaire peut recevoir plusieurs fois le même programme (repasser un
 -- niveau, par exemple) : aucune contrainte d'unicité sur (user_id, type). Ce
--- qui est unique, c'est la référence du certificat — déjà garantie par le socle.
+-- qui est unique, c'est la référence du certificat : déjà garantie par le socle.
 create index if not exists certificates_issued_by_idx on public.certificates (issued_by);
 
 -- ============================================================================
@@ -316,7 +316,7 @@ comment on column public.notifications.kind is
   'INVITATION, CERTIFICAT_ATTRIBUE, MOT_DE_PASSE, PROFIL_MODIFIE.';
 
 -- ============================================================================
--- 7. POLITIQUES — le gestionnaire entre en scène
+-- 7. POLITIQUES : le gestionnaire entre en scène
 -- ============================================================================
 
 alter table public.certification_domains  enable row level security;
@@ -324,7 +324,7 @@ alter table public.certificate_templates  enable row level security;
 alter table public.notifications          enable row level security;
 
 -- Référentiels : lisibles sans session (la page publique affiche le domaine),
--- modifiables par l'administrateur seul — c'est de la configuration.
+-- modifiables par l'administrateur seul : c'est de la configuration.
 drop policy if exists domains_read on public.certification_domains;
 create policy domains_read on public.certification_domains
   for select to anon, authenticated using (true);
@@ -438,14 +438,14 @@ create policy types_write on public.certificate_types
   using (public.is_admin()) with check (public.is_admin());
 
 -- ============================================================================
--- 8. CHEMIN PUBLIC — nouvelle projection
+-- 8. CHEMIN PUBLIC : nouvelle projection
 -- ============================================================================
 -- L'expiration et le score sortent ; le domaine entre.
 --
 -- `verify_by_reference` délègue à `verify_certificate` par un « select * » : les
 -- deux signatures changent donc ensemble, sous peine de casser la seconde.
 -- Changer le type de retour impose de supprimer avant de recréer, et les droits
--- d'exécution disparaissent avec la fonction — ils sont réattribués à la fin.
+-- d'exécution disparaissent avec la fonction : ils sont réattribués à la fin.
 
 drop function if exists public.verify_by_reference(text);
 drop function if exists public.verify_certificate(text, public.verification_source);

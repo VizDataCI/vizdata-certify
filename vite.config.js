@@ -9,7 +9,7 @@ import react from '@vitejs/plugin-react'
  * la réponse : sans mandataire, il viendrait de localhost:4321 et ne serait
  * jamais renvoyé par la page servie depuis localhost:5173. On passerait alors
  * son temps à déboguer une authentification qui « ne tient pas », alors
- * qu'elle fonctionne — et en production, où nginx sert tout depuis la même
+ * qu'elle fonctionne, et en production, où nginx sert tout depuis la même
  * origine, le problème n'existe pas.
  *
  * https://vite.dev/config/
