@@ -254,9 +254,20 @@
    flux, il se pose sur le document comme un tampon sur le papier.
    « multiply » efface le fond blanc du fichier sans l'avoir détouré : sur un
    document blanc, le résultat est identique à une image transparente. */
+/* 15 px, et non 42. Le cachet flottait vingt-quatre pixels AU-DESSUS du trait,
+   ce qui ne ressemble à rien : un tampon se pose sur la ligne de signature, il
+   ne plane pas au-dessus. L'écart s'était d'ailleurs creusé de cinq pixels
+   quand le nom a été rapproché du trait, puisque celui-ci est descendu d'autant
+   sans que le cachet bouge.
+
+   La valeur est mesurée sur l'ENCRE et non sur la boîte de l'image : le fichier
+   porte six pixels de marge blanche sous le tampon, que « multiply » rend
+   invisibles mais que la mise en page compte. À 15 px, l'encre franchit le
+   trait de 3 px et s'arrête encore 1 px au-dessus du nom. À 12 px elle mordait
+   sur « Direction VIZDATA ». */
 .vzc-cachet {
   position: absolute;
-  bottom: 42px;
+  bottom: 15px;
   left: -16px;
   width: 215px;
   height: auto;
