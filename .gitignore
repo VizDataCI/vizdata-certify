@@ -31,7 +31,7 @@ dist-ssr
 !.env.example
 # .env.demo ne contient que deux variables VIDES : il neutralise les clés pour
 # « npm run demo ». Il doit être suivi, sinon la commande retombe en silence sur
-# .env.local — donc sur le vrai projet, ou sur un projet mort.
+# .env.local, donc sur le vrai projet, ou sur un projet mort.
 !.env.demo
 
 # Rushes video de la marque : lourds, binaires, et sans rapport avec le code.
@@ -40,7 +40,7 @@ media/
 
 # La base SQLite et ses sauvegardes. Elles portent des donnees personnelles et
 # des empreintes de mots de passe : elles n'ont rien a faire dans un depot, qui
-# se clone, se pousse et se partage. Le schema, lui, est versionne — c'est
+# se clone, se pousse et se partage. Le schema, lui, est versionne : c'est
 # server/schema/.
 data/
 *.db

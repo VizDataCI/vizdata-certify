@@ -106,15 +106,14 @@ qui est ce qui figure dans l'URL de vérification et dans le QR code.
 
 ## La scène de l'accueil
 
-Le fond de la page d'accueil accueille une séquence de remise de diplômes. Elle n'est
-pas fournie avec le dépôt : trois fichiers sont attendus dans `public/`, et **la page
-est complète même si aucun n'est présent**.
+Le fond de la page d'accueil joue une séquence de remise de diplômes : des silhouettes
+levant leur toque devant un coucher de soleil. Elle est dans le dépôt, et **la page
+reste complète même si les fichiers disparaissent**.
 
-| Fichier | Rôle | Contrainte |
+| Fichier | Rôle | Ce qui est en place |
 |---|---|---|
-| `accueil-graduation.mp4` | la séquence | H.264, 6 à 10 s, bouclable, **muette**, ≤ 1 Mo, 1600 × 900 ou 1920 × 1080 |
-| `accueil-graduation.webm` | facultatif | VP9, même plan, souvent 30 % plus léger |
-| `accueil-graduation.jpg` | l'affiche | une image clé de la séquence, ≤ 250 Ko |
+| `accueil-graduation.mp4` | la séquence | H.264, 1600 × 900, 12,4 s, muette, **832 Ko** |
+| `accueil-graduation.jpg` | l'affiche | la première image du plan, **42 Ko** |
 
 Trois niveaux, et la page se tient à chacun :
 
@@ -122,16 +121,49 @@ Trois niveaux, et la page se tient à chacun :
 2. **L'affiche seule** : l'image fixe s'affiche.
 3. **La vidéo** : la séquence joue, muette et en boucle.
 
-**Pourquoi un MP4 et non un GIF.** Un GIF de six secondes en 1600 px pèse huit à douze
-mégaoctets, ne connaît que 256 couleurs : les dégradés d'une salle de cérémonie y
-deviennent des bandes, et se décode par le processeur. Le même plan en H.264 pèse 400
-à 800 kilooctets, garde ses couleurs, et se décode par la puce vidéo. Sur une connexion
-abidjanaise, c'est la différence entre une page qui s'ouvre et une page qu'on abandonne.
+**D'où vient le plan.** Pexels, « People Waving their Graduation Cap », olia danilevich,
+[pexels.com/video/8061028](https://www.pexels.com/video/people-waving-their-graduation-cap-8061028/).
+Licence Pexels : usage commercial libre, sans attribution. Elle est citée ici parce
+qu'un registre de certification se doit de savoir d'où vient ce qu'il affiche, pas
+parce qu'elle l'exige. Le contre-jour n'est pas qu'un parti esthétique : personne n'est
+identifiable, donc la page ne promet le visage de personne.
 
-**Le cadrage.** Le tiers gauche doit rester calme : c'est là que le titre se pose. Un
-plan fixe ou un travelling lent, jamais un plan agité : du texte sur une image qui
-bouge vite est illisible. Et la séquence ne joue pas pour qui a demandé moins
-d'animations : l'affiche la remplace.
+**La boucle est un palindrome**, c'est-à-dire que le plan joue à l'endroit puis à
+l'envers. Monté bout à bout il sautait deux fois, sur les bras qui se lèvent et sur la
+caméra qui se resserre : mesuré en SSIM, le raccord d'une boucle simple tombait à 0,69,
+là où le palindrome tient 0,97, soit l'écart d'un réencodage. Pour refaire le plan :
+
+```
+ffmpeg -ss 2.4 -to 8.6 -i source.mp4 -an -filter_complex \
+  "[0:v]scale=1600:900:flags=lanczos,setpts=PTS-STARTPTS,split[f][r];\
+   [r]reverse,trim=start_frame=1,setpts=PTS-STARTPTS[rv];\
+   [f][rv]concat=n=2:v=1:a=0[v]" -map "[v]" -c:v libx264 -profile:v high \
+  -pix_fmt yuv420p -crf 32 -preset veryslow -g 50 -movflags +faststart out.mp4
+```
+
+**Pourquoi un MP4 et non un GIF.** Le même plan en GIF pèserait huit à douze mégaoctets
+et ne connaîtrait que 256 couleurs : ce ciel y deviendrait des bandes, et le décodage
+retomberait sur le processeur. En H.264 il pèse 832 Ko, garde ses dégradés, et se
+décode par la puce vidéo. Sur une connexion abidjanaise, c'est la différence entre une
+page qui s'ouvre et une page qu'on abandonne.
+
+**Et pas de WebM non plus.** Réencodé en VP9, ce plan montait à 1,2 Mo, soit *plus* que
+le H.264 : le VP9 gagne sur du détail, pas sur un ciel lisse. Une source `.webm` servie
+en premier aurait donc fait télécharger le fichier le plus lourd aux navigateurs qui la
+préfèrent, ce qui est l'inverse du but.
+
+**Le cadrage et le voile.** Le tiers gauche reste calme : c'est là que le titre se pose.
+Sous 860 px le voile redevient uniforme, parce que le texte y occupe toute la largeur
+et se retrouverait là où le dégradé s'éclaircit. Contraste au pire cas, mesuré sur cinq
+images du plan et sur les rectangles des glyphes : **5,0:1 sur téléphone, 4,8:1 sur
+tablette, 5,5:1 sur bureau**, de 375 px à 1920 px, soit au-dessus du seuil AA de 4,5
+partout. Et la séquence ne joue pas pour qui a demandé moins d'animations : l'affiche
+la remplace.
+
+**Si le plan est remplacé.** Les deux fichiers ne portent pas d'empreinte dans leur nom,
+donc `.htaccess` leur donne une semaine de cache et non un an. Pour qu'un nouveau plan
+se propage tout de suite, renommer les deux fichiers et leurs trois références :
+`Home.jsx` (l'affiche et la source) et `styles.css` (le repli sans animation).
 
 ## Domaines et programmes
 

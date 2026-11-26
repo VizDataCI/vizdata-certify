@@ -1,4 +1,4 @@
-/* Création d'un titulaire — compte d'authentification et profil, en une fois.
+/* Création d'un titulaire : compte d'authentification et profil, en une fois.
  *
  * Pourquoi une fonction Edge
  * --------------------------
@@ -11,14 +11,14 @@
  *
  * Ce que la fonction garantit
  * ---------------------------
- * — L'appelant est authentifié et porte l'autorisation `creer_titulaires`.
+ * - L'appelant est authentifié et porte l'autorisation `creer_titulaires`.
  *   La vérification se fait en interrogeant la base AVEC le jeton de
  *   l'appelant, donc sous RLS : la clé secrète ne sert qu'après.
- * — Aucun doublon. Si l'adresse existe déjà, le profil existant est renvoyé
+ * - Aucun doublon. Si l'adresse existe déjà, le profil existant est renvoyé
  *   tel quel, avec `existe: true`. Le cahier des charges l'exige, et c'est
  *   aussi ce qui évite deux comptes pour une même personne lors d'une
  *   attribution.
- * — Aucun mot de passe en clair, jamais. Le titulaire reçoit un lien
+ * - Aucun mot de passe en clair, jamais. Le titulaire reçoit un lien
  *   d'invitation signé et choisit son mot de passe lui-même. C'est pour cela
  *   que `inviteUserByEmail` est préféré à `createUser` : il crée le compte ET
  *   envoie le lien, sans qu'un secret transite par e-mail.
@@ -29,7 +29,7 @@
  *
  * `SUPABASE_URL` et `SUPABASE_SERVICE_ROLE_KEY` sont fournis par la plateforme ;
  * rien à configurer. `SITE_URL` indique où le titulaire atterrit après avoir
- * suivi le lien — il doit figurer dans les URL de redirection autorisées du
+ * suivi le lien : il doit figurer dans les URL de redirection autorisées du
  * projet (Authentication → URL Configuration).
  *
  *   supabase secrets set SITE_URL=https://certify.vizdata.ci
@@ -147,7 +147,7 @@ Deno.serve(async (req) => {
   }
 
   /* L'invitation crée le compte ET envoie le lien. Aucun mot de passe n'est
-     généré, donc aucun secret ne part par e-mail — le titulaire choisit le
+     généré, donc aucun secret ne part par e-mail : le titulaire choisit le
      sien en suivant le lien. */
   const { data: invite, error: errInvite } = await service.auth.admin.inviteUserByEmail(email, {
     redirectTo: `${SITE_URL}/nouveau-mot-de-passe`,

@@ -1,4 +1,4 @@
-# VIZDATA — registre des certifications et académie.
+# VIZDATA : registre des certifications et académie.
 #
 # Les pages indexables sont la page de vente de l'académie et les pages
 # publiques du registre. Tout ce qui mène à un dossier nominatif reste hors

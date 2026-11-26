@@ -8,10 +8,10 @@
 # jour les suivantes. Trois choses ne sont JAMAIS écrasées, parce qu'une
 # réexécution malheureuse coûterait le registre :
 #
-#   — la base de données ;
-#   — la clé de chiffrement des sauvegardes (l'écraser rendrait illisibles
+#   - la base de données ;
+#   - la clé de chiffrement des sauvegardes (l'écraser rendrait illisibles
 #     toutes les sauvegardes déjà faites) ;
-#   — la configuration nginx existante du domaine.
+#   - la configuration nginx existante du domaine.
 #
 # Et une sauvegarde est prise AVANT toute mise à jour, parce qu'une migration
 # s'applique au redémarrage et que c'est le moment où l'on veut pouvoir revenir
@@ -50,7 +50,7 @@ command -v npm  >/dev/null || mourir "npm n'est pas installé."
 
 MAJEURE="$(node -p 'process.versions.node.split(".")[0]')"
 if [ "$MAJEURE" -lt 22 ]; then
-  mourir "Node $(node --version) — il faut la version 22 ou plus.
+  mourir "Node $(node --version), il faut la version 22 ou plus.
 
   Le registre utilise node:sqlite, livré avec Node depuis la 22. C'est la
   seule exigence du projet, et elle n'est pas contournable.
@@ -94,7 +94,7 @@ if [ -f "$BASE" ]; then
        npm --prefix "$RACINE" run sauvegarde >/dev/null 2>&1; then
     ok "sauvegarde prise avant la mise à jour"
   else
-    alerte "la sauvegarde a échoué — la mise à jour continue, mais vérifiez-la ensuite"
+    alerte "la sauvegarde a échoué : la mise à jour continue, mais vérifiez-la ensuite"
   fi
 else
   info "aucune base encore : rien à sauvegarder"
@@ -107,14 +107,14 @@ titre "4. Le code"
 if [ -d "$RACINE/.git" ]; then
   sudo -u "$UTILISATEUR" git -C "$RACINE" fetch --quiet origin
   sudo -u "$UTILISATEUR" git -C "$RACINE" reset --hard --quiet origin/main
-  ok "code mis à jour — $(sudo -u "$UTILISATEUR" git -C "$RACINE" log --oneline -1)"
+  ok "code mis à jour : $(sudo -u "$UTILISATEUR" git -C "$RACINE" log --oneline -1)"
 else
   # Un dossier non vide sans dépôt : on ne l'écrase pas en silence.
   if [ -n "$(ls -A "$RACINE" 2>/dev/null)" ]; then
     mourir "$RACINE n'est pas vide et n'est pas un dépôt git. Déplacez-le, puis relancez."
   fi
   sudo -u "$UTILISATEUR" git clone --quiet "$DEPOT" "$RACINE"
-  ok "code déposé — $(sudo -u "$UTILISATEUR" git -C "$RACINE" log --oneline -1)"
+  ok "code déposé : $(sudo -u "$UTILISATEUR" git -C "$RACINE" log --oneline -1)"
 fi
 
 cd "$RACINE"
@@ -154,7 +154,7 @@ titre "6. La base"
 # ============================================================================
 
 if [ -f "$BASE" ]; then
-  ok "base existante conservée — les migrations s'appliqueront au démarrage"
+  ok "base existante conservée : les migrations s'appliqueront au démarrage"
 else
   sudo -u "$UTILISATEUR" env VIZDATA_DB="$BASE" npm run base -- init >/dev/null
   ok "base créée, catalogue de départ posé"
@@ -166,7 +166,7 @@ titre "7. Le service"
 
 cat > "/etc/systemd/system/$SERVICE.service" <<UNITE
 [Unit]
-Description=VIZDATA CERTIFY — registre des certifications
+Description=VIZDATA CERTIFY, registre des certifications
 After=network.target
 
 [Service]

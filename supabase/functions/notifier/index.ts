@@ -7,7 +7,7 @@
  * besoin de cette fonction, et c'est heureux : ils transportent des liens
  * signés que seule la plateforme peut produire.
  *
- * Restent les messages métier — « une certification vous a été attribuée »,
+ * Restent les messages métier : « une certification vous a été attribuée »,
  * « votre profil a été modifié ». Ceux-là ne sont pas des e-mails
  * d'authentification : le mailer de Supabase ne les enverra pas. Il faut un
  * fournisseur d'envoi. Cette fonction parle à Resend, parce qu'une clé d'API
@@ -18,7 +18,7 @@
  * Si `RESEND_API_KEY` n'est pas renseignée, la fonction N'ÉCHOUE PAS : elle
  * inscrit la notification en base avec le statut PENDING et le dit dans sa
  * réponse. L'attribution d'un certificat ne doit pas échouer parce qu'un
- * e-mail n'a pas pu partir — le certificat, lui, est bien délivré, et il est
+ * e-mail n'a pas pu partir : le certificat, lui, est bien délivré, et il est
  * déjà visible dans l'espace du titulaire. L'administrateur voit les
  * notifications en attente dans l'écran des notifications.
  *
@@ -30,7 +30,7 @@
  *   supabase secrets set SITE_URL=https://certify.vizdata.ci
  *
  * Le domaine de l'expéditeur doit être vérifié chez Resend, sans quoi les
- * messages partent en indésirables — ou ne partent pas.
+ * messages partent en indésirables, ou ne partent pas.
  */
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
@@ -84,7 +84,7 @@ function gabarit(titre: string, intro: string, corps: string, lien?: { url: stri
           ${corps}
           ${bouton}
           <p style="margin:22px 0 0;font-size:12.5px;line-height:1.6;color:#667085;border-top:1px solid #E3E6EC;padding-top:16px;">
-            VIZDATA CERTIFY — registre officiel des certifications VIZDATA.<br>
+            VIZDATA CERTIFY, registre officiel des certifications VIZDATA.<br>
             Vérifiez l'authenticité d'un certificat sur
             <a href="${SITE_URL}/verifier" style="color:#12688F;">certify.vizdata.ci/verifier</a>.
           </p>
@@ -110,7 +110,7 @@ function composer(kind: string, p: Record<string, string>): Message | null {
            <tr><td style="padding:14px 16px;border-bottom:1px solid #E3E6EC;font-size:13px;color:#667085;">Certification</td>
                <td style="padding:14px 16px;border-bottom:1px solid #E3E6EC;font-size:14px;font-weight:600;text-align:right;">${echapper(p.certification ?? "")}</td></tr>
            <tr><td style="padding:14px 16px;border-bottom:1px solid #E3E6EC;font-size:13px;color:#667085;">Domaine</td>
-               <td style="padding:14px 16px;border-bottom:1px solid #E3E6EC;font-size:14px;text-align:right;">${echapper(p.domain ?? "—")}</td></tr>
+               <td style="padding:14px 16px;border-bottom:1px solid #E3E6EC;font-size:14px;text-align:right;">${echapper(p.domain ?? "-")}</td></tr>
            <tr><td style="padding:14px 16px;font-size:13px;color:#667085;">Référence</td>
                <td style="padding:14px 16px;font-family:monospace;font-size:13px;font-weight:600;text-align:right;color:#12688F;">${echapper(p.reference ?? "")}</td></tr>
          </table>`,
