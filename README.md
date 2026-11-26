@@ -740,9 +740,14 @@ contient pas ce qui a été déployé.
 
 **Mise en place, une seule fois, dans Plesk.** Domaine `certify.vizdata.ci`, puis Git :
 dépôt distant `https://github.com/VizDataCI/vizdata-certify.git`, branche `production`,
-dossier cible `httpdocs`. Le dépôt étant privé, Plesk affiche une clé publique SSH :
-elle se colle dans GitHub, *Settings, Deploy keys*, en lecture seule, et l'adresse du
-dépôt passe alors en SSH.
+dossier cible `httpdocs`. Le dépôt est public, donc rien d'autre à faire : ni clé de
+déploiement, ni jeton. S'il passait un jour en privé, Plesk afficherait une clé
+publique SSH, à coller dans GitHub sous *Settings, Deploy keys*, en lecture seule.
+
+Ce dépôt public ne porte aucun secret, et c'est une règle tenue depuis le début :
+`config.php` est écrit sur le serveur et n'existe nulle part ici, la base et les
+sauvegardes ne sont pas versionnées, et `config.exemple.php` ne contient que des
+valeurs vides. C'est ce qui rend ce mode de déploiement possible sans rien exposer.
 
 **Trois points à vérifier après la toute première mise en ligne**, parce qu'ils ne se
 voient pas tant qu'ils ne sont pas cassés :
