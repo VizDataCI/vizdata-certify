@@ -927,8 +927,8 @@
 .vz-scene-voile{
   position:absolute;inset:0;z-index:-1;
   background:
-    linear-gradient(90deg, rgba(8,32,46,.92) 0%, rgba(8,32,46,.78) 38%, rgba(8,32,46,.34) 72%, rgba(8,32,46,.22) 100%),
-    linear-gradient(180deg, rgba(8,32,46,.45) 0%, rgba(8,32,46,.18) 30%, rgba(8,32,46,.52) 100%);
+    linear-gradient(90deg, rgba(8,32,46,.90) 0%, rgba(8,32,46,.74) 38%, rgba(8,32,46,.26) 72%, rgba(8,32,46,.12) 100%),
+    linear-gradient(180deg, rgba(8,32,46,.30) 0%, rgba(8,32,46,.08) 32%, rgba(8,32,46,.42) 100%);
 }
 
 .vz-scene-contenu{
@@ -964,6 +964,20 @@
 /* Sur téléphone, le champ et son bouton s'empilent : côte à côte, le bouton
    mange la moitié de la largeur et il ne reste plus la place d'une référence
    de vingt-cinq signes. */
+/* Le voile asymétrique suppose que le texte tient dans le tiers gauche. Sous
+   860 px il occupe toute la largeur : le dégradé horizontal l'abandonne alors
+   là où il s'éclaircit, et les textes secondaires (62 % à 80 % de blanc)
+   tombent à 3,0:1 sur le ciel. Mesuré, pas supposé. Le voile redevient donc
+   uniforme, et la densité repart dans la couche verticale, qui elle garde son
+   sens : le ciel est en haut, le sol en bas. */
+@media (max-width:860px){
+  .vz-scene-voile{
+    background:
+      linear-gradient(90deg, rgba(8,32,46,.70) 0%, rgba(8,32,46,.70) 100%),
+      linear-gradient(180deg, rgba(8,32,46,.25) 0%, rgba(8,32,46,.10) 32%, rgba(8,32,46,.40) 100%);
+  }
+}
+
 @media (max-width:620px){
   .vz-scene{min-height:0;padding:84px 0 48px}
   .vz-scene-contenu{padding:0 20px}

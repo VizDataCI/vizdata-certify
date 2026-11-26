@@ -19,36 +19,51 @@
  * chacun d'eux : c'est la règle, parce qu'un fichier manquant ne doit jamais
  * laisser un écran cassé :
  *
- *   1. SANS AUCUN FICHIER : le champ de nuit VIZDATA, avec sa vignette. C'est
- *      l'état actuel, et il se tient.
+ *   1. SANS AUCUN FICHIER : le champ de nuit VIZDATA, avec sa vignette.
  *   2. AVEC `/accueil-graduation.jpg` : l'image fixe s'affiche, et sert
  *      d'affiche à la vidéo tant qu'elle se charge.
- *   3. AVEC `/accueil-graduation.mp4` (et, au choix, `.webm`) : la séquence
- *      joue, muette et en boucle.
+ *   3. AVEC `/accueil-graduation.mp4` : la séquence joue, muette, en boucle.
  *
- * Pourquoi une vidéo plutôt qu'un GIF
- * -----------------------------------
- * Un GIF de six secondes en 1600 px pèse huit à douze mégaoctets, ne connaît
- * que 256 couleurs : les dégradés d'une salle de cérémonie y deviennent des
- * bandes, et se décode par le processeur. Le même plan en MP4 (H.264) pèse
- * entre 400 et 800 kilooctets, garde ses couleurs, et se décode par la puce
- * vidéo. Sur une connexion abidjanaise, c'est la différence entre une page qui
- * s'ouvre et une page qu'on abandonne. Le GIF reste accepté si le fichier
- * déposé en est un, mais le MP4 est servi en premier.
+ * Le plan en place, et d'où il vient
+ * ----------------------------------
+ * Des silhouettes de diplômés levant leur toque devant un ciel de coucher de
+ * soleil. Le choix n'est pas qu'esthétique : à contre-jour, personne n'est
+ * identifiable, donc la page ne promet le visage de personne, et l'orange du
+ * ciel tombe sur la palette VIZDATA sans qu'on ait rien teinté.
  *
- * Ce qu'il faut déposer dans `public/`, exactement :
+ *   Source   Pexels, « People Waving their Graduation Cap », olia danilevich.
+ *            https://www.pexels.com/video/8061028/
+ *   Licence  Licence Pexels : usage commercial libre, sans attribution. Elle
+ *            est citée ici parce qu'un registre de certification se doit de
+ *            savoir d'où vient ce qu'il affiche, pas parce qu'elle l'exige.
  *
- *   accueil-graduation.mp4   H.264, 6 à 10 s, bouclable, MUETTE, ≤ 1 Mo,
- *                            1600 × 900 ou 1920 × 1080, mouvement lent
- *                            (travelling ou plan fixe : un plan agité sous du
- *                            texte est illisible).
- *   accueil-graduation.webm  Facultatif. VP9, même plan, souvent 30 % plus léger.
- *   accueil-graduation.jpg   L'affiche. Une image clé de la séquence, ≤ 250 Ko,
- *                            pour que le premier affichage ne soit jamais vide.
+ * La boucle est un PALINDROME : le plan joue à l'endroit, puis à l'envers.
+ * Un montage bout à bout sautait deux fois, sur les bras qui se lèvent et sur
+ * la caméra qui se resserre ; à l'envers, le mouvement se dénoue de lui-même
+ * et la raccord est invisible. La recette, si le plan doit être refait :
  *
- * Le cadrage doit laisser le tiers gauche calme : c'est là que le texte se
- * pose. Et la séquence ne joue pas pour qui a demandé moins d'animations
- * voir `vz-scene-media` dans la feuille de style.
+ *   ffmpeg -ss 2.4 -to 8.6 -i source.mp4 -an -filter_complex \
+ *     "[0:v]scale=1600:900:flags=lanczos,setpts=PTS-STARTPTS,split[f][r];\
+ *      [r]reverse,trim=start_frame=1,setpts=PTS-STARTPTS[rv];\
+ *      [f][rv]concat=n=2:v=1:a=0[v]" -map "[v]" -c:v libx264 -profile:v high \
+ *     -pix_fmt yuv420p -crf 32 -preset veryslow -g 50 -movflags +faststart out.mp4
+ *
+ * Pourquoi un MP4 et pas un GIF
+ * -----------------------------
+ * Le même plan en GIF pèse huit à douze mégaoctets et ne connaît que 256
+ * couleurs : ce ciel y deviendrait des bandes. En H.264 il pèse 832 Ko, garde
+ * ses dégradés, et se décode par la puce vidéo plutôt que par le processeur.
+ * Sur une connexion abidjanaise, c'est la différence entre une page qui
+ * s'ouvre et une page qu'on abandonne.
+ *
+ * Pas de WebM non plus : réencodé en VP9, ce plan montait à 1,2 Mo, soit PLUS
+ * que le H.264. Le VP9 gagne sur du détail, pas sur un ciel lisse. Une source
+ * `.webm` servie en premier aurait donc fait télécharger le fichier le plus
+ * lourd aux navigateurs qui la préfèrent, ce qui est l'inverse du but.
+ *
+ * Le cadrage laisse le tiers gauche calme : c'est là que le texte se pose. Et
+ * la séquence ne joue pas pour qui a demandé moins d'animations : voir
+ * `vz-scene-media` dans la feuille de style.
  */
 
 import { useState } from "react";
@@ -100,7 +115,6 @@ function Home(p) {
             preload="metadata"
             poster="/accueil-graduation.jpg"
           >
-            <source src="/accueil-graduation.webm" type="video/webm" />
             <source src="/accueil-graduation.mp4" type="video/mp4" />
           </video>
         </div>

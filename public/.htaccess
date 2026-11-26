@@ -85,6 +85,18 @@ Header always set Cache-Control "public, max-age=86400"
 </IfModule>
 </FilesMatch>
 
+# La scène de l'accueil : 832 Ko de vidéo et son affiche. Ces deux fichiers ne
+# portent pas d'empreinte dans leur nom, donc pas de cache « immutable » : s'ils
+# étaient remplacés, les visiteurs garderaient l'ancien plan pendant un an. Une
+# semaine est le bon compromis : le visiteur qui revient ne retélécharge rien,
+# et un changement de plan se propage en sept jours au pire. Pour l'imposer tout
+# de suite, il suffit de renommer les deux fichiers et la référence dans le code.
+<FilesMatch "^accueil-graduation\.(mp4|jpg)$">
+<IfModule mod_headers.c>
+Header always set Cache-Control "public, max-age=604800"
+</IfModule>
+</FilesMatch>
+
 # index.html n'est JAMAIS gardé en cache, et ce n'est pas un détail : c'est lui
 # qui nomme les fichiers d'interface, dont l'empreinte change à chaque mise à
 # jour. Gardé en cache, il continue de réclamer l'ancien paquet, et le site
